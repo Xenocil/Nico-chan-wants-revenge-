@@ -92,7 +92,7 @@
         #inventory-list > div { font-size: 1rem !important; min-height: 48px; }
         #inventory-list > div p { font-size: .85rem !important; line-height: 1.45; }
         #game-log-overlay { font-size: 18px !important; line-height: 1.42 !important; }
-        #game-log-overlay { max-height: 165px; overflow: hidden; pointer-events: auto; bottom: 8px !important; left: 8px !important; right: auto; padding: 5px 8px; max-width: min(58%, 720px); background: rgba(2,6,23,.52); border: 1px solid rgba(71,85,105,.72); border-radius: 4px; box-sizing: border-box; }
+        #game-log-overlay { max-height: 165px; overflow: hidden; pointer-events: auto; bottom: 8px !important; left: 8px !important; right: auto; padding: 2px 0; max-width: min(58%, 720px); background: transparent !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; box-sizing: border-box; touch-action: pan-y; }
         #game-log-overlay .log-line { transition: opacity 120ms ease, transform 120ms ease; }
         #game-log-overlay.log-hover { cursor: ns-resize; }
         #direct-status-overlay { font-size: 1.05rem; }
@@ -218,7 +218,10 @@
         body { padding: 0 !important; gap: 0 !important; }
         #game-container { position: relative; padding: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
         #game-canvas { width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center center !important; border-radius: 0 !important; }
-        #direct-title-overlay { top: max(8px, env(safe-area-inset-top)) !important; right: max(8px, env(safe-area-inset-right)) !important; }
+        #direct-title-overlay { top: max(8px, env(safe-area-inset-top)) !important; right: max(8px, env(safe-area-inset-right)) !important; pointer-events: none !important; }
+        #map-action-buttons { pointer-events: auto !important; }
+        #map-action-buttons .btn-sfc { white-space: nowrap; min-width: 58px; }
+        #help-window .sfc-window { background: rgba(2,6,23,.96); }
         #mini-map { width: 200px !important; height: 123px !important; }
         #direct-controls-overlay { right: max(8px, env(safe-area-inset-right)) !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; gap: 5px !important; }
         #direct-controls-overlay > div:first-child { width: 150px !important; }
@@ -234,6 +237,8 @@
         @media (orientation: portrait) and (max-width: 900px) {
             #direct-status-overlay { top: max(8px, env(safe-area-inset-top)) !important; left: max(8px, env(safe-area-inset-left)) !important; transform: scale(.88); transform-origin: top left; }
             #direct-title-overlay { transform: scale(.82); transform-origin: top right; }
+            #map-action-buttons { gap: 3px !important; }
+            #map-action-buttons .btn-sfc { padding: 5px 6px !important; font-size: 10px !important; min-width: 48px; }
             #mini-map { width: 190px !important; height: 117px !important; }
             #game-log-overlay { max-width: 58vw !important; max-height: 25vh !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; left: max(8px, env(safe-area-inset-left)) !important; font-size: 15px !important; }
             #direct-controls-overlay { transform: scale(.92); transform-origin: bottom right; }
@@ -252,6 +257,19 @@
         }
 
         /* ===== 追加調整：プロローグ／スマホ表示 ===== */
+        #map-action-buttons {
+            grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+        }
+        #map-action-buttons .btn-sfc {
+            width: 100% !important;
+            min-width: 0 !important;
+            white-space: nowrap !important;
+        }
+        @media (max-width: 420px) and (orientation: portrait) {
+            #map-action-buttons { gap: 3px !important; }
+            #map-action-buttons .btn-sfc { padding: 5px 4px !important; font-size: 10px !important; }
+        }
+
         #fall-caption {
             font-size: clamp(1.25rem, 3.2vw, 2.1rem) !important;
             line-height: 1.35 !important;
@@ -298,7 +316,7 @@
                 font-size: 14px !important;
                 line-height: 1.34 !important;
                 max-width: min(52vw, 390px) !important;
-                padding: 4px 6px !important;
+                padding: 2px 0 !important;
             }
             #game-log-overlay .log-line {
                 white-space: normal !important;
@@ -315,6 +333,8 @@
             #game-canvas { object-fit: cover !important; }
             #direct-status-overlay { top: max(6px, env(safe-area-inset-top)) !important; left: max(8px, env(safe-area-inset-left)) !important; transform: scale(.78) !important; transform-origin: top left !important; }
             #direct-title-overlay { top: max(6px, env(safe-area-inset-top)) !important; right: max(8px, env(safe-area-inset-right)) !important; transform: scale(.78) !important; transform-origin: top right !important; }
+            #map-action-buttons { gap: 3px !important; }
+            #map-action-buttons .btn-sfc { padding: 4px 5px !important; font-size: 10px !important; min-width: 0 !important; width: 100% !important; }
             #mini-map { width: 180px !important; height: 111px !important; }
             #direct-controls-overlay { right: max(8px, env(safe-area-inset-right)) !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; transform: scale(.78) !important; transform-origin: bottom right !important; }
             #direct-controls-overlay > div:first-child { width: 120px !important; }
@@ -370,7 +390,6 @@
                     </div>
                     <span id="exp-display" class="text-cyan-200 whitespace-nowrap text-sm sm:text-base">0/20</span>
                     <span class="ml-3 text-yellow-300 whitespace-nowrap">Score <span id="score-display">0</span></span>
-                    <span class="ml-2 text-slate-300 whitespace-nowrap">HighScore <span id="highscore-display">0</span></span>
                 </div>
                 <div class="flex items-center gap-5 log-shadow text-lg sm:text-2xl font-bold">
                     <span class="text-green-400">HP <span id="hp-display">30/30</span></span>
@@ -389,6 +408,20 @@
                     <span id="floor-display" class="text-amber-400">B10F</span>
                 </div>
                 <canvas id="mini-map" width="200" height="123" class="mt-1 rounded border border-slate-500/40 bg-black/35 opacity-70"></canvas>
+                <div id="map-action-buttons" class="pointer-events-auto grid grid-cols-2 gap-1.5 w-full">
+                    <button id="btn-help" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-amber-200 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md">
+                        <i class="fa-solid fa-circle-question"></i> Help
+                    </button>
+                    <button id="sound-toggle" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-amber-300 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md" title="SE ON/OFF">
+                        🔊 SE:ON
+                    </button>
+                    <button id="btn-save" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-emerald-300 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md">
+                        <i class="fa-solid fa-floppy-disk"></i> セーブ
+                    </button>
+                    <button id="btn-load" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-sky-300 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md">
+                        <i class="fa-solid fa-folder-open"></i> ロード
+                    </button>
+                </div>
             </div>
 
             <!-- Canvas -->
@@ -410,10 +443,6 @@
                     <button id="btn-wait-turn" class="btn-sfc px-2 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-cyan-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-hourglass-half"></i> 足踏み (Space)
                     </button>
-                    <div class="grid grid-cols-2 gap-1">
-                        <button id="btn-save" class="btn-sfc px-2 py-1.5 text-[11px] text-emerald-300 rounded"><i class="fa-solid fa-floppy-disk"></i> セーブ</button>
-                        <button id="btn-load" class="btn-sfc px-2 py-1.5 text-[11px] text-sky-300 rounded"><i class="fa-solid fa-folder-open"></i> ロード</button>
-                    </div>
                 </div>
 
                 <div class="flex items-center justify-end gap-1 text-[11px] text-slate-200 bg-black/60 px-2 py-1 rounded backdrop-blur-sm w-full">
@@ -444,7 +473,7 @@
                 <!-- Prologue falling cutscene -->
                 <div id="prologue-fall-scene" class="hidden absolute inset-0 z-40 overflow-hidden bg-black">
                     <div id="fall-streaks" class="absolute inset-0 pointer-events-none"></div>
-                    <div id="fall-darkness" class="absolute inset-0 z-30 bg-black pointer-events-none" style="opacity:0"></div>
+                    <div id="fall-darkness" class="absolute inset-0 z-30 bg-black pointer-events-none" style="opacity:0;display:none"></div>
                     <div class="absolute inset-x-0 top-8 text-center">
                         <div class="text-sky-300/80 text-xs tracking-[0.5em]">天界</div>
                     </div>
@@ -542,39 +571,55 @@
                 <button id="synthesis-cancel" class="btn-sfc p-1.5 text-left text-slate-400 rounded hover:brightness-125">やめる</button>
             </div>
 
+            <!-- Help Window -->
+            <div id="help-window" class="hidden absolute inset-0 z-45 bg-black/65 flex items-center justify-center p-3 sm:p-6">
+                <div class="sfc-window w-full max-w-2xl max-h-[88vh] overflow-y-auto p-4 sm:p-5 shadow-2xl">
+                    <div class="flex items-center justify-between gap-3 mb-3 pb-2 border-b border-slate-700">
+                        <h3 class="text-amber-300 text-lg sm:text-xl font-bold"><i class="fa-solid fa-circle-question"></i> 操作マニュアル</h3>
+                        <div class="flex items-center gap-1.5">
+                            <button id="help-title-btn" class="btn-sfc px-3 py-1.5 rounded text-slate-200 text-xs sm:text-sm">タイトルに戻る</button>
+                            <button id="help-close" class="btn-sfc px-3 py-1.5 rounded text-slate-200 text-xs sm:text-sm">閉じる</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm leading-relaxed text-slate-200">
+                        <div class="sfc-window p-2.5"><span class="text-amber-300 font-bold">移動／攻撃</span><br>方向キー / WASD / テンキー</div>
+                        <div class="sfc-window p-2.5"><span class="text-amber-300 font-bold">向き変更</span><br>Shift + 方向キー</div>
+                        <div class="sfc-window p-2.5"><span class="text-amber-300 font-bold">足踏み</span><br>Space</div>
+                        <div class="sfc-window p-2.5"><span class="text-amber-300 font-bold">バッグ</span><br>X</div>
+                        <div class="sfc-window p-2.5"><span class="text-amber-300 font-bold">決定</span><br>Enter</div>
+                        <div class="sfc-window p-2.5"><span class="text-amber-300 font-bold">ログ</span><br>マウスホバー／ホイール・PageUp/PageDown</div>
+                        <div class="sfc-window p-2.5 sm:col-span-2"><span class="text-amber-300 font-bold">スマホ</span><br>画面上のボタン／D-Padをタップして操作します。ゲーム画面上に操作UIが重なって表示されます。</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Game Over / Victory Overlay -->
             <div id="game-overlay" class="hidden absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-4 text-center gap-3 z-20">
                 <h2 id="overlay-title" class="text-2xl sm:text-3xl font-bold text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">GAME OVER</h2>
                 <p id="overlay-desc" class="text-slate-300 text-xs sm:text-sm max-w-xs">nicoは力尽きた...</p>
                 <div id="overlay-score" class="text-amber-300 text-sm sm:text-base font-bold leading-relaxed">Score 0<br><span class="text-slate-300">HighScore 0</span></div>
-                <div id="game-over-actions" class="flex flex-col sm:flex-row gap-2 w-full max-w-xs justify-center">
-                    <button id="new-game-btn" class="btn-sfc px-5 py-2 rounded text-amber-300 text-xs sm:text-sm font-bold hover:brightness-125">
+                <div id="game-over-actions" class="grid grid-cols-2 gap-2 w-full max-w-xs justify-center">
+                    <button id="new-game-btn" class="btn-sfc px-3 py-2 rounded text-amber-300 text-xs sm:text-sm font-bold hover:brightness-125 whitespace-nowrap">
                         新しく始める
                     </button>
-                    <button id="game-over-load-btn" class="btn-sfc px-5 py-2 rounded text-sky-300 text-xs sm:text-sm font-bold hover:brightness-125">
+                    <button id="game-over-load-btn" class="btn-sfc px-3 py-2 rounded text-sky-300 text-xs sm:text-sm font-bold hover:brightness-125 whitespace-nowrap">
                         ロード
                     </button>
+                    <div aria-hidden="true" class="h-1"></div>
+                    <div aria-hidden="true" class="h-1"></div>
+                    <button id="restart-btn" class="btn-sfc col-span-2 px-3 py-2 rounded text-violet-300 text-xs sm:text-sm font-bold hover:brightness-125 whitespace-nowrap">
+                        オートセーブからやり直し
+                    </button>
+                    <button id="game-over-title-btn" class="btn-sfc col-span-2 px-3 py-2 rounded text-slate-200 text-xs sm:text-sm font-bold hover:brightness-125 whitespace-nowrap">
+                        タイトルへ戻る
+                    </button>
                 </div>
-                <button id="restart-btn" class="btn-sfc px-5 py-2 rounded text-violet-300 text-xs sm:text-sm font-bold hover:brightness-125">
-                    オートセーブからやり直し
-                </button>
             </div>
         </div>
 
     </div>
 
-    <!-- Bottom Operating Manual Footer -->
-    <footer class="sfc-window px-2 py-0.5 shrink-0 text-[10px] sm:text-[11px] text-slate-300 flex flex-wrap items-center justify-between sm:justify-around gap-x-3 gap-y-0.5">
-        <div><span class="text-amber-300 font-bold">移動/攻撃:</span> 方向キー / WASD / テンキー</div>
-        <div><span class="text-amber-300 font-bold">向き変更:</span> Shift + 方向キー</div>
-        <div><span class="text-amber-300 font-bold">足踏み:</span> Space</div>
-        <div><span class="text-amber-300 font-bold">バッグ:</span> X</div>
-        <div><span class="text-amber-300 font-bold">決定:</span> Enter</div>
-        <div><span class="text-amber-300 font-bold">ログ:</span> マウスホバー/ホイール・PageUp/PageDown</div>
-        <button id="sound-toggle" class="btn-sfc px-2 py-0.5 rounded text-amber-300 text-[10px] sm:text-xs hover:brightness-125 ml-auto sm:ml-0">
-            <i class="fa-solid fa-volume-high"></i> 🔊 SE：ON
-        </button>
-    </footer>
+
 
     <script>
         class RetroSoundEngine {
@@ -720,6 +765,14 @@
         }
 
         const sound = new RetroSoundEngine();
+
+        // iPhone/iPad等ではAudioContextがユーザー操作を受けるまで停止状態になるため、
+        // 最初のタップ/タッチを「音声解禁」だけに使う。ここではSEを再生しない。
+        const unlockMobileAudio = () => {
+            try { sound.init(); } catch (e) {}
+        };
+        document.addEventListener('touchstart', unlockMobileAudio, { passive: true });
+        document.addEventListener('pointerdown', unlockMobileAudio, { passive: true });
 
         const TILE_SIZE = 32;
         const GRID_WIDTH = 52;
@@ -921,6 +974,7 @@
                 this.canvas.height = 450;
 
                 this.currentFloor = 10;
+                this.floorTransitionBusy = false;
                 this.score = 0;
                 this.medalScore = 0;
                 this.clearScoreBonus = 0;
@@ -966,6 +1020,8 @@
                 this.actionMessage = null;
                 this.specialMovement = null;
                 this.combatSequenceBusy = false;
+                // 階段移動中は、暗転～新フロア表示完了まで一切のプレイヤー入力を受け付けない。
+                this.floorTransitionBusy = false;
                 this.logScrollOffset = 0;
                 this.logHover = false;
 
@@ -996,17 +1052,44 @@
                     logOverlay.addEventListener('mouseleave', () => { this.logHover = false; logOverlay.classList.remove('log-hover'); });
                     logOverlay.addEventListener('wheel', (e) => {
                         e.preventDefault();
-                        const step = e.deltaY > 0 ? 1 : -1;
-                        this.logScrollOffset = Math.max(0, Math.min(20, this.logScrollOffset + step));
+                        // マウスホイールの向きを実際のスクロール感覚に合わせる。
+                        // 上へ回す＝過去へ、下へ回す＝最新へ。
+                        const step = e.deltaY < 0 ? 1 : -1;
+                        const maxOlder = Math.max(0, Math.min(20, this.logs.length - 6));
+                        this.logScrollOffset = Math.max(0, Math.min(maxOlder, this.logScrollOffset + step));
                         this.renderLogOverlay();
                     }, { passive: false });
+
+                    // スマホ：ログ上を上下にスワイプして履歴をさかのぼれるようにする。
+                    let logTouchStartY = null;
+                    let logTouchLastY = null;
+                    logOverlay.addEventListener('touchstart', (e) => {
+                        if (!e.touches.length) return;
+                        logTouchStartY = e.touches[0].clientY;
+                        logTouchLastY = logTouchStartY;
+                    }, { passive: true });
+                    logOverlay.addEventListener('touchmove', (e) => {
+                        if (logTouchStartY === null || !e.touches.length) return;
+                        const y = e.touches[0].clientY;
+                        const dy = y - logTouchLastY;
+                        if (Math.abs(dy) < 12) return;
+                        e.preventDefault();
+                        const direction = dy < 0 ? 1 : -1; // 上スワイプ＝過去、下スワイプ＝最新
+                        const maxOlder = Math.max(0, Math.min(20, this.logs.length - 6));
+                        this.logScrollOffset = Math.max(0, Math.min(maxOlder, this.logScrollOffset + direction));
+                        logTouchLastY = y;
+                        this.renderLogOverlay();
+                    }, { passive: false });
+                    logOverlay.addEventListener('touchend', () => {
+                        logTouchStartY = null;
+                        logTouchLastY = null;
+                    }, { passive: true });
                 }
 
                 document.getElementById('sound-toggle').addEventListener('click', () => {
                     sound.enabled = !sound.enabled;
                     document.getElementById('sound-toggle').innerHTML = sound.enabled ? 
-                        '<i class="fa-solid fa-volume-high"></i> 🔊 SE：ON' : 
-                        '<i class="fa-solid fa-volume-xmark"></i> 🔇 SE：OFF';
+                        '🔊 SE:ON' : '🔇 SE:OFF';
                 });
 
                 document.getElementById('story-overlay').addEventListener('click', (e) => {
@@ -1025,6 +1108,24 @@
                 document.getElementById('inv-close-btn').addEventListener('click', () => this.closeInventory());
                 document.getElementById('btn-save').addEventListener('click', () => this.openSaveSlots('save'));
                 document.getElementById('btn-load').addEventListener('click', () => this.openSaveSlots('load'));
+                document.getElementById('btn-help').addEventListener('click', () => document.getElementById('help-window').classList.remove('hidden'));
+                document.getElementById('help-close').addEventListener('click', () => document.getElementById('help-window').classList.add('hidden'));
+                document.getElementById('help-window').addEventListener('click', (e) => { if (e.target.id === 'help-window') e.currentTarget.classList.add('hidden'); });
+                const returnToTitle = () => {
+                    const help = document.getElementById('help-window');
+                    const saveMenu = document.getElementById('save-slot-menu');
+                    if (help) help.classList.add('hidden');
+                    if (saveMenu) saveMenu.classList.add('hidden');
+                    clearTimeout(this.deathOverlayTimer);
+                    this.deathSequenceActive = false;
+                    this.combatSequenceBusy = false;
+                    this.enemyTurnPending = false;
+                    this.actionTimer = 0;
+                    this.specialMovement = null;
+                    this.isGameOver = false;
+                    this.showTitleScreen();
+                };
+                document.getElementById('help-title-btn').addEventListener('click', returnToTitle);
                 document.getElementById('save-slot-close').addEventListener('click', () => document.getElementById('save-slot-menu').classList.add('hidden'));
                 document.getElementById('btn-reset-highscore').addEventListener('click', () => {
                     if (!window.confirm('ハイスコアをリセットしますか？')) return;
@@ -1092,8 +1193,16 @@
                     }
                 });
 
-                document.getElementById('restart-btn').addEventListener('click', () => this.loadGame('auto'));
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    const raw = localStorage.getItem(this.getAutoSaveKey());
+                    if (!raw) {
+                        this.log('オートセーブがありません。タイトルへ戻って新しく始めてください。', 'text-amber-300 font-bold');
+                        return;
+                    }
+                    this.loadGame('auto');
+                });
                 document.getElementById('new-game-btn').addEventListener('click', () => this.showStoryPrologue());
+                document.getElementById('game-over-title-btn').addEventListener('click', returnToTitle);
                 document.getElementById('title-new-game').addEventListener('click', () => this.startFromTitle());
                 document.getElementById('title-continue').addEventListener('click', () => this.continueFromTitle());
                 document.getElementById('game-over-load-btn').addEventListener('click', () => this.openSaveSlots('load'));
@@ -1119,6 +1228,12 @@
 
                 window.addEventListener('keydown', (e) => {
                     if (this.isGameOver) return;
+                    // 階層移動中はキーボード入力を最優先で遮断。
+                    // キーリピートや遅れて届いた入力が、新フロア開始直後の1歩になるのを防ぐ。
+                    if (this.floorTransitionBusy) {
+                        e.preventDefault();
+                        return;
+                    }
 
                     if (e.key === 'PageUp' || e.key === 'PageDown') {
                         if (true) {
@@ -1440,9 +1555,11 @@
                         caption.style.opacity='1';
                     });
                 });
+                // 落下中の暗幕は使用しない。文字まで暗くなるため、常時非表示にする。
                 if (darkness) {
-                    darkness.style.transition='opacity 0.38s ease 1.48s';
-                    darkness.style.opacity='0.62';
+                    darkness.style.transition='none';
+                    darkness.style.opacity='0';
+                    darkness.style.display='none';
                 }
                 this.prologueFallTimer = setTimeout(() => {
                     this.prologueFallTimer = null;
@@ -1626,92 +1743,225 @@
                     this.spawnEntities(); this.updateFieldOfView(); return;
                 }
 
-                // B1FもB2F以降と同じランダム生成。1Fへの階段は通常生成の最後の部屋に必ず置く。
+                // B1F～B10Fは「小・中・大」の3サイズからランダムに選ぶ。
+                // 目安は歩ける床マスで約50 / 100 / 150マス。
+                // 以前の「部屋が大きすぎて空間が余る」生成をやめ、部屋＋細い接続路を中心にする。
+                const mapProfiles = [
+                    { id:'small',  label:'小', target:50,  minRooms:2, maxRooms:4, minSize:4, maxSize:7,  waterMin:1, waterMax:1, solidRatio:0.16 },
+                    { id:'medium', label:'中', target:100, minRooms:3, maxRooms:6, minSize:5, maxSize:9,  waterMin:1, waterMax:2, solidRatio:0.18 },
+                    { id:'large',  label:'大', target:150, minRooms:5, maxRooms:8, minSize:6, maxSize:11, waterMin:1, waterMax:2, solidRatio:0.20 }
+                ];
+                const profile = mapProfiles[Math.floor(Math.random() * mapProfiles.length)];
+                this.mapSizeProfile = profile.id;
 
-                const stage = 11 - this.currentFloor;
-                const targetRooms = Math.min(3 + Math.floor(stage * 0.8), 10);
-                
-                // 部屋の広さをランダム化
-                const minSize = 4;
-                const maxSize = 16;
+                const countFloorTiles = () => {
+                    let n=0;
+                    for(let y=0;y<GRID_HEIGHT;y++) for(let x=0;x<GRID_WIDTH;x++) {
+                        if(this.map[y][x]===TILE.FLOOR || this.map[y][x]===TILE.STAIRS) n++;
+                    }
+                    return n;
+                };
+
+                const roomCenter = r => ({ x:Math.floor(r.x+r.w/2), y:Math.floor(r.y+r.h/2) });
+                // 部屋数は従来の難易度カーブを維持する。
+                // B10F=3部屋を基準に、B9F=4、B8F=5……B1F=12部屋。
+                // マップサイズは「1部屋あたりの規模」と全体の床面積の目安として別管理する。
+                const targetRoomCount = Math.max(3, 13 - this.currentFloor);
+                const roomVariance = Math.random() < 0.25 ? (Math.random() < 0.5 ? -1 : 1) : 0;
+                const roomCount = Math.max(3, targetRoomCount + roomVariance);
+                const lowerTarget = Math.floor(profile.target * 0.84);
+                const upperTarget = Math.ceil(profile.target * 1.24);
+                // 部屋数が多い階層では、部屋そのものを小さくして「部屋数の増加」を優先する。
+                // これによりB10Fの少部屋構成からB1Fの多部屋構成へ自然に変化する。
+                const roomScale = targetRoomCount >= 10 ? { min:2, max:3 }
+                    : targetRoomCount >= 8 ? { min:3, max:4 }
+                    : targetRoomCount >= 6 ? { min:3, max:5 }
+                    : { min:profile.minSize, max:profile.maxSize };
 
                 let attempts = 0;
-                while (this.rooms.length < targetRooms && attempts < 500) {
+                while(this.rooms.length < roomCount && attempts < 900){
                     attempts++;
-                    const w = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-                    const h = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-                    const x = Math.floor(Math.random() * (GRID_WIDTH - w - 2)) + 1;
-                    const y = Math.floor(Math.random() * (GRID_HEIGHT - h - 2)) + 1;
+                    const w = Math.floor(Math.random()*(roomScale.max-roomScale.min+1))+roomScale.min;
+                    const h = Math.floor(Math.random()*(roomScale.max-roomScale.min+1))+roomScale.min;
+                    const x = Math.floor(Math.random()*(GRID_WIDTH-w-2))+1;
+                    const y = Math.floor(Math.random()*(GRID_HEIGHT-h-2))+1;
 
-                    let overlap = false;
-                    for (const room of this.rooms) {
-                        if (x < room.x + room.w + 2 && x + w + 2 > room.x &&
-                            y < room.y + room.h + 2 && y + h + 2 > room.y) {
-                            overlap = true;
-                            break;
+                    let overlap=false;
+                    for(const room of this.rooms){
+                        if(x < room.x+room.w+2 && x+w+2 > room.x && y < room.y+room.h+2 && y+h+2 > room.y){
+                            overlap=true; break;
                         }
                     }
+                    if(overlap) continue;
 
-                    if (!overlap) {
-                        for (let ry = y; ry < y + h; ry++) {
-                            for (let rx = x; rx < x + w; rx++) {
-                                this.map[ry][rx] = TILE.FLOOR;
-                            }
-                        }
-
-                        if (this.rooms.length > 0) {
-                            const prev = this.rooms[this.rooms.length - 1];
-                            let cx = Math.floor(x + w / 2);
-                            let cy = Math.floor(y + h / 2);
-                            let px = Math.floor(prev.x + prev.w / 2);
-                            let py = Math.floor(prev.y + prev.h / 2);
-
-                            while (cx !== px) {
-                                this.map[cy][cx] = TILE.FLOOR;
-                                cx += (px > cx) ? 1 : -1;
-                            }
-                            while (cy !== py) {
-                                this.map[cy][cx] = TILE.FLOOR;
-                                cy += (py > cy) ? 1 : -1;
-                            }
-                        }
-
-                        this.rooms.push({ x, y, w, h });
-
-                        if (y - 1 >= 0) {
-                            this.torches.push({ x, y: y - 1 });
-                            this.torches.push({ x: x + w - 1, y: y - 1 });
-                        }
+                    // 仮に部屋と接続路を掘って、サイズ上限を大きく超える候補は捨てる。
+                    const before = this.map.map(row=>row.slice());
+                    for(let ry=y;ry<y+h;ry++) for(let rx=x;rx<x+w;rx++) this.map[ry][rx]=TILE.FLOOR;
+                    if(this.rooms.length>0){
+                        const prev=roomCenter(this.rooms[this.rooms.length-1]);
+                        let cx=Math.floor(x+w/2), cy=Math.floor(y+h/2);
+                        let px=prev.x, py=prev.y;
+                        while(cx!==px){ this.map[cy][cx]=TILE.FLOOR; cx+=(px>cx)?1:-1; }
+                        while(cy!==py){ this.map[cy][cx]=TILE.FLOOR; cy+=(py>cy)?1:-1; }
                     }
-                }
-
-                if (this.rooms.length === 0) {
-                    this.rooms.push({ x: 2, y: 2, w: 10, h: 8 });
-                    for (let ry = 2; ry < 10; ry++) {
-                        for (let rx = 2; rx < 12; rx++) {
-                            this.map[ry][rx] = TILE.FLOOR;
-                        }
+                    const area=countFloorTiles();
+                    const minimumRoomAndCorridorArea = targetRoomCount * (roomScale.min * roomScale.min) + Math.max(0, targetRoomCount - 1);
+                    const allowedArea = Math.max(upperTarget, minimumRoomAndCorridorArea + 8);
+                    if(area > allowedArea && this.rooms.length>=1){
+                        this.map=before;
+                        continue;
                     }
+
+                    this.rooms.push({x,y,w,h});
+                    // 部屋上部の壁際に候補松明を置き、後で必ず壁マスへ正規化する。
+                    if(y-1>=0){
+                        this.torches.push({x,y:y-1});
+                        this.torches.push({x:x+w-1,y:y-1});
+                    }
+                    // 部屋数カーブを最優先。指定部屋数に達するまでは、床面積が下限を超えても生成を続ける。
+                    if(this.rooms.length>=roomCount) break;
                 }
 
-                const startRoom = this.rooms[0];
-                this.player.x = Math.floor(startRoom.x + startRoom.w / 2);
-                this.player.y = Math.floor(startRoom.y + startRoom.h / 2);
-                this.player.renderX = this.player.x * TILE_SIZE;
-                this.player.renderY = this.player.y * TILE_SIZE;
-
-                if (this.currentFloor > 0) {
-                    const lastRoom = this.rooms[this.rooms.length - 1];
-                    const stairsX = Math.floor(lastRoom.x + lastRoom.w / 2);
-                    const stairsY = Math.floor(lastRoom.y + lastRoom.h / 2);
-                    this.map[stairsY][stairsX] = TILE.STAIRS;
+                // 何らかの理由で部屋生成が足りなかった場合の安全なフォールバック。
+                if(this.rooms.length===0){
+                    this.rooms.push({x:2,y:2,w:6,h:6});
+                    for(let ry=2;ry<8;ry++) for(let rx=2;rx<8;rx++) this.map[ry][rx]=TILE.FLOOR;
                 }
 
-                // 障害物は単発ではなく小さな群れとして配置し、地形として意味のある密度にする。
-                // ただし配置後に床の連結性を検査し、通路・部屋の一部を分断する配置は採用しない。
-                this.placeStageObstacles(Math.min(18, Math.max(8, Math.floor(this.rooms.length * 1.4))));
+                const startRoom=this.rooms[0];
+                this.player.x=Math.floor(startRoom.x+startRoom.w/2);
+                this.player.y=Math.floor(startRoom.y+startRoom.h/2);
+                this.player.renderX=this.player.x*TILE_SIZE;
+                this.player.renderY=this.player.y*TILE_SIZE;
+
+                // 階段は最後の部屋の中心に固定。湖や障害物はこの後に置き、階段を避ける。
+                if(this.currentFloor>0){
+                    const lastRoom=this.rooms[this.rooms.length-1];
+                    const stairsX=Math.floor(lastRoom.x+lastRoom.w/2);
+                    const stairsY=Math.floor(lastRoom.y+lastRoom.h/2);
+                    this.map[stairsY][stairsX]=TILE.STAIRS;
+                }
+
+                // まず「湖」を作る。湖は部屋の内部にのみ生成し、通路には置かない。
+                // 仮配置後に床ネットワークを検査するので、階段までの道を分断しない。
+                const lakeCount = profile.waterMin + Math.floor(Math.random()*(profile.waterMax-profile.waterMin+1));
+                this.placeWaterLakes(lakeCount, profile.target);
+
+                // 湖のあとに固形障害物を配置。水マスは候補から除外するため、湖の中に柱・石などは入らない。
+                const solidCount = Math.max(6, Math.round(profile.target * profile.solidRatio));
+                this.placeStageObstacles(solidCount);
+
+                this.normalizeTorchPositions();
                 this.spawnEntities();
                 this.updateFieldOfView();
+            }
+
+            placeWaterLakes(count, targetArea) {
+                if(this.currentFloor===0 || !this.rooms.length) return;
+                let placedLakes=0, attempts=0;
+                const lakeMin = targetArea<=60 ? 6 : targetArea<=120 ? 9 : 12;
+                const lakeMax = targetArea<=60 ? 10 : targetArea<=120 ? 17 : 24;
+
+                while(placedLakes<count && attempts<500){
+                    attempts++;
+                    const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
+                    // 湖は部屋の縁から1マス以上離し、出入口・通路に食い込まないようにする。
+                    if(room.w<6 || room.h<6) continue;
+
+                    const seedX=Math.floor(room.x+2+Math.random()*Math.max(1,room.w-4));
+                    const seedY=Math.floor(room.y+2+Math.random()*Math.max(1,room.h-4));
+                    if(this.map[seedY]?.[seedX]!==TILE.FLOOR) continue;
+                    if(Math.abs(seedX-this.player.x)+Math.abs(seedY-this.player.y)<5) continue;
+
+                    const wanted=Math.floor(Math.random()*(lakeMax-lakeMin+1))+lakeMin;
+                    const cells=[{x:seedX,y:seedY}];
+                    const used=new Set([`${seedX},${seedY}`]);
+                    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+
+                    for(let n=1;n<wanted;n++){
+                        const base=cells[Math.floor(Math.random()*cells.length)];
+                        const shuffled=dirs.slice().sort(()=>Math.random()-0.5);
+                        let added=false;
+                        for(const [dx,dy] of shuffled){
+                            const x=base.x+dx, y=base.y+dy;
+                            const key=`${x},${y}`;
+                            if(x<=room.x || x>=room.x+room.w-1 || y<=room.y || y>=room.y+room.h-1) continue;
+                            if(used.has(key) || this.map[y]?.[x]!==TILE.FLOOR) continue;
+                            if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<5) continue;
+                            cells.push({x,y}); used.add(key); added=true; break;
+                        }
+                        if(!added) break;
+                    }
+                    if(cells.length<Math.max(5,Math.floor(wanted*0.55))) continue;
+
+                    for(const c of cells) this.map[c.y][c.x]=TILE.OBSTACLE;
+                    if(!this.isFloorNetworkConnected()){
+                        for(const c of cells) this.map[c.y][c.x]=TILE.FLOOR;
+                        continue;
+                    }
+
+                    for(const c of cells) this.obstacles.push({x:c.x,y:c.y,kind:'water'});
+                    placedLakes++;
+                }
+            }
+
+            normalizeTorchPositions() {
+                if (!this.torches || !this.map) return;
+                const dirs = [
+                    { x: 0, y: -1, name: 'N' },
+                    { x: 1, y: 0, name: 'E' },
+                    { x: 0, y: 1, name: 'S' },
+                    { x: -1, y: 0, name: 'W' }
+                ];
+                const isFloorLike = (x, y) => {
+                    const t = this.map[y]?.[x];
+                    return t === TILE.FLOOR || t === TILE.STAIRS;
+                };
+                // 松明は「壁マスそのもの」に置き、隣接する床方向を向きとして保存する。
+                // これで通路の床に松明が残ったり、壁から浮いた向きで描画されたりしない。
+                const getMount = (x, y) => {
+                    if (this.map[y]?.[x] !== TILE.WALL) return null;
+                    const d = dirs.find(dir => isFloorLike(x + dir.x, y + dir.y));
+                    return d ? d.name : null;
+                };
+                const isValidWall = (x, y) => !!getMount(x, y);
+                const used = new Set();
+                const normalized = [];
+                const add = (x, y) => {
+                    const mount = getMount(x, y);
+                    if (!mount) return false;
+                    const key = `${x},${y}`;
+                    if (used.has(key)) return false;
+                    used.add(key);
+                    normalized.push({ x, y, mount });
+                    return true;
+                };
+
+                // まず既存位置を維持できるものを採用。
+                for (const torch of this.torches) add(torch.x, torch.y);
+
+                const allWallCandidates = [];
+                for (let y = 1; y < GRID_HEIGHT - 1; y++) {
+                    for (let x = 1; x < GRID_WIDTH - 1; x++) {
+                        if (isValidWall(x, y)) allWallCandidates.push({ x, y });
+                    }
+                }
+
+                // 不正位置は最寄りの「床に接した壁」へ移す。
+                for (const torch of this.torches) {
+                    if (isValidWall(torch.x, torch.y)) continue;
+                    let candidates = allWallCandidates.filter(c =>
+                        Math.abs(c.x - torch.x) + Math.abs(c.y - torch.y) <= 5 && !used.has(`${c.x},${c.y}`)
+                    );
+                    if (!candidates.length) candidates = allWallCandidates.filter(c => !used.has(`${c.x},${c.y}`));
+                    if (!candidates.length) continue;
+                    candidates.sort((a, b) =>
+                        (Math.abs(a.x - torch.x) + Math.abs(a.y - torch.y)) -
+                        (Math.abs(b.x - torch.x) + Math.abs(b.y - torch.y))
+                    );
+                    add(candidates[0].x, candidates[0].y);
+                }
+                this.torches = normalized;
             }
 
             isCorridorTile(x,y) {
@@ -1757,18 +2007,17 @@
 
             placeStageObstacles(count) {
                 if(this.currentFloor===0) return;
-                const kinds=this.currentFloor>=8?['bush','stone','stump']:this.currentFloor>=5?['rock','pillar','water']:['brick','column','lava'];
+                // 水は placeWaterLakes() で先に配置済み。ここでは固形物だけを置く。
+                const kinds=this.currentFloor>=8?['bush','stone','stump']:this.currentFloor>=5?['rock','pillar']:['brick','column','lava'];
                 let placed=0, attempts=0;
 
-                // 1～4個程度をひとまとまりにして配置する。
-                // 「壁際に沿って置く」「通路の入口を塞ぐ」ことを避けるため、
-                // 部屋の外周1マスは候補から外し、配置のたびに床全体の連結性を確認する。
-                while(placed<count && attempts<900){
+                // 1～4個程度の小さな塊を作り、部屋が広すぎて何もない印象にならないよう密度を上げる。
+                while(placed<count && attempts<1200){
                     attempts++;
                     const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
                     if(room.w<5 || room.h<5) continue;
 
-                    const clusterSize=Math.min(count-placed, 1 + Math.floor(Math.random()*4));
+                    const clusterSize=Math.min(count-placed,1+Math.floor(Math.random()*4));
                     const seedX=Math.floor(room.x+1+Math.random()*Math.max(1,room.w-2));
                     const seedY=Math.floor(room.y+1+Math.random()*Math.max(1,room.h-2));
                     if(this.map[seedY]?.[seedX]!==TILE.FLOOR || this.isOccupied(seedX,seedY)) continue;
@@ -1780,14 +2029,15 @@
                     for(let n=1;n<clusterSize;n++){
                         const base=cells[Math.floor(Math.random()*cells.length)];
                         const dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
-                        const shuffled=dirs.sort(()=>Math.random()-0.5);
+                        const shuffled=dirs.slice().sort(()=>Math.random()-0.5);
                         let added=false;
                         for(const [dx,dy] of shuffled){
-                            const x=base.x+dx, y=base.y+dy;
-                            const key=`${x},${y}`;
+                            const x=base.x+dx,y=base.y+dy,key=`${x},${y}`;
                             // 部屋の外周・通路接続部から1マス以上離す。
                             if(x<=room.x || x>=room.x+room.w-1 || y<=room.y || y>=room.y+room.h-1) continue;
-                            if(used.has(key) || this.map[y]?.[x]!==TILE.FLOOR || this.isOccupied(x,y)) continue;
+                            // 湖（水）や階段は固形障害物の候補から完全に除外。
+                            if(used.has(key) || this.map[y]?.[x]!==TILE.FLOOR || this.obstacles.some(o=>o.x===x&&o.y===y&&o.kind==='water')) continue;
+                            if(this.isOccupied(x,y)) continue;
                             if(this.items.some(i=>i.x===x&&i.y===y) || this.traps.some(t=>t.x===x&&t.y===y)) continue;
                             if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<3) continue;
                             cells.push({x,y}); used.add(key); added=true; break;
@@ -1795,11 +2045,7 @@
                         if(!added) break;
                     }
 
-                    if(!cells.length) continue;
-                    // 仮配置。1マスの障害物だけでなく、連続した塊が通路を間接的に塞ぐケースも
-                    // 4方向の床連結性チェックで弾く。
                     for(const c of cells) this.map[c.y][c.x]=TILE.OBSTACLE;
-
                     if(!this.isFloorNetworkConnected()){
                         for(const c of cells) this.map[c.y][c.x]=TILE.FLOOR;
                         continue;
@@ -2444,6 +2690,8 @@
             }
 
             handleDirectionInput(dir, faceOnly) {
+                // 階段移動中は暗転～新フロア表示完了まで入力を完全にロックする。
+                if (this.floorTransitionBusy) return;
                 // 1ターン制なので、敵ターンが終わるまでは次の入力を受け付けない。
                 // 長押し時に敵ターンの予約が上書きされ続けるのを防ぐ。
                 if (this.actionTimer > 0 || this.enemyTurnPending || this.combatSequenceBusy) return;
@@ -2507,19 +2755,88 @@
                     this.triggerTrapAtPlayer();
 
                     if (this.map[targetY][targetX] === TILE.STAIRS) {
+                        // 階段に乗った瞬間から入力を完全ロック。
+                        // キーリピートやタップの連打で「階段に乗る→もう1歩進む」を起こさない。
+                        if (this.floorTransitionBusy) return;
+                        this.floorTransitionBusy = true;
+                        this.actionTimer = 999999;
+                        this.enemyTurnPending = false;
+                        this.enemyTurnTimer = 0;
                         sound.playStairs();
-                        this.currentFloor--;
-                        this.log(`★ 梯子を上り ${this.getFloorName()} へ足を踏み入れた。`, 'text-cyan-300 font-bold');
-                        // 階層が切り替わる瞬間は一度暗転させ、新しいフロアを見せる。
-                        this.playSceneTransition(this.currentFloor === 0 ? 'flash' : 'soft', () => {
+
+                        const oldFloor = this.currentFloor;
+                        const nextFloor = Math.max(0, oldFloor - 1);
+                        this.log(`★ 梯子を上り ${nextFloor === 0 ? '1F (天界の門)' : `B${nextFloor}F`} へ足を踏み入れた。`, 'text-cyan-300 font-bold');
+
+                        const layer = document.getElementById('scene-transition');
+                        const fadeOutMs = 500;
+                        const fadeInMs = 650;
+                        const unlockDelayMs = 180;
+
+                        // まず現在フロアをそのまま表示した状態から黒へフェード。
+                        // currentFloor はここでは変更しない。
+                        const beginFadeOut = () => {
+                            if (!layer) {
+                                finishFloorTransition();
+                                return;
+                            }
+                            layer.className = '';
+                            layer.id = 'scene-transition';
+                            layer.style.transition = `opacity ${fadeOutMs}ms ease-in`;
+                            layer.style.opacity = '0';
+                            layer.style.background = '#000';
+                            layer.classList.add('active');
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    layer.style.opacity = '1';
+                                });
+                            });
+                            setTimeout(finishFloorTransition, fadeOutMs + 30);
+                        };
+
+                        const finishFloorTransition = () => {
+                            // ★ 完全に黒くなった後でのみ階層・マップ・テーマを切り替える。
+                            // これにより「現在階の赤茶けた大地→洞窟」が一瞬見えることを防ぐ。
+                            this.currentFloor = nextFloor;
                             this.generateFloor();
                             this.saveAutoGame();
-                            // 階段移動は1ターン消費扱いにせず、新フロアをプレイヤーターンから開始する。
                             this.enemyTurnPending = false;
                             this.enemyTurnTimer = 0;
-                            this.actionTimer = 0;
+                            this.actionTimer = 999999;
                             this.updateUI();
-                        });
+
+                            if (!layer) {
+                                setTimeout(() => {
+                                    this.floorTransitionBusy = false;
+                                    this.actionTimer = 0;
+                                    this.updateUI();
+                                }, fadeInMs + unlockDelayMs);
+                                return;
+                            }
+
+                            // 新フロアを黒画面の裏で1フレーム以上描画してから、黒をフェードアウト。
+                            layer.style.transition = 'none';
+                            layer.style.opacity = '1';
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    layer.style.transition = `opacity ${fadeInMs}ms ease-out`;
+                                    layer.style.opacity = '0';
+                                });
+                            });
+
+                            // フェードインが終わってから、さらに短い余韻を置いて操作解除。
+                            setTimeout(() => {
+                                layer.classList.remove('active');
+                                layer.style.transition = '';
+                                layer.style.opacity = '';
+                                layer.style.background = '';
+                                this.floorTransitionBusy = false;
+                                this.actionTimer = 0;
+                                this.updateUI();
+                            }, fadeInMs + unlockDelayMs);
+                        };
+
+                        beginFadeOut();
                         return;
                     }
 
@@ -2536,6 +2853,7 @@
             }
 
             performAttackInFacingDirection() {
+                if (this.floorTransitionBusy) return;
                 if (this.actionTimer > 0 || this.enemyTurnPending || this.combatSequenceBusy) return;
                 if (this.facing.x !== 0 && this.facing.y !== 0 && this.isCorridorTile(this.player.x, this.player.y)) {
                     this.log('通路では斜め方向へ攻撃できない。', 'text-slate-400');
@@ -2842,6 +3160,7 @@
             }
 
             turnWait() {
+                if (this.floorTransitionBusy) return;
                 if (this.actionTimer > 0 || this.enemyTurnPending || this.combatSequenceBusy) return;
                 this.actionTimer = 100;
                 if (this.consumeSlowCurseAction()) return;
@@ -3878,6 +4197,7 @@
                     this.enemies = data.enemies || [];
                     this.items = data.items || [];
                     this.torches = data.torches || [];
+                    this.normalizeTorchPositions();
                     this.traps = data.traps || [];
                     this.traps.forEach(t => { if (t.revealed === undefined) t.revealed = false; });
                     this.trapsVisible = !!data.trapsVisible;
@@ -4500,6 +4820,16 @@
                 document.getElementById('overlay-desc').innerText = reason;
                 document.getElementById('overlay-score').innerHTML = `Score ${this.score}<br><span class="text-slate-300">HighScore ${this.highScore}</span>`;
                 this.log(`💀 GAME OVER: ${reason}`, 'text-red-500 font-bold text-sm');
+                const restartBtn = document.getElementById('restart-btn');
+                if (restartBtn) {
+                    const hasAutoSave = !!localStorage.getItem(this.getAutoSaveKey());
+                    restartBtn.disabled = !hasAutoSave;
+                    restartBtn.title = hasAutoSave
+                        ? '直前のオートセーブから再開します。'
+                        : 'オートセーブがありません。タイトルへ戻るか、新しく始めてください。';
+                    restartBtn.classList.toggle('opacity-50', !hasAutoSave);
+                    restartBtn.classList.toggle('cursor-not-allowed', !hasAutoSave);
+                }
                 clearTimeout(this.deathOverlayTimer);
                 this.deathOverlayTimer=setTimeout(()=>{
                     this.deathSequenceActive=false;
@@ -4635,7 +4965,6 @@
                 document.getElementById('def-display').innerText = this.getPlayerDef();
                 this.updateScore();
                 document.getElementById('score-display').innerText = this.score;
-                document.getElementById('highscore-display').innerText = this.highScore;
                 const titleHigh = document.getElementById('title-highscore-display'); if (titleHigh) titleHigh.innerText = this.highScore;
                 const inlineCap = document.getElementById('inv-capacity-inline');
                 if (inlineCap) inlineCap.innerText = `${this.player.inventory.length}/${this.getInventoryCapacity()}`;
@@ -4747,7 +5076,7 @@
                 // 2. 松明描画
                 this.torches.forEach(t => {
                     if (this.explored[t.y] && this.explored[t.y][t.x]) {
-                        this.drawSFCTorch(this.ctx, t.x * TILE_SIZE, t.y * TILE_SIZE);
+                        this.drawSFCTorch(this.ctx, t.x * TILE_SIZE, t.y * TILE_SIZE, t.mount || 'S');
                     }
                 });
 
@@ -4948,11 +5277,24 @@
                         this.pixelRect(ctx,sx+14,sy+16,5,3,'#4a1721'); this.pixelRect(ctx,sx+22,sy+13,3,8,'#4c1720');
                     }
                 } else if(k==='water'){
-                    // 地下水源：穴＋水面。床のタイルとは明確に違う輪郭。
-                    this.pixelPoly(ctx,[[sx+2,sy+24],[sx+4,sy+8],[sx+9,sy+5],[sx+23,sy+5],[sx+29,sy+10],[sx+30,sy+25],[sx+25,sy+29],[sx+8,sy+29]],'#111827');
-                    this.pixelPoly(ctx,[[sx+5,sy+21],[sx+7,sy+10],[sx+11,sy+8],[sx+22,sy+8],[sx+27,sy+12],[sx+27,sy+23],[sx+22,sy+26],[sx+9,sy+26]],'#155e75');
-                    this.pixelRect(ctx,sx+8,sy+12,8,2,'#67e8f9'); this.pixelRect(ctx,sx+18,sy+16,7,2,'#38bdf8');
-                    this.pixelRect(ctx,sx+11,sy+20,10,2,'#0ea5e9'); this.pixelRect(ctx,sx+21,sy+11,4,1,'#bae6fd');
+                    // 湖：隣接する水マス同士が一続きに見えるよう、境界を接続して描く。
+                    // 水源そのものは map 上で OBSTACLE なので、柱・石などは湖内部に侵入しない。
+                    const isWater=(x,y)=>this.map[y]?.[x]===TILE.OBSTACLE && this.obstacles.some(v=>v.x===x&&v.y===y&&v.kind==='water');
+                    const n=isWater(o.x,o.y-1), e=isWater(o.x+1,o.y), s=isWater(o.x,o.y+1), w=isWater(o.x-1,o.y);
+                    const left=w?0:3, top=n?0:3, right=e?32:29, bottom=s?32:29;
+                    ctx.fillStyle='#111827'; ctx.fillRect(sx,sy,32,32);
+                    ctx.fillStyle='#155e75'; ctx.fillRect(sx+left,sy+top,Math.max(1,right-left),Math.max(1,bottom-top));
+                    // 湖岸側だけ暗い縁を残し、内部は水面のハイライトを散らす。
+                    ctx.fillStyle='#0b3d52';
+                    if(!n) ctx.fillRect(sx+2,sy+1,28,2);
+                    if(!s) ctx.fillRect(sx+2,sy+29,28,2);
+                    if(!w) ctx.fillRect(sx+1,sy+2,2,28);
+                    if(!e) ctx.fillRect(sx+29,sy+2,2,28);
+                    const waveOffset=(o.x*7+o.y*11)%9;
+                    this.pixelRect(ctx,sx+5+waveOffset,sy+9,7,2,'#38bdf8');
+                    this.pixelRect(ctx,sx+18-(waveOffset%5),sy+18,8,2,'#0ea5e9');
+                    this.pixelRect(ctx,sx+9,sy+23,5,1,'#67e8f9');
+                    if((o.x+o.y)%3===0) this.pixelRect(ctx,sx+21,sy+11,4,1,'#bae6fd');
                 } else if(k==='brick'){
                     // 魔界レンガの瓦礫柱。
                     this.pixelPoly(ctx,[[sx+4,sy+27],[sx+5,sy+8],[sx+9,sy+5],[sx+24,sy+6],[sx+28,sy+10],[sx+26,sy+28]],'#220b11');
@@ -5094,13 +5436,57 @@
                 ctx.fillRect(px + 15, py + 2 + pulse, 2, 2);
             }
 
-            drawSFCTorch(ctx, px, py) {
-                ctx.fillStyle = '#475569';
-                ctx.fillRect(px + 14, py + 14, 4, 10);
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillRect(px + 12, py + 12, 8, 3);
+            drawSFCTorch(ctx, px, py, mount = 'S') {
+                const flameFrame = this.animFrame % 4;
+                const flicker = [0, 1.5, -1, 1][flameFrame];
 
-                const flameFrame = this.animFrame;
+                // 壁のどちら側に床があるかで、松明をその床側へ向ける。
+                const toward = {
+                    N: { x: 0, y: -1 },
+                    E: { x: 1, y: 0 },
+                    S: { x: 0, y: 1 },
+                    W: { x: -1, y: 0 }
+                }[mount] || { x: 0, y: 1 };
+
+                // 壁面に密着した台座位置。
+                let bx = px + 16, by = py + 16;
+                if (mount === 'N') by = py + 26;
+                if (mount === 'S') by = py + 6;
+                if (mount === 'W') bx = px + 26;
+                if (mount === 'E') bx = px + 6;
+
+                const fx = bx + toward.x * 3;
+                const fy = by + toward.y * 3;
+
+                // 多重の柔らかい光を重ねた簡易ブルーム。
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                const glow = ctx.createRadialGradient(fx, fy, 2, fx, fy, 42);
+                glow.addColorStop(0, 'rgba(255,250,205,0.48)');
+                glow.addColorStop(0.16, 'rgba(255,214,105,0.28)');
+                glow.addColorStop(0.42, 'rgba(255,157,45,0.13)');
+                glow.addColorStop(0.72, 'rgba(255,105,25,0.055)');
+                glow.addColorStop(1, 'rgba(255,80,10,0)');
+                ctx.fillStyle = glow;
+                ctx.fillRect(px - 30, py - 30, TILE_SIZE + 60, TILE_SIZE + 60);
+                ctx.restore();
+
+                // 壁にめり込む金具＋台座。必ず壁側に残す。
+                ctx.fillStyle = '#111827';
+                if (mount === 'N' || mount === 'S') {
+                    ctx.fillRect(px + 13, mount === 'S' ? py + 2 : py + 24, 6, 7);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillRect(px + 12, mount === 'S' ? py + 4 : py + 22, 8, 3);
+                    ctx.fillStyle = '#475569';
+                    ctx.fillRect(px + 11, mount === 'S' ? py + 6 : py + 20, 10, 2);
+                } else {
+                    ctx.fillRect(mount === 'E' ? px + 2 : px + 24, py + 13, 7, 6);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillRect(mount === 'E' ? px + 4 : px + 22, py + 12, 3, 8);
+                    ctx.fillStyle = '#475569';
+                    ctx.fillRect(mount === 'E' ? px + 6 : px + 20, py + 11, 2, 10);
+                }
+
                 const fireColors = [
                     ['#ef4444', '#f97316', '#fde047'],
                     ['#dc2626', '#ea580c', '#facc15'],
@@ -5108,16 +5494,24 @@
                     ['#ef4444', '#f97316', '#fef08a']
                 ][flameFrame];
 
+                // 炎は床側へ寄せ、壁から浮いて見えないようにする。
+                let flameX = fx, flameY = fy + flicker;
+                if (mount === 'N') flameY += 4;
+                if (mount === 'S') flameY -= 4;
+                if (mount === 'W') flameX += 4;
+                if (mount === 'E') flameX -= 4;
+
                 ctx.fillStyle = fireColors[0];
-                ctx.fillRect(px + 13, py + 4, 6, 8);
+                ctx.fillRect(flameX - 3, flameY - 4, 6, 8);
                 ctx.fillStyle = fireColors[1];
-                ctx.fillRect(px + 14, py + 6, 4, 5);
+                ctx.fillRect(flameX - 2, flameY - 2, 4, 5);
                 ctx.fillStyle = fireColors[2];
-                ctx.fillRect(px + 15, py + 8, 2, 2);
+                ctx.fillRect(flameX - 1, flameY, 2, 2);
 
                 ctx.fillStyle = fireColors[1];
-                const sparkY = py + 2 - (flameFrame % 3);
-                ctx.fillRect(px + 12 + (flameFrame % 4), sparkY, 1.5, 1.5);
+                const sparkX = flameX + (flameFrame % 3) - 1;
+                const sparkY = flameY - 7 - (flameFrame % 2);
+                ctx.fillRect(sparkX, sparkY, 1.5, 1.5);
             }
 
             drawNicoSprite(ctx, centerX, centerY, facing = DIRECTION.S, scale = 1.0) {
