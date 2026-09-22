@@ -250,6 +250,88 @@
             #direct-controls-overlay { transform: scale(.82); }
             #game-log-overlay { max-width: 54vw !important; font-size: 13px !important; }
         }
+
+        /* ===== 追加調整：プロローグ／スマホ表示 ===== */
+        #fall-caption {
+            font-size: clamp(1.25rem, 3.2vw, 2.1rem) !important;
+            line-height: 1.35 !important;
+            letter-spacing: .12em !important;
+            color: #ffffff !important;
+            text-shadow:
+                -3px -3px 0 #111827,
+                 3px -3px 0 #111827,
+                -3px  3px 0 #111827,
+                 3px  3px 0 #111827,
+                 0 4px 10px rgba(0,0,0,.95) !important;
+            padding: 0 18px !important;
+        }
+        /* 落下シーンでは「地獄・最下層 B10F」の追加ラベルを表示しない */
+        #fall-hell-label { display: none !important; }
+
+        /* 会話フレームは画面中央寄りに大きく。 */
+        #story-overlay {
+            justify-content: center !important;
+            padding: clamp(14px, 4vw, 36px) !important;
+        }
+        #story-overlay > .flex.justify-between.items-center {
+            position: absolute !important;
+            top: max(10px, env(safe-area-inset-top)) !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+        }
+        #story-dialogue-box {
+            width: min(92vw, 980px) !important;
+            max-width: 980px !important;
+            min-height: 240px !important;
+            margin: 0 auto !important;
+            padding: 22px 26px !important;
+        }
+        #story-avatar-wrap { width: 112px !important; height: 112px !important; flex: 0 0 112px !important; }
+        #story-avatar-canvas { width: 108px !important; height: 108px !important; }
+        #story-speaker { font-size: 1.25rem !important; line-height: 1.25 !important; padding: 7px 14px !important; }
+        #story-text { font-size: clamp(1.2rem, 2.5vw, 1.65rem) !important; line-height: 1.75 !important; }
+
+        /* 頭上の行動メッセージはスマホで長文を二段まで折り返す。 */
+        @media (max-width: 900px) {
+            #game-log-overlay {
+                font-size: 14px !important;
+                line-height: 1.34 !important;
+                max-width: min(52vw, 390px) !important;
+                padding: 4px 6px !important;
+            }
+            #game-log-overlay .log-line {
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+                word-break: break-word !important;
+            }
+            #story-dialogue-box { min-height: 210px !important; padding: 18px 18px !important; }
+            #story-avatar-wrap { width: 92px !important; height: 92px !important; flex-basis: 92px !important; }
+            #story-avatar-canvas { width: 88px !important; height: 88px !important; }
+            #story-speaker { font-size: 1.05rem !important; }
+            #story-text { font-size: 1.18rem !important; line-height: 1.7 !important; }
+        }
+        @media (orientation: landscape) and (max-width: 900px) {
+            #game-canvas { object-fit: cover !important; }
+            #direct-status-overlay { top: max(6px, env(safe-area-inset-top)) !important; left: max(8px, env(safe-area-inset-left)) !important; transform: scale(.78) !important; transform-origin: top left !important; }
+            #direct-title-overlay { top: max(6px, env(safe-area-inset-top)) !important; right: max(8px, env(safe-area-inset-right)) !important; transform: scale(.78) !important; transform-origin: top right !important; }
+            #mini-map { width: 180px !important; height: 111px !important; }
+            #direct-controls-overlay { right: max(8px, env(safe-area-inset-right)) !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; transform: scale(.78) !important; transform-origin: bottom right !important; }
+            #direct-controls-overlay > div:first-child { width: 120px !important; }
+            #direct-controls-overlay > div:first-child > button { width: 120px !important; padding-top: 5px !important; padding-bottom: 5px !important; }
+            #direct-controls-overlay .grid.grid-cols-2 { width: 120px !important; }
+            #direct-controls-overlay > div:nth-of-type(2) { width: 120px !important; font-size: 10px !important; }
+            #direct-controls-overlay .grid.w-36, #direct-controls-overlay .grid.sm\\:w-44 { width: 150px !important; }
+            #direct-controls-overlay .grid.w-36 button, #direct-controls-overlay .grid.sm\\:w-44 button { padding-top: 5px !important; padding-bottom: 5px !important; }
+            #game-log-overlay { max-width: 38vw !important; max-height: 26vh !important; font-size: 13px !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; left: max(8px, env(safe-area-inset-left)) !important; }
+            #story-dialogue-box { width: min(88vw, 760px) !important; min-height: 170px !important; padding: 14px 18px !important; }
+            #story-avatar-wrap { width: 76px !important; height: 76px !important; flex-basis: 76px !important; }
+            #story-avatar-canvas { width: 72px !important; height: 72px !important; }
+            #story-speaker { font-size: 1rem !important; }
+            #story-text { font-size: 1.05rem !important; line-height: 1.55 !important; }
+            #fall-caption { bottom: 15vh !important; }
+        }
+
 </style>
 </head>
 <body class="h-screen w-screen flex flex-col p-1.5 sm:p-2 gap-1.5 max-h-screen overflow-hidden">
@@ -930,13 +1012,13 @@
                 document.getElementById('story-overlay').addEventListener('click', (e) => {
                     const fall = document.getElementById('prologue-fall-scene');
                     if (fall && !fall.classList.contains('hidden')) {
-                        // ブラウザの自動再生制限下でも、最初のユーザー操作で音声を解禁する。
-                        sound.init();
-                        if (sound.ctx && sound.ctx.state === 'running' && this.prologueFallTimer) sound.playFall();
-                        this.finishPrologueFall();
-                    } else {
-                        this.advanceStory();
+                        // 落下中はタップでスキップ・SE再生・着地処理をしない。
+                        // 落下アニメーションとSEは自動で最後まで進み、終了後に会話へ移る。
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
                     }
+                    this.advanceStory();
                 });
                 document.getElementById('btn-inventory').addEventListener('click', () => this.toggleInventory());
                 document.getElementById('btn-wait-turn').addEventListener('click', () => this.turnWait());
@@ -1214,7 +1296,8 @@
                             if (!document.getElementById('story-overlay').classList.contains('hidden')) {
                                 const fall = document.getElementById('prologue-fall-scene');
                                 if (fall && !fall.classList.contains('hidden')) {
-                                    this.finishPrologueFall();
+                                    // 落下中はEnterでもスキップしない。
+                                    return;
                                 } else {
                                     this.advanceStory();
                                 }
@@ -4730,20 +4813,41 @@
                     const p = Math.min(1, m.timer / m.duration);
                     const fade = p < 0.82 ? 1 : Math.max(0, 1 - (p - 0.82) / 0.18);
                     const rise = Math.min(10, m.timer / 180 * 3);
-                    const maxWidth = 680;
-                    const text = m.text;
+                    const mobileView = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+                    const maxWidth = mobileView ? 270 : 680;
+                    const text = String(m.text || '');
                     this.ctx.save();
                     this.ctx.globalAlpha = fade;
-                    this.ctx.font = 'bold 24px monospace';
+                    this.ctx.font = `bold ${mobileView ? 20 : 24}px monospace`;
                     this.ctx.textAlign = 'center';
                     this.ctx.textBaseline = 'middle';
                     const cx = pRenderX + 16 + pOffset.x;
                     const cy = pRenderY - 18 + pOffset.y - rise;
-                    this.ctx.lineWidth = 5;
+                    const chars = Array.from(text);
+                    const lines = [];
+                    let line = '';
+                    for (const ch of chars) {
+                        const test = line + ch;
+                        if (line && this.ctx.measureText(test).width > maxWidth) {
+                            lines.push(line);
+                            line = ch;
+                        } else {
+                            line = test;
+                        }
+                    }
+                    if (line) lines.push(line);
+                    // スマホでは見切れを防ぐため最大2段。長すぎる場合は2段目へ残りをまとめる。
+                    const drawLines = lines.length > 2 ? [lines[0], lines.slice(1).join('')] : lines;
+                    const lineHeight = mobileView ? 24 : 30;
+                    const startY = cy - ((drawLines.length - 1) * lineHeight) / 2;
+                    this.ctx.lineWidth = mobileView ? 4 : 5;
                     this.ctx.strokeStyle = '#000000';
-                    this.ctx.strokeText(text, cx, cy);
                     this.ctx.fillStyle = m.color;
-                    this.ctx.fillText(text, cx, cy);
+                    drawLines.forEach((ln, idx) => {
+                        const yy = startY + idx * lineHeight;
+                        this.ctx.strokeText(ln, cx, yy);
+                        this.ctx.fillText(ln, cx, yy);
+                    });
                     this.ctx.restore();
                 }
 
