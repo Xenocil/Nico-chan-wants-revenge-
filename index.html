@@ -1205,7 +1205,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '1.50';
+        const GAME_VERSION = '1.70';
 
         class Game {
             constructor() {
@@ -2066,6 +2066,9 @@
                         candidates.push({x,y,score:Math.abs(x-(lastRoom.x+lastRoom.w/2))+Math.abs(y-(lastRoom.y+lastRoom.h/2))+Math.random()*8});
                     }
                     candidates.sort((a,b)=>b.score-a.score);
+                    // 天上界は専用の雲・花・水景を配置。地獄の地形を使い回さない。
+                    const totalRoomArea=this.rooms.reduce((sum,r)=>sum+r.w*r.h,0);
+                    this.placeHeavenObstacles(Math.min(46,Math.max(14,Math.floor(totalRoomArea/22))));
                     const stair=candidates[0]||{x:lastRoom.x+Math.floor(lastRoom.w/2),y:lastRoom.y+Math.floor(lastRoom.h/2)};
                     this.map[stair.y][stair.x]=TILE.STAIRS; this.stairsPosition={x:stair.x,y:stair.y};
                     this.spawnHeavenEntities();
@@ -2264,6 +2267,44 @@
                 return degree===2;
             }
 
+            normalizeLoadedItemIds() {
+                // 古いセーブ互換：v1.50では天上界で item.id を一意IDへ上書きしていたため、
+                // そのセーブを読み込んでも見た目・合成・装備判定が壊れないよう原本IDを名前から復元する。
+                const catalogs=[...(typeof WEAPON_ITEMS!=='undefined'?WEAPON_ITEMS:[]),...(typeof ARMOR_ITEMS!=='undefined'?ARMOR_ITEMS:[]),...(typeof CONSUMABLE_ITEMS!=='undefined'?CONSUMABLE_ITEMS:[])];
+                const normalize=(item)=>{
+                    if(!item || !item.id || !String(item.id).startsWith('heaven_')) return item;
+                    const exact=catalogs.find(db=>db.name===item.name && db.type===item.type);
+                    if(exact){ item.id=exact.id; return item; }
+                    // エンチャント名付きでも元アイテム名を含むため、長い名前から優先して照合。
+                    const candidates=catalogs.filter(db=>db.type===item.type && String(item.name||'').includes(db.name)).sort((a,b)=>b.name.length-a.name.length);
+                    if(candidates.length) item.id=candidates[0].id;
+                    return item;
+                };
+                this.items=(this.items||[]).map(normalize);
+                if(this.player?.inventory) this.player.inventory=this.player.inventory.map(normalize);
+            }
+
+            placeHeavenObstacles(count) {
+                if(!this.rooms.length) return;
+                const kinds=['heaven_flower_white','heaven_flower_pink','heaven_flower_blue','heaven_cloud','heaven_water'];
+                let placed=0, attempts=0;
+                while(placed<count && attempts<1200){
+                    attempts++;
+                    const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
+                    if(room.w<5 || room.h<5) continue;
+                    const x=Math.floor(room.x+1+Math.random()*Math.max(1,room.w-2));
+                    const y=Math.floor(room.y+1+Math.random()*Math.max(1,room.h-2));
+                    if(this.map[y]?.[x]!==TILE.FLOOR || this.isOccupied(x,y)) continue;
+                    if(this.items.some(i=>i.x===x&&i.y===y)||this.traps.some(t=>t.x===x&&t.y===y)) continue;
+                    if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<3) continue;
+                    const kindRoll=Math.random();
+                    const kind=kindRoll<0.20?'heaven_water':kindRoll<0.43?'heaven_cloud':kindRoll<0.63?'heaven_flower_white':kindRoll<0.82?'heaven_flower_pink':'heaven_flower_blue';
+                    this.map[y][x]=TILE.OBSTACLE;
+                    if(!this.isFloorNetworkConnected()){ this.map[y][x]=TILE.FLOOR; continue; }
+                    this.obstacles.push({x,y,kind}); placed++;
+                }
+            }
+
             repairObstacleMetadata() {
                 // セーブデータや旧バージョンからロードした際、mapだけにOBSTACLEが残って
                 // obstacles配列が欠けると「見た目は何もないのに移動できない」状態になる。
@@ -2424,7 +2465,10 @@
                 const depth=Math.max(1,this.heavenFloor);
                 const newCount=Math.min(10, 3 + Math.floor((depth-1)/2));
                 for(let i=0;i<newCount;i++){ const s=HEAVEN_ENEMY_SPECIES[i]; pool.push({species:s,weight:Math.max(20,120-i*8)}); }
-                for(let i=0;i<ENEMY_SPECIES.length && i<10;i++){
+                // 天上界では地獄の敵も最初から全種類を出さず、1Fのスライムから順番に解禁する。
+                // 1F=スライム、2F=スライム+コウモリ……10Fで10種すべて。
+                const hellUnlockCount=Math.min(10, depth);
+                for(let i=0;i<hellUnlockCount;i++){
                     const base=ENEMY_SPECIES[i];
                     const scaled={...base, hp:base.hp*HEAVEN_HELL_MULTIPLIER, maxHp:base.maxHp*HEAVEN_HELL_MULTIPLIER, atk:base.atk*HEAVEN_HELL_MULTIPLIER, def:base.def*HEAVEN_HELL_MULTIPLIER, exp:Math.floor(base.exp*2.5)};
                     pool.push({species:scaled,weight:Math.max(8,70-i*4)});
@@ -2451,7 +2495,9 @@
                     const ix=Math.floor(room.x+Math.random()*room.w), iy=Math.floor(room.y+Math.random()*room.h);
                     if(this.map[iy]?.[ix]!==TILE.FLOOR || this.items.some(it=>it.x===ix&&it.y===iy)) continue;
                     const dbItem=Math.random()<0.35?getRandomByWeight(WEAPON_ITEMS):Math.random()<0.55?getRandomByWeight(ARMOR_ITEMS):getRandomByWeight(CONSUMABLE_ITEMS);
-                    this.items.push({...dbItem,x:ix,y:iy,id:`heaven_${this.heavenFloor}_${i}_${Date.now()}_${Math.random().toString(36).slice(2)}`});
+                    // item.id は描画・合成・装備判定の基準IDなので、地上アイテムと同じく原本IDを保持する。
+                    // 以前は heaven_... の一意IDで上書きしていたため、天上界でアイコンが汎用絵になる問題があった。
+                    this.items.push({...dbItem,x:ix,y:iy,uid:`heaven_${this.heavenFloor}_${i}_${Date.now()}_${Math.random().toString(36).slice(2)}`});
                 }
                 this.log(`☁ 天上界 ${this.heavenFloor}F。雲海の彼方へ続く階段がある。`, 'text-cyan-200 font-bold');
             }
@@ -3660,10 +3706,15 @@
                     if (!visible && enemy.id !== 'jet_babaa' && !enemy.flee) {
                         this.moveEnemyRandomly(enemy);
                     } else if (enemy.id === 'jet_babaa') {
+                        // ジェットばばぁは3マス走る。移動中に隣接した瞬間、そのターンの残りを使って2回攻撃。
                         if (Math.max(dx, dy) === 1 && !(dx === 1 && dy === 1 && (this.isCorridorTile(enemy.x, enemy.y) || this.isCorridorTile(this.player.x, this.player.y)))) {
                             attackers.push(enemy, enemy);
                         } else {
                             this.moveJetBabaa(enemy, visible);
+                            const ndx=Math.abs(enemy.x-this.player.x), ndy=Math.abs(enemy.y-this.player.y);
+                            if (Math.max(ndx,ndy)===1 && !(ndx===1&&ndy===1&&(this.isCorridorTile(enemy.x,enemy.y)||this.isCorridorTile(this.player.x,this.player.y)))) {
+                                attackers.push(enemy, enemy);
+                            }
                         }
                     } else if (Math.max(dx, dy) === 1 && !(dx === 1 && dy === 1 && (this.isCorridorTile(enemy.x, enemy.y) || this.isCorridorTile(this.player.x, this.player.y)))) attackers.push(enemy);
                     else if (dist <= 6) {
@@ -3728,12 +3779,18 @@
                             return;
                         }
                         const yasuoPowerStrike = !isBoss && enemy.id==='yasuo' && Math.random() < 0.20;
+                        // 敵にも3%の正真正銘のクリティカル判定を持たせる。
+                        // これまでは「8ダメージ以上ならCRITICAL表示」という演出だけの判定だったため、
+                        // 天上界など高ATKの敵がほぼ常時クリティカルに見えていた。
+                        const enemyCritical = Math.random() < 0.03;
+                        const enemyCritMultiplier = enemyCritical ? 1.5 : 1;
                         let dmg = Math.max(1, enemy.atk - this.getPlayerDef() + Math.floor(Math.random() * (isBoss ? 5 : 3)));
                         if (yasuoPowerStrike) dmg *= 2;
+                        dmg = Math.max(1, Math.round(dmg * enemyCritMultiplier));
                         dmg = Math.max(1, Math.round(dmg * (1 - getEnchantStat(this.player.weapon, 'damageReduce') - getEnchantStat(this.player.armor, 'damageReduce'))));
                         this.player.hp -= dmg;
-                        this.addHitEffect(px, py, isBoss ? '#facc15' : '#ef4444', dmg, dmg >= 8);
-                        this.addDamageNumber(px, py, dmg, isBoss ? '#fbbf24' : '#f87171', dmg >= 8);
+                        this.addHitEffect(px, py, isBoss ? '#facc15' : '#ef4444', dmg, enemyCritical);
+                        this.addDamageNumber(px, py, dmg, isBoss ? '#fbbf24' : '#f87171', enemyCritical);
                         sound.playImpactHit();
                         if (yasuoPowerStrike) {
                             this.log(`💥 番犬やすおの強襲！ ${dmg} ダメージ！ すぐに逃げた！`, 'text-red-400 font-bold');
@@ -3925,12 +3982,14 @@
                         this.addMissNumber(this.player.x * TILE_SIZE + TILE_SIZE / 2, this.player.y * TILE_SIZE + TILE_SIZE / 2);
                         return;
                     }
+                    const bossCritical = Math.random() < 0.03;
                     let dmg = Math.max(1, this.boss.atk - this.getPlayerDef() + Math.floor(Math.random() * 5));
+                    if (bossCritical) dmg = Math.max(1, Math.round(dmg * 1.5));
                     dmg = Math.max(1, Math.round(dmg * (1 - getEnchantStat(this.player.weapon, 'damageReduce') - getEnchantStat(this.player.armor, 'damageReduce'))));
                     this.player.hp -= dmg;
-                    this.addHitEffect(this.player.x * TILE_SIZE + TILE_SIZE / 2, this.player.y * TILE_SIZE + TILE_SIZE / 2, '#facc15', dmg, true);
-                    this.addDamageNumber(this.player.x * TILE_SIZE + TILE_SIZE / 2, this.player.y * TILE_SIZE + TILE_SIZE / 2, dmg, '#fbbf24', true);
-                    this.log(`⚡ 全能神しるぺん の神罰の雷！ ${dmg} ダメージ！`, 'text-amber-400 font-bold');
+                    this.addHitEffect(this.player.x * TILE_SIZE + TILE_SIZE / 2, this.player.y * TILE_SIZE + TILE_SIZE / 2, '#facc15', dmg, bossCritical);
+                    this.addDamageNumber(this.player.x * TILE_SIZE + TILE_SIZE / 2, this.player.y * TILE_SIZE + TILE_SIZE / 2, dmg, '#fbbf24', bossCritical);
+                    this.log(`⚡ 全能神しるぺん の神罰の雷！ ${dmg} ダメージ！${bossCritical ? ' CRITICAL!' : ''}`, 'text-amber-400 font-bold');
 
                     if (this.player.hp <= 0) {
                         this.gameOver('全能神しるぺん の神罰に敗れ去った...');
@@ -4782,6 +4841,7 @@
                     this.repairObstacleMetadata();
                     this.enemies = data.enemies || [];
                     this.items = data.items || [];
+                    this.normalizeLoadedItemIds();
                     this.torches = data.torches || [];
                     this.normalizeTorchPositions();
                     this.traps = data.traps || [];
@@ -5503,31 +5563,13 @@
             }
 
             moveJetBabaa(enemy, visible) {
-                // 視認中はプレイヤーへ一直線に接近。見失っている間は通路だけを3マス走る。
-                if (visible) {
-                    for (let i = 0; i < 3; i++) {
-                        if (!this.moveEnemyTowardPlayer(enemy)) break;
-                        if (Math.max(Math.abs(enemy.x-this.player.x), Math.abs(enemy.y-this.player.y)) === 1) break;
-                    }
-                    return;
-                }
+                // ジェットばばぁは「通路を高速疾走して、プレイヤーのいる部屋まで突入する」。
+                // 視認できていなくても、通路からプレイヤー部屋への経路を3マス/ターンで追跡する。
                 for (let step = 0; step < 3; step++) {
-                    const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-                    const candidates = dirs.map(d => ({x:enemy.x+d.x,y:enemy.y+d.y,d}))
-                        .filter(o => this.isWalkable(o.x,o.y) && !this.isOccupied(o.x,o.y))
-                        .filter(o => this.isCorridorTile(o.x,o.y));
-                    if (!candidates.length) {
-                        // 行き止まりでは、隣接する通路へ戻れる方向を優先して反転する。
-                        const fallback = dirs.map(d => ({x:enemy.x+d.x,y:enemy.y+d.y,d}))
-                            .filter(o => this.isWalkable(o.x,o.y) && !this.isOccupied(o.x,o.y));
-                        if (!fallback.length) break;
-                        const c = fallback[Math.floor(Math.random()*fallback.length)];
-                        enemy.x=c.x; enemy.y=c.y;
-                        continue;
-                    }
-                    // 直前方向があれば少し優先して、往復ではなく走り続ける。
-                    const c = candidates[Math.floor(Math.random()*candidates.length)];
-                    enemy.x=c.x; enemy.y=c.y;
+                    const dx=Math.abs(enemy.x-this.player.x), dy=Math.abs(enemy.y-this.player.y);
+                    if (Math.max(dx,dy)===1) break;
+                    const moved=this.moveEnemyTowardPlayer(enemy,{corridorOnly:true});
+                    if (!moved) break;
                 }
             }
 
@@ -5816,6 +5858,11 @@
                     wallBase:'#fff7ed', wallMain:'#f8d36a', wallDark:'#c58a28', wallDeep:'#6f4515', wallAccent:'#fff3b0',
                     floorA:'#fff1b8', floorB:'#ffe18a', floorEdge:'#b9781e', floorDetail:'#f5b83d'
                 };
+                if (this.currentFloor < 0) return {
+                    type:'celestial',
+                    wallBase:'#f8fafc', wallMain:'#e0f2fe', wallDark:'#bfdbfe', wallDeep:'#93c5fd', wallAccent:'#ffffff',
+                    floorA:'#9bdcff', floorB:'#c9f0ff', floorEdge:'#5aaee8', floorDetail:'#e8fbff'
+                };
                 if (this.currentFloor >= 8) return {
                     type:'wasteland',
                     wallBase:'#3b1d12', wallMain:'#6e321d', wallDark:'#4b2416', wallDeep:'#24100a', wallAccent:'#a9572d',
@@ -5844,7 +5891,29 @@
                 const shadow='#0b0b0b';
                 this.pixelRect(ctx,sx+4,sy+27,24,3,shadow);
 
-                if(k==='bush'){
+                if(k==='heaven_flower_white' || k==='heaven_flower_pink' || k==='heaven_flower_blue'){
+                    const flower={heaven_flower_white:['#ffffff','#fde68a','#a7f3d0'],heaven_flower_pink:['#fbcfe8','#f472b6','#f9a8d4'],heaven_flower_blue:['#dbeafe','#60a5fa','#bfdbfe']}[k];
+                    this.pixelRect(ctx,sx+13,sy+17,5,10,'#4ade80'); this.pixelRect(ctx,sx+9,sy+22,5,3,'#22c55e'); this.pixelRect(ctx,sx+18,sy+20,6,3,'#16a34a');
+                    this.pixelRect(ctx,sx+8,sy+8,8,8,flower[0]); this.pixelRect(ctx,sx+16,sy+8,8,8,flower[0]); this.pixelRect(ctx,sx+8,sy+16,8,8,flower[0]); this.pixelRect(ctx,sx+16,sy+16,8,8,flower[0]);
+                    this.pixelRect(ctx,sx+14,sy+14,4,4,flower[1]); this.pixelRect(ctx,sx+15,sy+15,2,2,flower[2]);
+                } else if(k==='heaven_cloud'){
+                    // ちぎれた雲の塊。丸い雲房を重ね、底面を青灰色に落として立体化。
+                    const cloud=(x,y,r)=>{
+                        const g=ctx.createRadialGradient(sx+x-r*.25,sy+y-r*.35,r*.12,sx+x,sy+y,r);
+                        g.addColorStop(0,'#ffffff'); g.addColorStop(.55,'#f8fdff'); g.addColorStop(.82,'#d8edf8'); g.addColorStop(1,'#9fc9e4');
+                        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(sx+x,sy+y,r,0,Math.PI*2); ctx.fill();
+                    };
+                    cloud(7,21,7); cloud(13,15,9); cloud(21,16,10); cloud(27,21,7); cloud(17,9,7);
+                    ctx.fillStyle='rgba(255,255,255,.72)'; ctx.fillRect(sx+9,sy+8,7,2); ctx.fillRect(sx+20,sy+11,6,2);
+                    ctx.fillStyle='rgba(80,135,180,.20)'; ctx.fillRect(sx+6,sy+25,20,2);
+                } else if(k==='heaven_water'){
+                    const isWater=(x,y)=>this.map[y]?.[x]===TILE.OBSTACLE && this.obstacles.some(v=>v.x===x&&v.y===y&&v.kind==='heaven_water');
+                    const n=isWater(o.x,o.y-1),e=isWater(o.x+1,o.y),ss=isWater(o.x,o.y+1),w=isWater(o.x-1,o.y);
+                    const l=w?0:2,t= n?0:2,r=e?32:30,b=ss?32:30;
+                    this.pixelRect(ctx,sx+l,sy+t,r-l,b-t,'#7dd3fc'); this.pixelRect(ctx,sx+l+1,sy+t+2,r-l-2,2,'#e0f2fe');
+                    this.pixelRect(ctx,sx+6,sy+11,9,2,'#38bdf8'); this.pixelRect(ctx,sx+19,sy+19,8,2,'#bae6fd');
+                    if(!n)this.pixelRect(ctx,sx+3,sy+1,26,2,'#60a5fa'); if(!ss)this.pixelRect(ctx,sx+3,sy+29,26,2,'#60a5fa');
+                } else if(k==='bush'){
                     // 荒野：枯れ草の茂み。丸いアイテムに見えないよう複数の枝を束ねる。
                     this.pixelPoly(ctx,[[sx+5,sy+25],[sx+7,sy+12],[sx+11,sy+15],[sx+13,sy+6],[sx+17,sy+13],[sx+21,sy+8],[sx+24,sy+16],[sx+28,sy+13],[sx+27,sy+26]],'#4d3515');
                     this.pixelRect(ctx,sx+7,sy+18,4,7,'#7a5a20'); this.pixelRect(ctx,sx+12,sy+12,4,14,'#9a7127');
@@ -5950,11 +6019,23 @@
                     if(n===2||n===7){ctx.fillStyle='#b84b59';ctx.fillRect(px+12,py+13,4,2);ctx.fillRect(px+14,py+15,2,4);}
                     if(n===5){ctx.fillStyle='#2e0b13';ctx.fillRect(px+25,py+4,3,4);}
                 } else {
-                    // 1F/天界：磨かれた神殿床。
-                    ctx.fillStyle='#6b4c16'; ctx.fillRect(px,py,32,32); ctx.fillStyle='#f6d77a'; ctx.fillRect(px+1,py+1,30,30);
-                    ctx.fillStyle='#fff2ae';ctx.fillRect(px+3,py+3,26,2);ctx.fillRect(px+3,py+27,26,2);
-                    ctx.fillStyle='#b77a18';ctx.fillRect(px+4,py+8,24,2);ctx.fillRect(px+4,py+20,24,2);
-                    ctx.fillStyle='#d6a934';ctx.fillRect(px+8,py+10,2,9);ctx.fillRect(px+22,py+10,2,9);
+                    // 天上界：壁そのものが厚い雲。角張った塗りつぶしではなく、
+                    // 複数の雲房を重ね、下側に青い陰影、上側に白い光沢を置いて
+                    // 「モコモコした雲の壁」に見えるようにする。
+                    const grad=ctx.createLinearGradient(px,py,px,py+32);
+                    grad.addColorStop(0,'#ffffff'); grad.addColorStop(0.46,'#f8fdff'); grad.addColorStop(1,'#b9ddf2');
+                    ctx.fillStyle=grad; ctx.fillRect(px,py,32,32);
+                    const cloud=(x,y,r)=>{
+                        const g=ctx.createRadialGradient(px+x-r*0.25,py+y-r*0.35,r*0.12,px+x,py+y,r);
+                        g.addColorStop(0,'#ffffff'); g.addColorStop(0.55,'#f7fcff'); g.addColorStop(0.82,'#d9eef9'); g.addColorStop(1,'#a9cfe7');
+                        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px+x,py+y,r,0,Math.PI*2); ctx.fill();
+                    };
+                    cloud(5,22,8); cloud(12,16,10); cloud(21,18,10); cloud(28,23,8);
+                    cloud(7,9,7); cloud(17,8,8); cloud(25,10,7);
+                    ctx.fillStyle='rgba(255,255,255,.72)';
+                    ctx.fillRect(px+3,py+4,7,2); ctx.fillRect(px+14,py+3,8,2); ctx.fillRect(px+22,py+7,6,2);
+                    ctx.fillStyle='rgba(96,165,250,.18)';
+                    ctx.fillRect(px+1,py+29,30,2); ctx.fillRect(px+7,py+25,7,2); ctx.fillRect(px+20,py+26,8,2);
                 }
             }
 
@@ -5993,7 +6074,12 @@
                     else {ctx.fillRect(px+4,py+10,6,1);ctx.fillRect(px+10,py+11,12,1);}
                     ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillRect(px+4,py+26,20,1);
                 } else {
-                    ctx.fillStyle='#f6d77a';ctx.fillRect(px,py,32,32);ctx.fillStyle='#fff1a8';ctx.fillRect(px+3,py+3,26,2);ctx.fillRect(px+3,py+27,26,2);ctx.fillStyle='#b9781e';ctx.fillRect(px+2,py+15,28,2);ctx.fillRect(px+15,py+2,2,28);
+                    // 天上界の道：薄い青色の艶ありタイル。格子を弱くし、光沢を主役にする。
+                    ctx.fillStyle=(n%3===0?'#91d7f7':n%3===1?'#a9e4fb':'#bcecff'); ctx.fillRect(px,py,32,32);
+                    ctx.fillStyle='#5aaee8'; ctx.fillRect(px,py,32,1); ctx.fillRect(px,py+31,32,1);
+                    ctx.fillStyle='rgba(255,255,255,.72)'; ctx.fillRect(px+3,py+3,22,2); ctx.fillRect(px+6,py+6,12,1);
+                    ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fillRect(px+4,py+13,17,1); ctx.fillRect(px+12,py+22,13,1);
+                    ctx.fillStyle='rgba(40,130,190,.20)'; ctx.fillRect(px+25,py+8,3,2); ctx.fillRect(px+4,py+26,7,1);
                 }
             }
 
@@ -6284,6 +6370,55 @@
                 ctx.restore();
             }
 
+            drawHeavenEnemyFinish(ctx, id) {
+                // 天上界敵専用の32x32仕上げ。昨日の高精細敵グラと同じく、
+                // 接地影・輪郭の濃淡・左上ハイライト・右下陰影・装飾の反射を重ねて立体化する。
+                ctx.save();
+                ctx.imageSmoothingEnabled=false;
+                const p=(x,y,w,h,c,a=1)=>{ctx.globalAlpha=a;ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
+                const data={
+                    heaven_soldier:['#f8fafc','#bfdbfe','#64748b','#1e3a8a'],
+                    holy_knight:['#fff7ed','#fde68a','#92400e','#713f12'],
+                    wing_guard:['#eff6ff','#bfdbfe','#2563eb','#1e3a8a'],
+                    divine_executor:['#fff7ed','#facc15','#a16207','#78350f'],
+                    halo_knight:['#fefce8','#fde047','#a16207','#713f12'],
+                    heaven_mage:['#f5f3ff','#c4b5fd','#6d28d9','#4c1d95'],
+                    fallen_watch:['#eef2ff','#a5b4fc','#4338ca','#312e81'],
+                    divine_beast:['#fff7ed','#fbbf24','#b45309','#78350f'],
+                    sky_executioner:['#fff1f2','#fb7185','#9f1239','#881337'],
+                    sanctum_guardian:['#ffffff','#c4b5fd','#64748b','#312e81']
+                }[id] || ['#ffffff','#dbeafe','#64748b','#1e3a8a'];
+                const [light,mid,shadow,deep]=data;
+                p(-13,14,26,2,'#020617',0.42); p(-10,12,4,2,'#020617',0.20); p(6,12,4,2,'#020617',0.20);
+                p(-15,-8,2,17,deep,0.30); p(13,-7,2,16,deep,0.34); p(-11,11,22,2,shadow,0.34);
+                p(-10,-13,6,2,light,0.92); p(-7,-11,4,2,light,0.72); p(2,-12,5,1,light,0.62);
+                p(-13,-6,2,7,mid,0.48); p(-10,-8,3,2,light,0.56);
+                p(-8,8,16,3,shadow,0.48); p(-5,10,10,2,deep,0.36); p(7,4,4,5,deep,0.26); p(-9,5,3,4,mid,0.28);
+                if(id==='heaven_soldier'){
+                    p(-7,-5,14,2,light,0.58); p(-5,-2,10,1,mid,0.45); p(-2,-1,4,5,light,0.32); p(-16,-1,4,5,light,0.65); p(12,-1,4,5,shadow,0.42);
+                }else if(id==='holy_knight'){
+                    p(-8,-8,16,2,light,0.82); p(-6,-5,12,2,mid,0.52); p(-18,-1,5,8,light,0.72); p(14,0,5,8,shadow,0.50); p(-4,1,8,1,light,0.55);
+                }else if(id==='wing_guard'){
+                    p(-24,-6,5,2,light,0.70); p(-22,-3,6,1,mid,0.58); p(18,-6,5,2,light,0.62); p(20,-3,6,1,shadow,0.48); p(-7,-3,14,2,light,0.45); p(-2,2,4,5,shadow,0.30);
+                }else if(id==='divine_executor'){
+                    p(-7,-9,14,2,light,0.92); p(-4,-6,8,2,mid,0.58); p(-20,0,5,7,light,0.72); p(15,0,5,8,shadow,0.52); p(-2,-21,4,3,light,0.95); p(-1,-22,2,1,'#ffffff',0.95);
+                }else if(id==='halo_knight'){
+                    p(-14,-20,5,2,light,0.95); p(9,-20,5,2,light,0.72); p(-7,-8,14,2,light,0.82); p(-20,0,5,8,light,0.70); p(15,0,5,8,shadow,0.50);
+                    ctx.strokeStyle=light; ctx.globalAlpha=.75; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,-17,14,Math.PI*1.08,Math.PI*1.92); ctx.stroke();
+                }else if(id==='heaven_mage'){
+                    p(-9,-8,18,2,light,0.82); p(-7,-4,4,10,mid,0.38); p(4,-4,4,10,shadow,0.38); p(-3,1,6,2,light,0.46); p(-20,-7,3,12,light,0.70); p(17,-9,3,14,shadow,0.54); p(18,-15,4,3,light,0.80);
+                }else if(id==='fallen_watch'){
+                    p(-9,-9,18,2,light,0.76); p(-6,-5,12,2,mid,0.48); p(-23,-2,5,9,mid,0.60); p(18,-2,5,9,shadow,0.46); p(-2,-4,4,2,'#ffffff',0.68); p(-17,-20,34,2,light,0.72);
+                }else if(id==='divine_beast'){
+                    p(-12,-11,24,2,light,0.88); p(-8,-7,16,2,mid,0.50); p(-22,-1,6,8,light,0.62); p(17,-1,6,8,shadow,0.46); p(-6,2,5,3,light,0.38); p(2,2,5,3,shadow,0.38); p(-11,10,7,2,deep,0.48); p(5,10,7,2,deep,0.48);
+                }else if(id==='sky_executioner'){
+                    p(-9,-10,18,2,light,0.86); p(-7,-6,5,13,mid,0.42); p(2,-6,5,13,shadow,0.48); p(-22,-3,6,8,light,0.60); p(16,-3,6,9,shadow,0.52); p(-19,-21,8,2,light,0.82);
+                }else if(id==='sanctum_guardian'){
+                    p(-12,-12,24,2,light,0.98); p(-9,-9,18,3,mid,0.54); p(-7,-4,14,8,light,0.28); p(-23,-2,6,10,light,0.76); p(17,-2,6,10,shadow,0.58); p(-9,8,18,3,deep,0.48); p(-3,-2,6,7,'#ffffff',0.72); p(-2,0,4,4,mid,0.65); p(-1,1,2,2,'#ffffff',0.95);
+                }
+                ctx.globalAlpha=1; ctx.restore();
+            }
+
             drawEnemySprite(ctx, enemy, px, py) {
                 ctx.save();
                 const bounce = (this.animFrame % 2 === 0) ? 0 : -1;
@@ -6292,13 +6427,65 @@
 
                 const pixel = (x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
 
-                if(enemy.id && (enemy.id.startsWith('heaven_') || enemy.id==='holy_knight' || enemy.id==='wing_guard' || enemy.id==='divine_executor' || enemy.id==='halo_knight' || enemy.id==='heaven_mage' || enemy.id==='fallen_watch' || enemy.id==='divine_beast' || enemy.id==='sky_executioner' || enemy.id==='sanctum_guardian')){
-                    const pal={
-                        heaven_soldier:['#f8fafc','#93c5fd','#1e3a8a'], holy_knight:['#fef3c7','#f59e0b','#78350f'], wing_guard:['#dbeafe','#60a5fa','#1e40af'], divine_executor:['#fef3c7','#facc15','#92400e'], halo_knight:['#fef9c3','#fde047','#713f12'], heaven_mage:['#ede9fe','#a78bfa','#4c1d95'], fallen_watch:['#e0e7ff','#818cf8','#312e81'], divine_beast:['#fef3c7','#fbbf24','#92400e'], sky_executioner:['#ffe4e6','#fb7185','#881337'], sanctum_guardian:['#ffffff','#facc15','#1e3a8a']
-                    }[enemy.id] || ['#f8fafc','#93c5fd','#1e3a8a'];
-                    pixel(-9,8,18,3,'#0f172a'); pixel(-10,-7,20,15,pal[0]); pixel(-7,-11,14,5,pal[1]); pixel(-5,-5,3,3,pal[2]); pixel(2,-5,3,3,pal[2]); pixel(-4,-4,1,1,'#ffffff'); pixel(3,-4,1,1,'#ffffff');
-                    if(enemy.id==='wing_guard' || enemy.id==='sky_executioner' || enemy.id==='sanctum_guardian'){ pixel(-14,-2,5,10,pal[1]); pixel(9,-2,5,10,pal[1]); }
-                    if(enemy.id==='halo_knight' || enemy.id==='sanctum_guardian'){ ctx.strokeStyle=pal[1]; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,-13,9,Math.PI,Math.PI*2); ctx.stroke(); }
+                if(enemy.id && (enemy.id.startsWith('heaven_') || ['holy_knight','wing_guard','divine_executor','halo_knight','heaven_mage','fallen_watch','divine_beast','sky_executioner','sanctum_guardian'].includes(enemy.id))){
+                    const id=enemy.id, bob=(this.animFrame%4<2?0:-1);
+                    if(id==='heaven_soldier'){
+                        pixel(-15,10,30,5,'#64748b'); pixel(-11,-10,22,20,'#f8fafc'); pixel(-8,-15,16,7,'#dbeafe');
+                        pixel(-6,-8,12,8,'#93c5fd'); pixel(-4,-6,3,3,'#1e3a8a'); pixel(2,-6,3,3,'#1e3a8a');
+                        pixel(-18,-2,6,12,'#bfdbfe'); pixel(12,-2,6,12,'#bfdbfe'); pixel(-9,10,6,8,'#1e40af'); pixel(3,10,6,8,'#1e40af');
+                        pixel(-17,-12,34,3,'#fff');
+                    }else if(id==='holy_knight'){
+                        pixel(-16,11,32,5,'#713f12'); pixel(-12,-12,24,23,'#fef3c7'); pixel(-9,-17,18,8,'#fde68a');
+                        pixel(-7,-9,14,9,'#f59e0b'); pixel(-4,-6,3,3,'#78350f'); pixel(1,-6,3,3,'#78350f');
+                        pixel(-20,-2,7,14,'#fbbf24'); pixel(13,-2,7,14,'#fbbf24'); pixel(-10,10,7,9,'#92400e'); pixel(3,10,7,9,'#92400e');
+                        pixel(-16,-19,32,3,'#fff7ed');
+                    }else if(id==='wing_guard'){
+                        const flap=this.animFrame%4<2?0:3; pixel(-13,10,26,5,'#1e3a8a');
+                        pixel(-10,-11,20,22,'#dbeafe'); pixel(-7,-16,14,7,'#60a5fa'); pixel(-5,-7,4,4,'#1e40af'); pixel(2,-7,4,4,'#1e40af');
+                        pixel(-22,-7+flap,10,7,'#93c5fd'); pixel(-28,-12+flap,7,5,'#dbeafe'); pixel(12,-7-flap,10,7,'#93c5fd'); pixel(21,-12-flap,7,5,'#dbeafe');
+                        pixel(-9,10,6,8,'#2563eb'); pixel(3,10,6,8,'#2563eb');
+                    }else if(id==='divine_executor'){
+                        pixel(-15,11,30,5,'#78350f'); pixel(-11,-12,22,23,'#fef3c7'); pixel(-7,-18,14,8,'#facc15');
+                        pixel(-6,-8,12,8,'#fde68a'); pixel(-4,-5,3,3,'#92400e'); pixel(1,-5,3,3,'#92400e');
+                        pixel(-21,-1,7,14,'#facc15'); pixel(14,-1,7,14,'#facc15'); pixel(-9,10,6,9,'#92400e'); pixel(3,10,6,9,'#92400e');
+                        pixel(-17,-20,34,3,'#fff'); pixel(-2,-22,4,5,'#fef08a');
+                    }else if(id==='halo_knight'){
+                        pixel(-17,11,34,5,'#713f12'); pixel(-12,-11,24,22,'#fef9c3'); pixel(-8,-16,16,7,'#fde047');
+                        pixel(-5,-7,3,3,'#713f12'); pixel(2,-7,3,3,'#713f12'); pixel(-21,-2,7,12,'#facc15'); pixel(14,-2,7,12,'#facc15');
+                        pixel(-10,10,7,9,'#a16207'); pixel(3,10,7,9,'#a16207');
+                        ctx.strokeStyle='#fff7ae'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(0,-17,14,Math.PI*1.05,Math.PI*1.95); ctx.stroke();
+                        pixel(-16,-19,32,3,'#fff');
+                    }else if(id==='heaven_mage'){
+                        pixel(-16,12,32,4,'#4c1d95'); pixel(-12,-10,24,21,'#ede9fe'); pixel(-8,-17,16,9,'#a78bfa');
+                        pixel(-5,-7,3,3,'#4c1d95'); pixel(2,-7,3,3,'#4c1d95'); pixel(-18,0,5,11,'#c4b5fd'); pixel(13,0,5,11,'#c4b5fd');
+                        pixel(-10,10,7,8,'#6d28d9'); pixel(3,10,7,8,'#6d28d9');
+                        pixel(-21,-6,5,20,'#8b5cf6'); pixel(16,-10,5,24,'#8b5cf6'); pixel(18,-14,4,4,'#fef08a');
+                    }else if(id==='fallen_watch'){
+                        pixel(-17,11,34,5,'#312e81'); pixel(-12,-12,24,23,'#e0e7ff'); pixel(-8,-18,16,8,'#818cf8');
+                        pixel(-5,-7,3,3,'#312e81'); pixel(2,-7,3,3,'#312e81'); pixel(-22,-3,7,14,'#6366f1'); pixel(15,-3,7,14,'#6366f1');
+                        pixel(-11,10,7,9,'#3730a3'); pixel(4,10,7,9,'#3730a3'); pixel(-17,-21,34,3,'#c7d2fe');
+                    }else if(id==='divine_beast'){
+                        pixel(-19,10,38,6,'#92400e'); pixel(-15,-8,30,20,'#fef3c7'); pixel(-11,-15,22,8,'#fbbf24');
+                        pixel(-8,-6,6,5,'#78350f'); pixel(2,-6,6,5,'#78350f'); pixel(-5,-5,2,2,'#fff'); pixel(3,-5,2,2,'#fff');
+                        pixel(-24,-2,8,12,'#fde68a'); pixel(16,-2,8,12,'#fde68a'); pixel(-12,10,7,8,'#b45309'); pixel(5,10,7,8,'#b45309');
+                        pixel(-17,-17,6,5,'#fff'); pixel(11,-17,6,5,'#fff');
+                    }else if(id==='sky_executioner'){
+                        pixel(-16,11,32,5,'#881337'); pixel(-12,-12,24,23,'#ffe4e6'); pixel(-8,-18,16,8,'#fb7185');
+                        pixel(-5,-7,3,3,'#881337'); pixel(2,-7,3,3,'#881337'); pixel(-22,-4,8,15,'#fda4af'); pixel(14,-4,8,15,'#fda4af');
+                        pixel(-10,10,7,9,'#9f1239'); pixel(3,10,7,9,'#9f1239'); pixel(-20,-21,40,3,'#fff1f2');
+                        pixel(17,-14,5,14,'#fb7185'); pixel(20,-17,3,5,'#fda4af');
+                    }else if(id==='sanctum_guardian'){
+                        pixel(-21,12,42,5,'#1e3a8a'); pixel(-16,-12,32,25,'#ffffff'); pixel(-11,-20,22,9,'#facc15');
+                        pixel(-7,-8,5,5,'#1e3a8a'); pixel(2,-8,5,5,'#1e3a8a'); pixel(-25,-3,9,15,'#fde68a'); pixel(17,-3,9,15,'#fde68a');
+                        pixel(-13,11,8,10,'#1e40af'); pixel(5,11,8,10,'#1e40af'); pixel(-18,-22,36,3,'#fff');
+                        ctx.strokeStyle='#fde047'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(0,-18,18,Math.PI*1.02,Math.PI*1.98); ctx.stroke();
+                    }
+                    // 天上界の敵はプレイヤーより一回り大きく、さらに共通の立体陰影を重ねる。
+                    // 左上の光源・右下の落ち影・装甲の反射を加え、単純な矩形の集合に見えないようにする。
+                    ctx.fillStyle='rgba(15,23,42,.34)'; ctx.fillRect(-22,14,44,4);
+                    ctx.fillStyle='rgba(255,255,255,.34)'; ctx.fillRect(-13,-20,8,2);
+                    ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillRect(-18,-14,4,7);
+                    ctx.fillStyle='rgba(15,23,42,.20)'; ctx.fillRect(9,7,8,7);
                     ctx.restore(); return;
                 }
 
@@ -6415,6 +6602,7 @@
                     pixel(-6,-5,4,4,'#24170f'); pixel(2,-5,4,4,'#24170f'); pixel(-5,-4,2,2,'#fef08a'); pixel(3,-4,2,2,'#fef08a');
                     pixel(-2,0,4,3,'#f1e0c8'); pixel(-1,1,2,2,'#24170f'); pixel(-8,6,16,3,'#6f3f24'); pixel(-5,7,10,2,'#d7a24d');
                     pixel(-7,10,4,5,'#8a552d'); pixel(3,10,4,5,'#8a552d'); pixel(-10,13,6,2,'#5b351f'); pixel(4,13,6,2,'#5b351f');
+                    this.drawHeavenEnemyFinish(ctx,id);
                 }else{
                     pixel(-10,-9,20,18,enemy.color||'#ef4444'); pixel(-7,-12,14,4,'#fecaca');
                     pixel(-5,-3,3,3,'#fff'); pixel(2,-3,3,3,'#fff');
