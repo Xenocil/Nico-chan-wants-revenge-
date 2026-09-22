@@ -1039,6 +1039,23 @@
             { id: 'yasuo', name: '番犬やすお', color: '#b9783c', hp: 3, maxHp: 3, atk: 20, def: 999, exp: 55, flee: true, suicide: false, moveSteps: 2 }
         ];
 
+        // 天上界専用敵：全能神撃破後の無限上昇パートで使用。守護者（聖なる審判者）を明確に上回る強さ。
+        const HEAVEN_ENEMY_SPECIES = [
+            { id:'heaven_soldier', name:'天界兵', color:'#e0f2fe', hp:240, maxHp:240, atk:72, def:20, exp:150 },
+            { id:'holy_knight', name:'聖騎士', color:'#fef3c7', hp:320, maxHp:320, atk:78, def:28, exp:190 },
+            { id:'wing_guard', name:'天翼兵', color:'#dbeafe', hp:220, maxHp:220, atk:86, def:19, exp:175, moveSteps:2 },
+            { id:'divine_executor', name:'神罰執行者', color:'#fde68a', hp:260, maxHp:260, atk:105, def:22, exp:230 },
+            { id:'halo_knight', name:'光輪騎士', color:'#fef9c3', hp:360, maxHp:360, atk:82, def:35, exp:250 },
+            { id:'heaven_mage', name:'天界魔導士', color:'#c4b5fd', hp:230, maxHp:230, atk:92, def:20, exp:240 },
+            { id:'fallen_watch', name:'堕天監視者', color:'#a5b4fc', hp:390, maxHp:390, atk:96, def:27, exp:285 },
+            { id:'divine_beast', name:'神獣', color:'#fde68a', hp:560, maxHp:560, atk:100, def:30, exp:360, moveInterval:2 },
+            { id:'sky_executioner', name:'天空の処刑人', color:'#fda4af', hp:340, maxHp:340, atk:118, def:25, exp:400, multiAttack:2 },
+            { id:'sanctum_guardian', name:'神域の守護者', color:'#f8fafc', hp:720, maxHp:720, atk:112, def:38, exp:520 }
+        ];
+
+        // 地獄で戦った通常10種の天上界強化版。各個体はHP/ATK/DEFを約3倍にして再登場。
+        const HEAVEN_HELL_MULTIPLIER = 3;
+
         // 特殊敵：B7F～B1Fのみ出現。通常敵プールとは分離して出現率を管理する。
         const JET_BABAA_SPEC = {
             id: 'jet_babaa', name: 'ジェットばばぁ', color: '#f5f5f4', hp: 72, maxHp: 72,
@@ -1188,7 +1205,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '1.40';
+        const GAME_VERSION = '1.50';
 
         class Game {
             constructor() {
@@ -1198,6 +1215,7 @@
                 this.canvas.height = 450;
 
                 this.currentFloor = 10;
+                this.heavenFloor = 0;
                 this.floorTransitionBusy = false;
                 this.score = 0;
                 this.medalScore = 0;
@@ -1868,7 +1886,7 @@
                     document.getElementById('victory-score-panel').classList.add('hidden');
                 } else if (this.storyStep === 104) {
                     speaker.innerText='SYSTEM';
-                    text.innerText='「冒険は終わった。だが、nicoの物語はまだ続いている。」';
+                    text.innerText='「復讐は終わった。……でも、あの先にまだ空が続いている。」';
                     this.drawNicoSprite(sCtx,40,40,DIRECTION.S,2.2);
                     const panel=document.getElementById('victory-score-panel'); if(panel) panel.classList.remove('hidden');
                     document.getElementById('victory-score-display').innerText=this.score;
@@ -1885,7 +1903,7 @@
                 if (this.storyStep >= 104) {
                     document.getElementById('story-overlay').classList.add('hidden');
                     document.getElementById('story-overlay').classList.remove('victory-scene');
-                    this.startNewGame();
+                    this.startHeavenPostgame();
                     return;
                 }
 
@@ -1909,8 +1927,27 @@
                 this.updateStoryDialogue();
             }
 
+            startHeavenPostgame() {
+                this.currentFloor = -1;
+                this.heavenFloor = 1;
+                this.isGameOver = false;
+                this.storyStep = 105;
+                this.floorTransitionBusy = false;
+                this.enemyTurnPending = false;
+                this.enemyTurnTimer = 0;
+                this.actionTimer = 0;
+                this.spawnGraceTurns = 6;
+                this.boss = null;
+                this.enemies = []; this.items = []; this.traps = []; this.torches = []; this.obstacles = [];
+                this.generateFloor();
+                this.saveAutoGame();
+                this.updateUI();
+                this.log('☀ 全能神の城のさらに上へ。ここから先は天上界だ。', 'text-amber-200 font-bold');
+            }
+
             startNewGame() {
                 this.currentFloor = 10;
+                this.heavenFloor = 0;
                 this.score = 0;
                 this.medalScore = 0;
                 this.clearScoreBonus = 0;
@@ -1966,7 +2003,9 @@
             }
 
             getFloorName() {
-                return this.currentFloor > 0 ? `B${this.currentFloor}F` : `1F (天界の門)`;
+                if (this.currentFloor > 0) return `B${this.currentFloor}F`;
+                if (this.currentFloor === 0) return '全能神の城';
+                return `天上界 ${this.heavenFloor}F`;
             }
 
             generateFloor() {
@@ -1985,7 +2024,56 @@
                 this.actionTimer = 0;
                 this.actionMessage = null;
 
-                // 1Fは通路や小部屋を作らず、天界の大広間だけにする。
+                // 全能神撃破後の天上界。1F=3部屋、以降は1階上がるごとに+1部屋。
+                // 固定サイズのマップ上で無限階層を成立させるため、部屋数は空間上限の12部屋まで。
+                if(this.currentFloor < 0){
+                    const targetRooms = Math.min(2 + this.heavenFloor, 12);
+                    const roomSizeBands = [
+                        { min: 6, max: 9 },
+                        { min: 9, max: 12 },
+                        { min: 12, max: 15 }
+                    ];
+                    let attempts=0;
+                    while(this.rooms.length < targetRooms && attempts < 1200){
+                        attempts++;
+                        const band=roomSizeBands[Math.floor(Math.random()*roomSizeBands.length)];
+                        const w=Math.floor(Math.random()*(band.max-band.min+1))+band.min;
+                        const h=Math.floor(Math.random()*(band.max-band.min+1))+band.min;
+                        const x=Math.floor(Math.random()*(GRID_WIDTH-w-2))+1;
+                        const y=Math.floor(Math.random()*(GRID_HEIGHT-h-2))+1;
+                        let overlap=false;
+                        for(const room of this.rooms){
+                            if(x < room.x+room.w+2 && x+w+2 > room.x && y < room.y+room.h+2 && y+h+2 > room.y){ overlap=true; break; }
+                        }
+                        if(overlap) continue;
+                        for(let ry=y;ry<y+h;ry++) for(let rx=x;rx<x+w;rx++) this.map[ry][rx]=TILE.FLOOR;
+                        if(this.rooms.length){
+                            const prev=this.rooms[this.rooms.length-1];
+                            let cx=Math.floor(x+w/2), cy=Math.floor(y+h/2), px=Math.floor(prev.x+prev.w/2), py=Math.floor(prev.y+prev.h/2);
+                            while(cx!==px){ this.map[cy][cx]=TILE.FLOOR; cx += px>cx?1:-1; }
+                            while(cy!==py){ this.map[cy][cx]=TILE.FLOOR; cy += py>cy?1:-1; }
+                        }
+                        this.rooms.push({x,y,w,h});
+                    }
+                    if(!this.rooms.length){ this.rooms.push({x:2,y:2,w:12,h:9}); for(let y=2;y<11;y++)for(let x=2;x<14;x++)this.map[y][x]=TILE.FLOOR; }
+                    const startRoom=this.rooms[0];
+                    this.player.x=Math.floor(startRoom.x+startRoom.w/2); this.player.y=Math.floor(startRoom.y+startRoom.h/2);
+                    this.player.renderX=this.player.x*TILE_SIZE; this.player.renderY=this.player.y*TILE_SIZE;
+                    const lastRoom=this.rooms[this.rooms.length-1];
+                    const candidates=[];
+                    for(let y=lastRoom.y+1;y<lastRoom.y+lastRoom.h-1;y++) for(let x=lastRoom.x+1;x<lastRoom.x+lastRoom.w-1;x++){
+                        if(this.map[y]?.[x]!==TILE.FLOOR || this.isOccupied(x,y)) continue;
+                        candidates.push({x,y,score:Math.abs(x-(lastRoom.x+lastRoom.w/2))+Math.abs(y-(lastRoom.y+lastRoom.h/2))+Math.random()*8});
+                    }
+                    candidates.sort((a,b)=>b.score-a.score);
+                    const stair=candidates[0]||{x:lastRoom.x+Math.floor(lastRoom.w/2),y:lastRoom.y+Math.floor(lastRoom.h/2)};
+                    this.map[stair.y][stair.x]=TILE.STAIRS; this.stairsPosition={x:stair.x,y:stair.y};
+                    this.spawnHeavenEntities();
+                    this.updateFieldOfView();
+                    return;
+                }
+
+                // 1Fは全能神の城。旧1Fの大広間をそのままボス専用フロアとして維持する。
                 if(this.currentFloor===0){
                     const hall={x:2,y:2,w:48,h:28}; this.rooms=[hall];
                     for(let y=hall.y;y<hall.y+hall.h;y++)for(let x=hall.x;x<hall.x+hall.w;x++)this.map[y][x]=TILE.FLOOR;
@@ -2331,7 +2419,45 @@
                 return seen.size===floorCount;
             }
 
+            getRandomHeavenEnemy() {
+                const pool=[];
+                const depth=Math.max(1,this.heavenFloor);
+                const newCount=Math.min(10, 3 + Math.floor((depth-1)/2));
+                for(let i=0;i<newCount;i++){ const s=HEAVEN_ENEMY_SPECIES[i]; pool.push({species:s,weight:Math.max(20,120-i*8)}); }
+                for(let i=0;i<ENEMY_SPECIES.length && i<10;i++){
+                    const base=ENEMY_SPECIES[i];
+                    const scaled={...base, hp:base.hp*HEAVEN_HELL_MULTIPLIER, maxHp:base.maxHp*HEAVEN_HELL_MULTIPLIER, atk:base.atk*HEAVEN_HELL_MULTIPLIER, def:base.def*HEAVEN_HELL_MULTIPLIER, exp:Math.floor(base.exp*2.5)};
+                    pool.push({species:scaled,weight:Math.max(8,70-i*4)});
+                }
+                const total=pool.reduce((a,b)=>a+b.weight,0); let r=Math.random()*total;
+                for(const e of pool){ if(r<e.weight) return e.species; r-=e.weight; }
+                return pool[0].species;
+            }
+
+            spawnHeavenEntities() {
+                const spawnRooms=this.rooms.length>1?this.rooms.slice(1):[];
+                const enemyCount=Math.min(18,Math.floor(this.rooms.length*1.35)+2);
+                let spawned=0;
+                for(let i=0;i<enemyCount*5 && spawned<enemyCount;i++){
+                    const room=spawnRooms.length?spawnRooms[Math.floor(Math.random()*spawnRooms.length)]:this.rooms[0];
+                    const ex=Math.floor(room.x+Math.random()*room.w), ey=Math.floor(room.y+Math.random()*room.h);
+                    if(this.map[ey]?.[ex]!==TILE.FLOOR || this.isOccupied(ex,ey)) continue;
+                    const species=this.getRandomHeavenEnemy();
+                    this.enemies.push({...species,x:ex,y:ey,renderX:ex*TILE_SIZE,renderY:ey*TILE_SIZE}); spawned++;
+                }
+                const itemCount=Math.min(8,Math.floor(this.rooms.length*0.7)+1);
+                for(let i=0;i<itemCount;i++){
+                    const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
+                    const ix=Math.floor(room.x+Math.random()*room.w), iy=Math.floor(room.y+Math.random()*room.h);
+                    if(this.map[iy]?.[ix]!==TILE.FLOOR || this.items.some(it=>it.x===ix&&it.y===iy)) continue;
+                    const dbItem=Math.random()<0.35?getRandomByWeight(WEAPON_ITEMS):Math.random()<0.55?getRandomByWeight(ARMOR_ITEMS):getRandomByWeight(CONSUMABLE_ITEMS);
+                    this.items.push({...dbItem,x:ix,y:iy,id:`heaven_${this.heavenFloor}_${i}_${Date.now()}_${Math.random().toString(36).slice(2)}`});
+                }
+                this.log(`☁ 天上界 ${this.heavenFloor}F。雲海の彼方へ続く階段がある。`, 'text-cyan-200 font-bold');
+            }
+
             getRandomEnemyForFloor() {
+                if(this.currentFloor < 0) return this.getRandomHeavenEnemy();
                 const unlockIndex = Math.min(9, Math.max(0, 10 - this.currentFloor));
                 const floorPool = [];
                 for (let i = 0; i <= unlockIndex; i++) {
@@ -3044,8 +3170,9 @@
                         sound.playStairs();
 
                         const oldFloor = this.currentFloor;
-                        const nextFloor = Math.max(0, oldFloor - 1);
-                        this.log(`★ 梯子を上り ${nextFloor === 0 ? '1F (天界の門)' : `B${nextFloor}F`} へ足を踏み入れた。`, 'text-cyan-300 font-bold');
+                        const nextFloor = oldFloor > 0 ? Math.max(0, oldFloor - 1) : oldFloor - 1;
+                        const nextName = nextFloor > 0 ? `B${nextFloor}F` : nextFloor === 0 ? '全能神の城' : `天上界 ${Math.abs(nextFloor)}F`;
+                        this.log(`★ 梯子を上り ${nextName} へ足を踏み入れた。`, 'text-cyan-300 font-bold');
 
                         const layer = document.getElementById('scene-transition');
                         const fadeOutMs = 500;
@@ -3077,6 +3204,7 @@
                             // ★ 完全に黒くなった後でのみ階層・マップ・テーマを切り替える。
                             // これにより「現在階の赤茶けた大地→洞窟」が一瞬見えることを防ぐ。
                             this.currentFloor = nextFloor;
+                            if (this.currentFloor < 0) this.heavenFloor = Math.abs(this.currentFloor);
                             this.generateFloor();
                             this.saveAutoGame();
                             this.enemyTurnPending = false;
@@ -3563,7 +3691,7 @@
                 }
                 const finishEnemyTurn = () => {
                     this.combatSequenceBusy = false;
-                    if (this.currentFloor > 0) this.checkNaturalSpawn();
+                    if (this.currentFloor !== 0) this.checkNaturalSpawn();
                     this.updateUI();
                 };
                 const perform = (idx) => {
@@ -4496,7 +4624,7 @@
                 const weaponInventoryIndex=this.player.weapon?this.player.inventory.indexOf(this.player.weapon):-1;
                 const armorInventoryIndex=this.player.armor?this.player.inventory.indexOf(this.player.armor):-1;
                 const playerData={...this.player, weapon:null, armor:null};
-                return {version:7,currentFloor:this.currentFloor,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep,spawnGraceTurns:this.spawnGraceTurns};
+                return {version:8,currentFloor:this.currentFloor,heavenFloor:this.heavenFloor||0,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep,spawnGraceTurns:this.spawnGraceTurns};
             }
 
             openSaveSlots(mode) {
@@ -4548,8 +4676,8 @@
                         : -1;
                     const playerData = { ...this.player, weapon: null, armor: null };
                     const data = {
-                        version: 7,
-                        currentFloor: this.currentFloor, score: this.score, medalScore: this.medalScore, clearScoreBonus: this.clearScoreBonus, turn: this.turn,
+                        version: 8,
+                        currentFloor: this.currentFloor, heavenFloor: this.heavenFloor || 0, score: this.score, medalScore: this.medalScore, clearScoreBonus: this.clearScoreBonus, turn: this.turn,
                         isGameOver: this.isGameOver, facing: this.facing,
                         player: playerData, weaponInventoryIndex, armorInventoryIndex,
                         map: this.map, explored: this.explored,
@@ -4570,7 +4698,8 @@
                     if (!raw && slot===1) raw = localStorage.getItem('nico_roguelike_save_v1');
                     if (!raw) { this.log('セーブデータがありません。', 'text-slate-400'); return; }
                     const data = JSON.parse(raw);
-                    this.currentFloor = data.currentFloor;
+                    this.currentFloor = Number(data.currentFloor);
+                    this.heavenFloor = Number(data.heavenFloor || (this.currentFloor < 0 ? Math.abs(this.currentFloor) : 0));
                     this.medalScore = Number(data.medalScore || 0);
                     this.clearScoreBonus = Number(data.clearScoreBonus || 0);
                     this.score = Number(data.score || 0);
@@ -5487,6 +5616,14 @@
                 const offsetY = Math.floor(this.canvas.height / 2 - camY);
 
                 this.ctx.translate(offsetX, offsetY);
+                if (this.currentFloor < 0) {
+                    this.ctx.save();
+                    this.ctx.fillStyle='#dbeafe';
+                    this.ctx.fillRect(-TILE_SIZE*8,-TILE_SIZE*8,GRID_WIDTH*TILE_SIZE+TILE_SIZE*16,GRID_HEIGHT*TILE_SIZE+TILE_SIZE*16);
+                    this.ctx.fillStyle='rgba(255,255,255,0.55)';
+                    for(let i=0;i<18;i++){ const cx=((i*137)%1800)-500, cy=((i*83)%900)-250; this.ctx.beginPath(); this.ctx.ellipse(cx,cy,70+(i%4)*18,18+(i%3)*8,0,0,Math.PI*2); this.ctx.fill(); }
+                    this.ctx.restore();
+                }
                 if (this.screenShake > 0) {
                     this.ctx.translate(
                         (Math.random() - 0.5) * this.screenShake,
@@ -6154,6 +6291,16 @@
                 ctx.translate(cx,cy);
 
                 const pixel = (x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
+
+                if(enemy.id && (enemy.id.startsWith('heaven_') || enemy.id==='holy_knight' || enemy.id==='wing_guard' || enemy.id==='divine_executor' || enemy.id==='halo_knight' || enemy.id==='heaven_mage' || enemy.id==='fallen_watch' || enemy.id==='divine_beast' || enemy.id==='sky_executioner' || enemy.id==='sanctum_guardian')){
+                    const pal={
+                        heaven_soldier:['#f8fafc','#93c5fd','#1e3a8a'], holy_knight:['#fef3c7','#f59e0b','#78350f'], wing_guard:['#dbeafe','#60a5fa','#1e40af'], divine_executor:['#fef3c7','#facc15','#92400e'], halo_knight:['#fef9c3','#fde047','#713f12'], heaven_mage:['#ede9fe','#a78bfa','#4c1d95'], fallen_watch:['#e0e7ff','#818cf8','#312e81'], divine_beast:['#fef3c7','#fbbf24','#92400e'], sky_executioner:['#ffe4e6','#fb7185','#881337'], sanctum_guardian:['#ffffff','#facc15','#1e3a8a']
+                    }[enemy.id] || ['#f8fafc','#93c5fd','#1e3a8a'];
+                    pixel(-9,8,18,3,'#0f172a'); pixel(-10,-7,20,15,pal[0]); pixel(-7,-11,14,5,pal[1]); pixel(-5,-5,3,3,pal[2]); pixel(2,-5,3,3,pal[2]); pixel(-4,-4,1,1,'#ffffff'); pixel(3,-4,1,1,'#ffffff');
+                    if(enemy.id==='wing_guard' || enemy.id==='sky_executioner' || enemy.id==='sanctum_guardian'){ pixel(-14,-2,5,10,pal[1]); pixel(9,-2,5,10,pal[1]); }
+                    if(enemy.id==='halo_knight' || enemy.id==='sanctum_guardian'){ ctx.strokeStyle=pal[1]; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,-13,9,Math.PI,Math.PI*2); ctx.stroke(); }
+                    ctx.restore(); return;
+                }
 
                 if(enemy.id==='slime'){
                     // 地獄スライム：X方向に長い、ぷるんとしたピンクのドーム。
