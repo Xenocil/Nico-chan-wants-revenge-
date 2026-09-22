@@ -222,6 +222,14 @@
         #map-action-buttons { pointer-events: auto !important; }
         #map-action-buttons .btn-sfc { white-space: nowrap; min-width: 58px; }
         #help-window .sfc-window { background: rgba(2,6,23,.96); }
+        #options-window .sfc-window { background: rgba(2,6,23,.97); }
+        #options-window, #help-window { overflow: hidden !important; }
+        #options-window .options-window-panel { width: 92%; max-width: 520px; max-height: 88%; box-sizing: border-box; }
+        #options-window .btn-sfc { min-height: 48px; touch-action: manipulation; }
+        #help-window > .sfc-window { width: 92%; max-width: 760px; max-height: 86%; box-sizing: border-box; }
+        #title-highscore-panel { text-align: center; }
+        #title-highscore-display, .title-highscore-reset { margin-left: auto; margin-right: auto; }
+
         #mini-map { width: 200px !important; height: 123px !important; }
         #direct-controls-overlay { right: max(8px, env(safe-area-inset-right)) !important; bottom: max(8px, env(safe-area-inset-bottom)) !important; gap: 5px !important; }
         #direct-controls-overlay > div:first-child { width: 150px !important; }
@@ -230,7 +238,7 @@
         #direct-controls-overlay > div:first-child .grid button { min-width: 0; }
         #direct-controls-overlay > div:nth-of-type(2) { width: 150px !important; }
         #direct-controls-overlay .grid.w-36, #direct-controls-overlay .grid.sm\:w-44 { width: 150px !important; }
-        .title-highscore-panel { margin: 10px auto 6px; padding: 7px 14px 9px; min-width: 210px; background: rgba(2,6,23,.72); border: 2px solid rgba(148,163,184,.45); border-radius: 8px; box-shadow: inset 0 0 16px rgba(30,64,175,.18), 0 4px 16px rgba(0,0,0,.35); }
+        .title-highscore-panel { margin: 10px auto 6px; text-align:center; padding: 7px 14px 9px; min-width: 210px; background: rgba(2,6,23,.72); border: 2px solid rgba(148,163,184,.45); border-radius: 8px; box-shadow: inset 0 0 16px rgba(30,64,175,.18), 0 4px 16px rgba(0,0,0,.35); }
         .title-highscore-label { font-size: 11px; letter-spacing: .16em; color: #cbd5e1; }
         #title-highscore-display { font-size: 30px; line-height: 1.05; color: #fcd34d; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(250,204,21,.25); font-weight: 900; margin: 2px 0 6px; }
         .title-highscore-reset { font-size: 11px; padding: 5px 9px; color: #fecaca; background: rgba(69,10,10,.75); border: 1px solid rgba(248,113,113,.45); border-radius: 5px; }
@@ -515,23 +523,19 @@
             #game-container { height: 100% !important; min-height: 0 !important; max-height: 100% !important; }
             #game-log-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 18px) !important; }
             #direct-controls-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 18px) !important; }
-            #game-canvas { object-fit: contain !important; object-position: center center !important; }
+            /* 縦向きは中央のゲーム画面を大きく見せる。横向きは後段でcontainを維持。 */
+            #game-canvas { object-fit: cover !important; object-position: center center !important; }
+            #map-action-buttons { display:block !important; }
+            #map-action-buttons .btn-sfc { min-height: 44px !important; font-size: 14px !important; padding: 8px 12px !important; }
         }
         @media (max-width: 900px) and (orientation: landscape) {
-            #game-canvas { object-fit: contain !important; }
+            #game-canvas { object-fit: contain !important; object-position: center center !important; }
             #game-log-overlay { bottom: calc(max(6px, env(safe-area-inset-bottom)) + 14px) !important; }
             #direct-controls-overlay { bottom: calc(max(6px, env(safe-area-inset-bottom)) + 14px) !important; }
-
-            /* 横向きは縦が短いため、ミニマップ＋4ボタンをD-Padと干渉しない高さに収める。 */
-            #direct-title-overlay { gap: 1px !important; }
-            #mini-map { width: 150px !important; height: 92px !important; }
-            #map-action-buttons { gap: 2px !important; }
-            #map-action-buttons .btn-sfc {
-                padding: 2px 4px !important;
-                font-size: 9px !important;
-                line-height: 1.15 !important;
-                min-height: 0 !important;
-            }
+            #map-action-buttons .btn-sfc { min-height: 42px !important; font-size: 13px !important; padding: 7px 10px !important; }
+            #help-window, #options-window { padding: 3vh 3vw !important; }
+            #help-window > .sfc-window { width: 94% !important; max-width: 94% !important; max-height: 88% !important; padding: 3% !important; }
+            #options-window .options-window-panel { width: 82% !important; max-width: 520px !important; max-height: 88% !important; padding: 3% !important; }
         }
         @media (max-width: 420px) and (orientation: portrait) {
             #game-log-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 38px) !important; }
@@ -542,6 +546,14 @@
             html, body { min-height: 100svh; }
         }
 
+        /* ===== 向き変更ボタン：タップ状態を視覚化 ===== */
+        #shift-facing-toggle.is-on {
+            background: linear-gradient(180deg, #92400e 0%, #78350f 100%) !important;
+            border-color: #f59e0b !important;
+            color: #fde68a !important;
+            box-shadow: inset 0 0 0 1px #fbbf24, 0 0 10px rgba(245,158,11,.35) !important;
+        }
+        #shift-facing-toggle.is-on .shift-facing-indicator { color: #fbbf24; }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col p-1.5 sm:p-2 gap-1.5 max-h-screen overflow-hidden">
@@ -558,7 +570,7 @@
                     <div class="title-kicker">PIXEL ROGUELIKE ADVENTURE</div>
                     <div class="title-logo">駄天使<span class="nico">nicoちゃん</span>は<br>復讐したい</div>
                     <div class="title-sub">THE FALLEN ANGEL'S REVENGE</div>
-                    <div id="title-version" class="title-version">Ver. 1.11</div>
+                    <div id="title-version" class="title-version">Ver. 1.30</div>
                     <div id="title-highscore-panel" class="title-highscore-panel">
                         <div class="title-highscore-label">HIGH SCORE</div>
                         <div id="title-highscore-display">0</div>
@@ -599,18 +611,9 @@
                     <span id="floor-display" class="text-amber-400">B10F</span>
                 </div>
                 <canvas id="mini-map" width="200" height="123" class="mt-1 rounded border border-slate-500/40 bg-black/35 opacity-70"></canvas>
-                <div id="map-action-buttons" class="pointer-events-auto grid grid-cols-2 gap-1.5 w-full">
-                    <button id="btn-help" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-amber-200 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md">
-                        <i class="fa-solid fa-circle-question"></i> Help
-                    </button>
-                    <button id="sound-toggle" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-amber-300 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md" title="SE ON/OFF">
-                        🔊 SE:ON
-                    </button>
-                    <button id="btn-save" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-emerald-300 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md">
-                        <i class="fa-solid fa-floppy-disk"></i> セーブ
-                    </button>
-                    <button id="btn-load" class="btn-sfc px-2 py-1.5 text-[11px] sm:text-xs font-bold text-sky-300 rounded bg-slate-950/80 backdrop-blur-sm border border-slate-600/80 shadow-md">
-                        <i class="fa-solid fa-folder-open"></i> ロード
+                <div id="map-action-buttons" class="pointer-events-auto w-full">
+                    <button id="btn-options" class="btn-sfc w-full px-3 py-2.5 text-sm font-bold text-amber-200 rounded bg-slate-950/85 backdrop-blur-sm border border-slate-600/80 shadow-md">
+                        <i class="fa-solid fa-gear"></i> オプション
                     </button>
                 </div>
             </div>
@@ -626,6 +629,11 @@
             <!-- Direct Overlay Control Panel (Bottom-Right) -->
             <div id="direct-controls-overlay" class="absolute bottom-2 right-2 z-10 flex flex-col items-end gap-1.5 select-none">
                 
+                <!-- バッグ：D-Padの上に配置 -->
+                <button id="btn-inventory" class="btn-sfc w-36 sm:w-44 px-2 py-3 sm:py-3.5 text-sm sm:text-base font-bold text-amber-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-bag-shopping"></i> バッグ (X)
+                </button>
+
                 <!-- 移動キー -->
                 <!-- Floating D-Pad -->
                 <div class="grid grid-cols-3 gap-1 w-36 sm:w-44 bg-slate-950/60 p-1 rounded-lg backdrop-blur-sm border border-slate-700/50 shadow-xl">
@@ -642,21 +650,15 @@
                     <button id="btn-se" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↘</button>
                 </div>
 
-                <!-- 足踏みは移動キーの直下。バッグはその下。 -->
-                <div class="flex flex-col items-stretch w-36 sm:w-44 gap-1">
-                    <button id="btn-wait-turn" class="btn-sfc px-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-cyan-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-hourglass-half"></i> 足踏み (Space)
-                    </button>
-                    <button id="btn-inventory" class="btn-sfc px-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-amber-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-bag-shopping"></i> バッグ (X)
-                    </button>
-                </div>
+                <!-- 足踏みはD-Padの下。さらにその下に向き変更ボタン。 -->
+                <button id="btn-wait-turn" class="btn-sfc w-36 sm:w-44 px-2 py-3 sm:py-3.5 text-sm sm:text-base font-bold text-cyan-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-hourglass-half"></i> 足踏み (Space)
+                </button>
 
-                <div class="flex items-center justify-end gap-1 text-[11px] text-slate-200 bg-black/60 px-2 py-1 rounded backdrop-blur-sm w-full">
-                    <label class="flex items-center justify-center gap-1 cursor-pointer w-full text-center">
-                        <input type="checkbox" id="shift-facing-toggle" class="accent-amber-500 w-3.5 h-3.5"> 向き変更 (Shift)
-                    </label>
-                </div>
+                <button id="shift-facing-toggle" type="button" aria-pressed="false" class="btn-sfc w-36 sm:w-44 px-2 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-200 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md flex items-center justify-center gap-1.5 transition-none">
+                    <span class="shift-facing-indicator">○</span> 向き変更 (Shift)
+                    <input type="checkbox" tabindex="-1" aria-hidden="true" class="sr-only">
+                </button>
 
             </div>
 
@@ -763,13 +765,39 @@
                 <button id="synthesis-cancel" class="btn-sfc p-1.5 text-left text-slate-400 rounded hover:brightness-125">やめる</button>
             </div>
 
+            <!-- Options Window -->
+            <div id="options-window" class="hidden absolute inset-0 z-[110] bg-black/65 flex items-center justify-center p-3 sm:p-6">
+                <div class="sfc-window options-window-panel w-[92%] sm:w-[78%] max-w-lg max-h-[88%] overflow-y-auto p-4 sm:p-5 shadow-2xl">
+                    <div class="flex items-center justify-between gap-3 mb-3 pb-2 border-b border-slate-700">
+                        <h3 class="text-amber-300 text-lg sm:text-xl font-bold"><i class="fa-solid fa-gear"></i> オプション</h3>
+                        <button id="options-close" class="btn-sfc px-4 py-2 rounded text-slate-200 text-sm font-bold">閉じる</button>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button id="btn-options-help" class="btn-sfc w-full px-4 py-3 rounded text-amber-200 text-base font-bold text-left">
+                            <i class="fa-solid fa-circle-question mr-2"></i>操作マニュアル
+                        </button>
+                        <button id="sound-toggle" class="btn-sfc w-full px-4 py-3 rounded text-amber-300 text-base font-bold text-left" title="SE ON/OFF">
+                            🔊 SE:ON
+                        </button>
+                        <button id="btn-save" class="btn-sfc w-full px-4 py-3 rounded text-emerald-300 text-base font-bold text-left">
+                            <i class="fa-solid fa-floppy-disk mr-2"></i>セーブ
+                        </button>
+                        <button id="btn-load" class="btn-sfc w-full px-4 py-3 rounded text-sky-300 text-base font-bold text-left">
+                            <i class="fa-solid fa-folder-open mr-2"></i>ロード
+                        </button>
+                        <button id="options-title-btn" class="btn-sfc w-full px-4 py-3 rounded text-slate-200 text-base font-bold text-left">
+                            <i class="fa-solid fa-house mr-2"></i>タイトルに戻る
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Help Window -->
             <div id="help-window" class="hidden absolute inset-0 z-[100] bg-black/65 flex items-center justify-center p-3 sm:p-6">
                 <div class="sfc-window w-full max-w-2xl max-h-[88vh] overflow-y-auto p-4 sm:p-5 shadow-2xl">
                     <div class="flex items-center justify-between gap-3 mb-3 pb-2 border-b border-slate-700">
                         <h3 class="text-amber-300 text-lg sm:text-xl font-bold"><i class="fa-solid fa-circle-question"></i> 操作マニュアル</h3>
                         <div class="flex items-center gap-1.5">
-                            <button id="help-title-btn" class="btn-sfc px-3 py-1.5 rounded text-slate-200 text-xs sm:text-sm">タイトルに戻る</button>
                             <button id="help-close" class="btn-sfc px-3 py-1.5 rounded text-slate-200 text-xs sm:text-sm">閉じる</button>
                         </div>
                     </div>
@@ -1022,7 +1050,8 @@
             { id: 'bat', name: '釘付きバット', type: 'WEAPON', effect: 'ATK', val: 4, baseVal: 4, desc: '攻撃力が4上昇する', weight: 25 },
             { id: 'sword', name: '堕天使の剣', type: 'WEAPON', effect: 'ATK', val: 10, baseVal: 10, desc: '攻撃力が10上昇する', weight: 10 },
             { id: 'nico_belos_whip', name: 'ニコベロスの鞭', type: 'WEAPON', effect: 'ATK', val: 2, baseVal: 2, desc: '攻撃力が2上昇し、1ターンに2回攻撃できる', weight: 6 },
-            { id: 'sylpain', name: '神槍シルペイン', type: 'WEAPON', effect: 'ATK', val: 3, baseVal: 3, desc: '攻撃力が3上昇し、向いている方向2マスまで攻撃できる', weight: 5 }
+            { id: 'sylpain', name: '神槍シルペイン', type: 'WEAPON', effect: 'ATK', val: 7, baseVal: 7, desc: '攻撃力が7上昇し、向いている方向2マスまで攻撃できる', weight: 5 },
+            { id: 'nico_stick', name: 'nicoスティック', type: 'WEAPON', effect: 'ATK', val: 3, baseVal: 3, desc: '攻撃力が3上昇し、攻撃時に与えたダメージの20%を回復する', weight: 5.5 }
         ];
 
         const ARMOR_ITEMS = [
@@ -1057,7 +1086,7 @@
             { name: '欲張り', capacity: 1 },
             { name: '強欲', capacity: 3 }
         ];
-        WEAPON_PREFIXES.push({ name: '神速', multiAttack: 2 });
+        WEAPON_PREFIXES.push({ name: '神速', multiAttack: 2, atkMul: -0.50 });
         WEAPON_PREFIXES.push({ name: '貫通', range: 2 });
         ARMOR_PREFIXES.push({ name: '罠食らい', trapChance: 0.30 });
         ARMOR_PREFIXES.push({ name: '痛み返し', reflect: 0.30 });
@@ -1065,7 +1094,7 @@
         function enchantDefinitionText(e) {
             if (!e) return '';
             const effects = [];
-            if (e.atkMul) effects.push(`攻撃力 +${Math.round(e.atkMul * 100)}%`);
+            if (e.atkMul && e.name !== '神速') effects.push(`攻撃力 +${Math.round(e.atkMul * 100)}%`);
             if (e.defMul) effects.push(`防御力 +${Math.round(e.defMul * 100)}%`);
             if (e.crit) effects.push(`クリティカル率 +${Math.round(e.crit * 100)}%`);
             if (e.lifesteal) effects.push(`与えたダメージの ${e.lifesteal * 100}%をHP吸収`);
@@ -1078,6 +1107,7 @@
             if (e.execute) effects.push(`攻撃時${Math.round(e.execute * 100)}%で残りHPを削って確殺`);
             if (e.capacity) effects.push(`所持数上限 +${e.capacity}`);
             if (e.multiAttack) effects.push(`1ターンに${e.multiAttack}回攻撃`);
+            if (e.name === '神速') effects.push('攻撃力50%');
             if (e.range) effects.push(`攻撃射程 +${e.range}マス`);
             if (e.trapChance) effects.push(`罠発動率 ${Math.round(e.trapChance * 100)}%`);
             if (e.reflect) effects.push(`受けたダメージの${Math.round(e.reflect * 100)}%を反射`);
@@ -1158,7 +1188,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '1.0';
+        const GAME_VERSION = '1.40';
 
         class Game {
             constructor() {
@@ -1284,10 +1314,33 @@
                     }, { passive: true });
                 }
 
+                const updateSoundToggle = () => {
+                    const button = document.getElementById('sound-toggle');
+                    if (button) button.innerHTML = sound.enabled ? '🔊 SE:ON' : '🔇 SE:OFF';
+                };
                 document.getElementById('sound-toggle').addEventListener('click', () => {
                     sound.enabled = !sound.enabled;
-                    document.getElementById('sound-toggle').innerHTML = sound.enabled ? 
-                        '🔊 SE:ON' : '🔇 SE:OFF';
+                    updateSoundToggle();
+                });
+                const shiftFacingButton = document.getElementById('shift-facing-toggle');
+                const updateShiftFacingButton = () => {
+                    const on = shiftFacingButton.classList.contains('is-on');
+                    shiftFacingButton.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    const indicator = shiftFacingButton.querySelector('.shift-facing-indicator');
+                    if (indicator) indicator.textContent = on ? '●' : '○';
+                };
+                shiftFacingButton.addEventListener('click', () => {
+                    shiftFacingButton.classList.toggle('is-on');
+                    updateShiftFacingButton();
+                });
+                updateShiftFacingButton();
+
+                document.getElementById('btn-options').addEventListener('click', () => document.getElementById('options-window').classList.remove('hidden'));
+                document.getElementById('options-close').addEventListener('click', () => document.getElementById('options-window').classList.add('hidden'));
+                document.getElementById('options-window').addEventListener('click', (e) => { if (e.target.id === 'options-window') e.currentTarget.classList.add('hidden'); });
+                document.getElementById('btn-options-help').addEventListener('click', () => {
+                    document.getElementById('options-window').classList.add('hidden');
+                    document.getElementById('help-window').classList.remove('hidden');
                 });
 
                 document.getElementById('story-overlay').addEventListener('click', (e) => {
@@ -1304,15 +1357,16 @@
                 document.getElementById('btn-inventory').addEventListener('click', () => this.toggleInventory());
                 document.getElementById('btn-wait-turn').addEventListener('click', () => this.turnWait());
                 document.getElementById('inv-close-btn').addEventListener('click', () => this.closeInventory());
-                document.getElementById('btn-save').addEventListener('click', () => this.openSaveSlots('save'));
-                document.getElementById('btn-load').addEventListener('click', () => this.openSaveSlots('load'));
-                document.getElementById('btn-help').addEventListener('click', () => document.getElementById('help-window').classList.remove('hidden'));
+                document.getElementById('btn-save').addEventListener('click', () => { document.getElementById('options-window').classList.add('hidden'); this.openSaveSlots('save'); });
+                document.getElementById('btn-load').addEventListener('click', () => { document.getElementById('options-window').classList.add('hidden'); this.openSaveSlots('load'); });
                 document.getElementById('help-close').addEventListener('click', () => document.getElementById('help-window').classList.add('hidden'));
                 document.getElementById('help-window').addEventListener('click', (e) => { if (e.target.id === 'help-window') e.currentTarget.classList.add('hidden'); });
                 const returnToTitle = () => {
                     const help = document.getElementById('help-window');
                     const saveMenu = document.getElementById('save-slot-menu');
                     if (help) help.classList.add('hidden');
+                    const options = document.getElementById('options-window');
+                    if (options) options.classList.add('hidden');
                     if (saveMenu) saveMenu.classList.add('hidden');
                     clearTimeout(this.deathOverlayTimer);
                     this.deathSequenceActive = false;
@@ -1323,7 +1377,7 @@
                     this.isGameOver = false;
                     this.showTitleScreen();
                 };
-                document.getElementById('help-title-btn').addEventListener('click', returnToTitle);
+                document.getElementById('options-title-btn').addEventListener('click', returnToTitle);
                 document.getElementById('save-slot-close').addEventListener('click', () => document.getElementById('save-slot-menu').classList.add('hidden'));
                 document.getElementById('btn-reset-highscore').addEventListener('click', () => {
                     if (!window.confirm('ハイスコアをリセットしますか？')) return;
@@ -1410,7 +1464,7 @@
                     if (!btn) return;
                     btn.addEventListener('click', () => {
                         sound.init();
-                        const faceOnly = document.getElementById('shift-facing-toggle').checked;
+                        const faceOnly = document.getElementById('shift-facing-toggle').classList.contains('is-on');
                         this.handleDirectionInput(dir, faceOnly);
                     });
                 };
@@ -1581,7 +1635,7 @@
                         return;
                     }
 
-                    const shift = e.shiftKey || document.getElementById('shift-facing-toggle').checked;
+                    const shift = e.shiftKey || document.getElementById('shift-facing-toggle').classList.contains('is-on');
                     sound.init();
 
                     switch (e.key) {
@@ -2686,6 +2740,26 @@
                         ctx.textAlign='center'; ctx.textBaseline='middle';
                         ctx.shadowColor='#000'; ctx.shadowOffsetX=2; ctx.shadowOffsetY=2;
                         ctx.fillText(`+${e.amount}`, px, py - 18 - rise);
+                    } else if (e.type === 'heartHeal') {
+                        const p2 = Math.min(1, e.timer / (e.animationDuration || 800));
+                        const rise = p2 * 30;
+                        const scale = 0.75 + Math.sin(p2 * Math.PI) * 0.35;
+                        ctx.save();
+                        ctx.globalAlpha = 1 - Math.max(0, (e.timer - 650) / 450);
+                        ctx.translate(px, py - 20 - rise);
+                        ctx.scale(scale, scale);
+                        ctx.fillStyle = '#fb7185';
+                        ctx.beginPath();
+                        ctx.moveTo(0, 8);
+                        ctx.bezierCurveTo(-3, 5, -11, 1, -11, -5);
+                        ctx.bezierCurveTo(-11, -10, -5, -12, 0, -7);
+                        ctx.bezierCurveTo(5, -12, 11, -10, 11, -5);
+                        ctx.bezierCurveTo(11, 1, 3, 5, 0, 8);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffe4e6';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.restore();
                     } else if (e.type === 'miss') {
                         const animDuration = e.animationDuration || 500;
                         const animProgress = Math.min(1, e.timer / animDuration);
@@ -3177,6 +3251,10 @@
                 this.addEffect({ type:'heal', x, y, amount, duration:1200, animationDuration:600 });
             }
 
+            addHeartHealEffect(x, y) {
+                this.addEffect({ type:'heartHeal', x, y, duration:1100, animationDuration:800 });
+            }
+
             addThrowEffect(x0, y0, x1, y1, item, hit = false) {
                 this.addEffect({
                     type: 'throw', x0, y0, x1, y1, item,
@@ -3292,6 +3370,19 @@
                             if (actualHeal > 0) { this.addHealNumber(this.player.x*TILE_SIZE+16, this.player.y*TILE_SIZE+16, actualHeal); this.log(`🩸 吸血！ HPが${actualHeal}回復した。`, 'text-rose-300 font-bold'); }
                         }
                     }
+                    if (this.player.weapon?.id === 'nico_stick') {
+                        const heal = Math.max(0, Math.floor(dmg * 0.20));
+                        if (heal > 0) {
+                            const oldHp = this.player.hp;
+                            this.player.hp = Math.min(this.getPlayerMaxHp(), this.player.hp + heal);
+                            const actualHeal = this.player.hp - oldHp;
+                            if (actualHeal > 0) {
+                                this.addHealNumber(this.player.x*TILE_SIZE+16, this.player.y*TILE_SIZE+16, actualHeal);
+                                this.addHeartHealEffect(this.player.x*TILE_SIZE+16, this.player.y*TILE_SIZE+16);
+                                this.log(`💗 nicoスティックの不思議な力！ HPが${actualHeal}回復した。`, 'text-pink-300 font-bold');
+                            }
+                        }
+                    }
                     enemy.hitTimer = 360;
                     enemy.hitDir = dir;
                     this.addHitEffect(hitX, hitY, '#ffffff', dmg, crit);
@@ -3342,6 +3433,19 @@
                     if (lifesteal > 0) {
                         const heal = Math.max(0, Math.floor(dmg * lifesteal));
                         if (heal > 0) { const oldHp=this.player.hp; this.player.hp = Math.min(this.getPlayerMaxHp(), this.player.hp + heal); this.addHealNumber(this.player.x*TILE_SIZE+16, this.player.y*TILE_SIZE+16, this.player.hp-oldHp); }
+                    }
+                    if (this.player.weapon?.id === 'nico_stick') {
+                        const heal = Math.max(0, Math.floor(dmg * 0.20));
+                        if (heal > 0) {
+                            const oldHp = this.player.hp;
+                            this.player.hp = Math.min(this.getPlayerMaxHp(), this.player.hp + heal);
+                            const actualHeal = this.player.hp - oldHp;
+                            if (actualHeal > 0) {
+                                this.addHealNumber(this.player.x*TILE_SIZE+16, this.player.y*TILE_SIZE+16, actualHeal);
+                                this.addHeartHealEffect(this.player.x*TILE_SIZE+16, this.player.y*TILE_SIZE+16);
+                                this.log(`💗 nicoスティックの不思議な力！ HPが${actualHeal}回復した。`, 'text-pink-300 font-bold');
+                            }
+                        }
                     }
                     this.boss.hitTimer = 400;
                     this.boss.hitDir = dir;
@@ -6286,7 +6390,18 @@
                     if(ce==='吸血'){r(3,-1,2,5,'#7f1d1d');r(-5,2,2,4,'#991b1b');}
                     if(ce==='痛み返し'){ctx.strokeStyle='#ffffff';ctx.lineWidth=1;ctx.strokeRect(-5,-5,10,10);}
                 }else if(item.type==='WEAPON'){
-                    if(item.id==='stick'){
+                    if(item.id==='nico_stick'){
+                        // nicoスティック：銀色のスティック先端にハート型宝石＋左右一対の翼。
+                        r(-2,9,4,3,'#475569');
+                        r(-1,-8,2,18,'#e2e8f0');
+                        r(-2,-7,4,2,'#ffffff');
+                        r(-1,2,2,7,'#94a3b8');
+                        poly([[-1,-12],[0,-15],[3,-12],[4,-9],[0,-6],[-4,-9],[-3,-12]],'#fb7185');
+                        r(-1,-12,2,2,'#ffe4e6');
+                        poly([[-3,-10],[-10,-13],[-12,-9],[-7,-7],[-3,-7]],'#f8fafc');
+                        poly([[3,-10],[10,-13],[12,-9],[7,-7],[3,-7]],'#f8fafc');
+                        r(-9,-11,4,2,'#cbd5e1'); r(5,-11,4,2,'#cbd5e1');
+                    }else if(item.id==='stick'){
                         poly([[-3,10],[-2,-10],[1,-12],[3,-9],[2,10]],'#713f12');r(-1,-8,2,16,'#b45309');r(-2,-6,2,3,'#d97706');r(0,3,2,5,'#854d0e');
                     }else if(item.id==='bat'){
                         poly([[-3,10],[-2,2],[-4,-7],[-2,-11],[4,-11],[5,-7],[3,2],[2,10]],'#713f12');r(-2,-9,5,2,'#a16207');r(-3,-5,5,3,'#92400e');r(3,-7,5,2,'#e5e7eb');r(-7,-3,5,2,'#e5e7eb');r(2,0,5,2,'#cbd5e1');r(-2,7,4,2,'#451a03');
