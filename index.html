@@ -92,7 +92,7 @@
         #inventory-list > div { font-size: 1rem !important; min-height: 48px; }
         #inventory-list > div p { font-size: .85rem !important; line-height: 1.45; }
         #game-log-overlay { font-size: 18px !important; line-height: 1.42 !important; }
-        #game-log-overlay { max-height: 165px; overflow: hidden; pointer-events: auto; bottom: 8px !important; left: 8px !important; right: auto; padding: 2px 0; max-width: min(58%, 720px); background: transparent !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; box-sizing: border-box; touch-action: pan-y; }
+        #game-log-overlay { max-height: 165px; overflow: hidden; display:flex; flex-direction:column; justify-content:flex-end; pointer-events: auto; bottom: 8px !important; left: 8px !important; right: auto; padding: 2px 0; max-width: min(58%, 720px); background: transparent !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; box-sizing: border-box; touch-action: pan-y; }
         #game-log-overlay .log-line { transition: opacity 120ms ease, transform 120ms ease; }
         #game-log-overlay.log-hover { cursor: ns-resize; }
         #direct-status-overlay { font-size: 1.05rem; }
@@ -352,6 +352,150 @@
             #fall-caption { bottom: 15vh !important; }
         }
 
+
+        /* ===== スマホ操作UIの最終微調整 ===== */
+        @media (max-width: 900px) {
+            #direct-controls-overlay {
+                bottom: calc(max(8px, env(safe-area-inset-bottom)) + 20px) !important;
+            }
+            #game-log-overlay {
+                bottom: calc(max(8px, env(safe-area-inset-bottom)) + 20px) !important;
+                display:flex !important;
+                flex-direction:column !important;
+                justify-content:flex-end !important;
+            }
+            #direct-controls-overlay .grid.w-36,
+            #direct-controls-overlay .grid.sm\:w-44 {
+                width: 154px !important;
+            }
+            #direct-controls-overlay .grid.w-36 > button,
+            #direct-controls-overlay .grid.sm\:w-44 > button {
+                padding-top: 11px !important;
+                padding-bottom: 11px !important;
+            }
+            #direct-controls-overlay > div:first-child,
+            #direct-controls-overlay > div:first-child > button,
+            #direct-controls-overlay > div:nth-of-type(2) {
+                width: 154px !important;
+            }
+            #direct-controls-overlay #btn-wait-turn,
+            #direct-controls-overlay #btn-inventory {
+                min-height: 46px !important;
+                padding-top: 11px !important;
+                padding-bottom: 11px !important;
+            }
+        }
+
+        /* ===== D-Pad 最終固定：3×3を必ず正方形グリッドで描画 ===== */
+        #direct-controls-overlay > .grid.grid-cols-3 {
+            width: 154px !important;
+            height: 154px !important;
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            grid-template-rows: repeat(3, 1fr) !important;
+            gap: 3px !important;
+            padding: 3px !important;
+            box-sizing: border-box !important;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > button {
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-family: Arial, Helvetica, sans-serif !important;
+            font-size: 26px !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+            font-variant: normal !important;
+            text-align: center !important;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > #btn-center {
+            font-family: 'DotGothic16', monospace !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+        }
+        @media (orientation: landscape) and (max-width: 900px) {
+            #direct-controls-overlay > .grid.grid-cols-3 {
+                width: 138px !important;
+                height: 138px !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 > button { font-size: 23px !important; }
+            #direct-controls-overlay > .grid.grid-cols-3 > #btn-center { font-size: 12px !important; }
+        }
+        @media (max-width: 420px) and (orientation: portrait) {
+            #direct-controls-overlay > .grid.grid-cols-3 {
+                width: 132px !important;
+                height: 132px !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 > button { font-size: 22px !important; }
+        }
+        /* 右側の縦ボタンもD-Padと同じ幅に固定し、右端だけ横長にならないようにする。 */
+        #direct-controls-overlay > .flex.flex-col.items-stretch {
+            width: 154px !important;
+        }
+        #direct-controls-overlay > .flex.flex-col.items-stretch > button {
+            width: 154px !important;
+            min-width: 154px !important;
+            max-width: 154px !important;
+        }
+        @media (orientation: landscape) and (max-width: 900px) {
+            #direct-controls-overlay > .flex.flex-col.items-stretch { width: 138px !important; }
+            #direct-controls-overlay > .flex.flex-col.items-stretch > button { width: 138px !important; min-width:138px !important; max-width:138px !important; }
+        }
+        @media (max-width: 420px) and (orientation: portrait) {
+            #direct-controls-overlay > .flex.flex-col.items-stretch { width: 132px !important; }
+            #direct-controls-overlay > .flex.flex-col.items-stretch > button { width:132px !important; min-width:132px !important; max-width:132px !important; }
+        }
+
+        /* ===== 今日分統合：横向きスマホでもタイトル～操作UIを画面内に収める ===== */
+        @media (orientation: landscape) and (max-width: 900px) {
+            html, body { height: 100dvh !important; min-height: 100dvh !important; }
+            body { padding: 0 !important; overflow: hidden !important; }
+            .flex-1.flex.flex-row { min-height: 0 !important; height: 100dvh !important; }
+            #game-container { min-height: 0 !important; height: 100% !important; overflow: hidden !important; }
+
+            #title-screen {
+                overflow: hidden !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: max(4px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
+            }
+            #title-screen .title-core {
+                width: min(94vw, 900px) !important;
+                gap: clamp(7px, 2.2vh, 18px) !important;
+                padding: 1vh 1vw !important;
+                transform-origin: center center !important;
+            }
+            #title-screen .title-ruins { height: 32% !important; }
+
+            #direct-controls-overlay {
+                bottom: max(6px, env(safe-area-inset-bottom)) !important;
+                right: max(6px, env(safe-area-inset-right)) !important;
+                max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8px) !important;
+            }
+            #game-log-overlay {
+                bottom: max(6px, env(safe-area-inset-bottom)) !important;
+                left: max(6px, env(safe-area-inset-left)) !important;
+                max-height: 24dvh !important;
+            }
+        }
+        @media (orientation: landscape) and (max-width: 900px) and (max-height: 430px) {
+            #title-screen .title-core {
+                transform: scale(.82) !important;
+                gap: 5px !important;
+                padding: 0 !important;
+            }
+            #title-screen .title-logo { font-size: clamp(24px, 6.2vw, 48px) !important; }
+            #title-screen .title-highscore-panel { margin: 4px auto !important; padding: 4px 10px 5px !important; }
+            #title-screen .title-menu { gap: 6px !important; }
+            #title-screen .title-menu button { padding-top: 6px !important; padding-bottom: 6px !important; }
+        }
+
 </style>
 </head>
 <body class="h-screen w-screen flex flex-col p-1.5 sm:p-2 gap-1.5 max-h-screen overflow-hidden">
@@ -435,22 +579,7 @@
             <!-- Direct Overlay Control Panel (Bottom-Right) -->
             <div id="direct-controls-overlay" class="absolute bottom-2 right-2 z-10 flex flex-col items-end gap-1.5 select-none">
                 
-                <!-- Quick Action Buttons -->
-                <div class="flex flex-col items-stretch w-36 sm:w-44 gap-1">
-                    <button id="btn-inventory" class="btn-sfc px-2 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-amber-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-bag-shopping"></i> バッグ (X)
-                    </button>
-                    <button id="btn-wait-turn" class="btn-sfc px-2 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-cyan-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-hourglass-half"></i> 足踏み (Space)
-                    </button>
-                </div>
-
-                <div class="flex items-center justify-end gap-1 text-[11px] text-slate-200 bg-black/60 px-2 py-1 rounded backdrop-blur-sm w-full">
-                    <label class="flex items-center justify-center gap-1 cursor-pointer w-full text-center">
-                        <input type="checkbox" id="shift-facing-toggle" class="accent-amber-500 w-3.5 h-3.5"> 向き変更 (Shift)
-                    </label>
-                </div>
-
+                <!-- 移動キー -->
                 <!-- Floating D-Pad -->
                 <div class="grid grid-cols-3 gap-1 w-36 sm:w-44 bg-slate-950/60 p-1 rounded-lg backdrop-blur-sm border border-slate-700/50 shadow-xl">
                     <button id="btn-nw" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↖</button>
@@ -464,6 +593,22 @@
                     <button id="btn-sw" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↙</button>
                     <button id="btn-s" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↓</button>
                     <button id="btn-se" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↘</button>
+                </div>
+
+                <!-- 足踏みは移動キーの直下。バッグはその下。 -->
+                <div class="flex flex-col items-stretch w-36 sm:w-44 gap-1">
+                    <button id="btn-wait-turn" class="btn-sfc px-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-cyan-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-hourglass-half"></i> 足踏み (Space)
+                    </button>
+                    <button id="btn-inventory" class="btn-sfc px-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-amber-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-bag-shopping"></i> バッグ (X)
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-end gap-1 text-[11px] text-slate-200 bg-black/60 px-2 py-1 rounded backdrop-blur-sm w-full">
+                    <label class="flex items-center justify-center gap-1 cursor-pointer w-full text-center">
+                        <input type="checkbox" id="shift-facing-toggle" class="accent-amber-500 w-3.5 h-3.5"> 向き変更 (Shift)
+                    </label>
                 </div>
 
             </div>
@@ -511,7 +656,7 @@
             </div>
 
             <!-- 3-slot Save Menu -->
-            <div id="save-slot-menu" class="hidden absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div id="save-slot-menu" class="hidden absolute inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
                 <div class="sfc-window w-full max-w-xl p-4">
                     <div class="flex justify-between items-center mb-3"><h3 id="save-slot-title" class="text-amber-300 text-lg font-bold">セーブデータ</h3><button id="save-slot-close" class="btn-sfc px-3 py-1 text-slate-300 rounded">閉じる</button></div>
                     <div id="auto-save-panel" class="sfc-window p-3 border-violet-400/70 bg-violet-950/30">
@@ -529,7 +674,7 @@
             </div>
 
             <!-- Inventory Modal -->
-            <div id="inventory-modal" class="hidden absolute bg-slate-950/95 border-2 border-slate-600 rounded p-3 z-20 flex flex-col gap-2 shadow-2xl">
+            <div id="inventory-modal" class="hidden absolute bg-slate-950/95 border-2 border-slate-600 rounded p-3 z-[100] flex flex-col gap-2 shadow-2xl">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-1.5">
                     <h3 class="text-amber-300 font-bold text-xs sm:text-sm flex items-center gap-1.5">
                         <i class="fa-solid fa-bag-shopping"></i> nicoのバッグ <span class="text-sky-300 ml-1" id="inv-capacity-inline">0/12</span>
@@ -546,7 +691,7 @@
             </div>
 
             <!-- Item Action Submenu -->
-            <div id="item-action-menu" class="hidden absolute z-30 sfc-window p-1.5 flex flex-col gap-1 w-32 text-xs shadow-2xl">
+            <div id="item-action-menu" class="hidden absolute z-[120] sfc-window p-1.5 flex flex-col gap-1 w-32 text-xs shadow-2xl">
                 <button id="act-use" class="btn-sfc p-1.5 text-left text-green-300 rounded hover:brightness-125"><i class="fa-solid fa-play mr-1"></i> 使う/装備</button>
                 <button id="act-pickup" class="btn-sfc p-1.5 text-left text-fuchsia-300 rounded hover:brightness-125 hidden"><i class="fa-solid fa-hand mr-1"></i> 拾う</button>
                 <button id="act-swap" class="btn-sfc p-1.5 text-left text-amber-300 rounded hover:brightness-125 hidden"><i class="fa-solid fa-right-left mr-1"></i> 入れ替え</button>
@@ -558,13 +703,13 @@
                 <button id="act-cancel" class="btn-sfc p-1.5 text-left text-slate-400 rounded hover:brightness-125"><i class="fa-solid fa-xmark mr-1"></i> やめる</button>
             </div>
 
-            <div id="enchant-target-menu" class="hidden absolute z-40 sfc-window p-2 flex flex-col gap-1.5 shadow-2xl">
+            <div id="enchant-target-menu" class="hidden absolute z-[120] sfc-window p-2 flex flex-col gap-1.5 shadow-2xl">
                 <div class="text-cyan-300 font-bold border-b border-slate-700 pb-1">エンチャント先を選択</div>
                 <div id="enchant-target-content" class="flex flex-col gap-1.5"></div>
                 <button id="enchant-cancel" class="btn-sfc p-1.5 text-left text-slate-400 rounded hover:brightness-125">やめる</button>
             </div>
 
-            <div id="synthesis-target-menu" class="hidden absolute z-40 sfc-window p-2 flex flex-col gap-1.5 shadow-2xl">
+            <div id="synthesis-target-menu" class="hidden absolute z-[120] sfc-window p-2 flex flex-col gap-1.5 shadow-2xl">
                 <div class="text-cyan-300 font-bold border-b border-slate-700 pb-1">合成先を選択</div>
                 <div id="synthesis-source-label" class="text-amber-200 text-xs"></div>
                 <div id="synthesis-target-content" class="flex flex-col gap-1.5 max-h-52 overflow-y-auto"></div>
@@ -572,7 +717,7 @@
             </div>
 
             <!-- Help Window -->
-            <div id="help-window" class="hidden absolute inset-0 z-45 bg-black/65 flex items-center justify-center p-3 sm:p-6">
+            <div id="help-window" class="hidden absolute inset-0 z-[100] bg-black/65 flex items-center justify-center p-3 sm:p-6">
                 <div class="sfc-window w-full max-w-2xl max-h-[88vh] overflow-y-auto p-4 sm:p-5 shadow-2xl">
                     <div class="flex items-center justify-between gap-3 mb-3 pb-2 border-b border-slate-700">
                         <h3 class="text-amber-300 text-lg sm:text-xl font-bold"><i class="fa-solid fa-circle-question"></i> 操作マニュアル</h3>
@@ -805,24 +950,24 @@
 
         // 全10種類の通常敵 ＋ ボスデータベース
         const ENEMY_SPECIES = [
-            { id: 'slime', name: '地獄スライム', color: '#a855f7', hp: 24, maxHp: 24, atk: 5, def: 0, exp: 6 },
-            { id: 'bat', name: 'スカルコウモリ', color: '#38bdf8', hp: 32, maxHp: 32, atk: 12, def: 2, exp: 9 },
-            { id: 'orc', name: 'オーク', color: '#92400e', hp: 44, maxHp: 44, atk: 16, def: 4, exp: 13 },
-            { id: 'zombie', name: 'ゾンビ', color: '#4d7c0f', hp: 56, maxHp: 56, atk: 20, def: 4, exp: 18 },
-            { id: 'imp', name: 'スカルナイト', color: '#e2e8f0', hp: 70, maxHp: 70, atk: 26, def: 6, exp: 24 },
-            { id: 'petit_demon', name: 'プチデーモン', color: '#ec4899', hp: 88, maxHp: 88, atk: 32, def: 8, exp: 32 },
-            { id: 'demon', name: 'ヘルデーモン', color: '#ef4444', hp: 110, maxHp: 110, atk: 38, def: 10, exp: 42 },
-            { id: 'dullahan', name: 'デュラハン', color: '#6366f1', hp: 136, maxHp: 136, atk: 46, def: 12, exp: 55 },
-            { id: 'abyss_knight', name: '深淵騎士', color: '#7e22ce', hp: 164, maxHp: 164, atk: 54, def: 14, exp: 70 },
-            { id: 'judger', name: '聖なる審判者', color: '#facc15', hp: 196, maxHp: 196, atk: 62, def: 18, exp: 90 },
-            { id: 'meatball', name: '肉だるま小僧', color: '#f97316', hp: 40, maxHp: 40, atk: 0, def: 8, exp: 45, moveInterval: 2, suicideRadius: 3, suicideDamageRate: 0.30, suicide: true },
-            { id: 'yasuo', name: '番犬やすお', color: '#b9783c', hp: 3, maxHp: 3, atk: 20, def: 999, exp: 512, flee: true }
+            { id: 'slime', name: '地獄スライム', color: '#a855f7', hp: 24, maxHp: 24, atk: 5, def: 0, exp: 8 },
+            { id: 'bat', name: 'スカルコウモリ', color: '#38bdf8', hp: 32, maxHp: 32, atk: 12, def: 2, exp: 12 },
+            { id: 'orc', name: 'オーク', color: '#92400e', hp: 44, maxHp: 44, atk: 16, def: 4, exp: 17 },
+            { id: 'zombie', name: 'ゾンビ', color: '#4d7c0f', hp: 56, maxHp: 56, atk: 20, def: 4, exp: 23 },
+            { id: 'imp', name: 'スカルナイト', color: '#e2e8f0', hp: 70, maxHp: 70, atk: 26, def: 6, exp: 30 },
+            { id: 'petit_demon', name: 'プチデーモン', color: '#ec4899', hp: 88, maxHp: 88, atk: 32, def: 8, exp: 40 },
+            { id: 'demon', name: 'ヘルデーモン', color: '#ef4444', hp: 110, maxHp: 110, atk: 38, def: 10, exp: 52 },
+            { id: 'dullahan', name: 'デュラハン', color: '#6366f1', hp: 136, maxHp: 136, atk: 46, def: 12, exp: 68 },
+            { id: 'abyss_knight', name: '深淵騎士', color: '#7e22ce', hp: 164, maxHp: 164, atk: 54, def: 14, exp: 86 },
+            { id: 'judger', name: '聖なる審判者', color: '#facc15', hp: 196, maxHp: 196, atk: 62, def: 18, exp: 110 },
+            { id: 'meatball', name: '肉だるま小僧', color: '#f97316', hp: 40, maxHp: 40, atk: 0, def: 8, exp: 70, moveInterval: 2, suicideRadius: 3, suicideDamageRate: 0.30, suicide: true },
+            { id: 'yasuo', name: '番犬やすお', color: '#b9783c', hp: 3, maxHp: 3, atk: 20, def: 999, exp: 55, flee: true, suicide: false, moveSteps: 2 }
         ];
 
         // 特殊敵：B7F～B1Fのみ出現。通常敵プールとは分離して出現率を管理する。
         const JET_BABAA_SPEC = {
-            id: 'jet_babaa', name: 'ジェットババァ', color: '#f5f5f4', hp: 72, maxHp: 72,
-            atk: 32, def: 4, exp: 38, moveSteps: 3, multiAttack: 2, corridorRunner: true
+            id: 'jet_babaa', name: 'ジェットばばぁ', color: '#f5f5f4', hp: 72, maxHp: 72,
+            atk: 32, def: 4, exp: 128, moveSteps: 3, multiAttack: 2, corridorRunner: true
         };
 
         const WEAPON_ITEMS = [
@@ -1022,6 +1167,10 @@
                 this.combatSequenceBusy = false;
                 // 階段移動中は、暗転～新フロア表示完了まで一切のプレイヤー入力を受け付けない。
                 this.floorTransitionBusy = false;
+                // 新しい階層へ到着した直後は、開始部屋が落ち着くまで自然スポーンを一時停止する。
+                this.spawnGraceTurns = 0;
+                // 足元装備の「入れ替え」で、バッグから交換対象を選択中かどうか。
+                this.swapGroundMode = false;
                 this.logScrollOffset = 0;
                 this.logHover = false;
 
@@ -1143,7 +1292,7 @@
                     if (this.selectedInvIndex === 'ground') this.useGroundItem(); else if (this.selectedInvIndex !== null) this.useItem(this.selectedInvIndex);
                 });
                 document.getElementById('act-pickup').addEventListener('click', () => { this.pickupGroundItem(); });
-                document.getElementById('act-swap').addEventListener('click', () => { this.swapGroundEquipment(); });
+                document.getElementById('act-swap').addEventListener('click', () => { this.openGroundSwapSelection(); });
                 document.getElementById('act-throw').addEventListener('click', () => {
                     if (this.selectedInvIndex === 'ground') this.throwGroundItem(); else if (this.selectedInvIndex !== null) this.throwItem(this.selectedInvIndex);
                 });
@@ -1228,12 +1377,6 @@
 
                 window.addEventListener('keydown', (e) => {
                     if (this.isGameOver) return;
-                    // 階層移動中はキーボード入力を最優先で遮断。
-                    // キーリピートや遅れて届いた入力が、新フロア開始直後の1歩になるのを防ぐ。
-                    if (this.floorTransitionBusy) {
-                        e.preventDefault();
-                        return;
-                    }
 
                     if (e.key === 'PageUp' || e.key === 'PageDown') {
                         if (true) {
@@ -1671,6 +1814,9 @@
                 this.turn = 0;
                 this.isGameOver = false;
                 this.hungerWarningShown = false;
+                // プロローグ終了直後のB10Fは、最初の数ターンだけ自然スポーンを止める。
+                this.spawnGraceTurns = 8;
+                this.swapGroundMode = false;
 
                 this.player.hp = 30;
                 this.player.maxHp = 30;
@@ -1711,6 +1857,8 @@
                 this.log('★ 地獄最底層 B10F に墜落。天界を目指して駆け登れ！', 'text-amber-300 font-bold');
 
                 this.generateFloor();
+                // プロローグ直後の状態を一度オートセーブ。
+                this.saveAutoGame();
                 this.updateUI();
             }
 
@@ -1743,211 +1891,156 @@
                     this.spawnEntities(); this.updateFieldOfView(); return;
                 }
 
-                // B1F～B10Fは「小・中・大」の3サイズからランダムに選ぶ。
-                // 目安は歩ける床マスで約50 / 100 / 150マス。
-                // 以前の「部屋が大きすぎて空間が余る」生成をやめ、部屋＋細い接続路を中心にする。
-                const mapProfiles = [
-                    { id:'small',  label:'小', target:50,  minRooms:2, maxRooms:4, minSize:4, maxSize:7,  waterMin:1, waterMax:1, solidRatio:0.16 },
-                    { id:'medium', label:'中', target:100, minRooms:3, maxRooms:6, minSize:5, maxSize:9,  waterMin:1, waterMax:2, solidRatio:0.18 },
-                    { id:'large',  label:'大', target:150, minRooms:5, maxRooms:8, minSize:6, maxSize:11, waterMin:1, waterMax:2, solidRatio:0.20 }
+                // B1FもB2F以降と同じランダム生成。1Fへの階段は通常生成の最後の部屋に必ず置く。
+
+                const stage = 11 - this.currentFloor;
+                const targetRooms = Math.min(3 + Math.floor(stage * 0.8), 10);
+                
+                // 部屋は小・中・大の3段階から選び、フロア全体に見た目の変化を出す。
+                // 大部屋ほど湖や地形オブジェクトを置ける余白も大きくする。
+                const roomSizeBands = [
+                    { min: 5, max: 8 },
+                    { min: 8, max: 12 },
+                    { min: 12, max: 16 }
                 ];
-                const profile = mapProfiles[Math.floor(Math.random() * mapProfiles.length)];
-                this.mapSizeProfile = profile.id;
-
-                const countFloorTiles = () => {
-                    let n=0;
-                    for(let y=0;y<GRID_HEIGHT;y++) for(let x=0;x<GRID_WIDTH;x++) {
-                        if(this.map[y][x]===TILE.FLOOR || this.map[y][x]===TILE.STAIRS) n++;
-                    }
-                    return n;
-                };
-
-                const roomCenter = r => ({ x:Math.floor(r.x+r.w/2), y:Math.floor(r.y+r.h/2) });
-                // 部屋数は従来の難易度カーブを維持する。
-                // B10F=3部屋を基準に、B9F=4、B8F=5……B1F=12部屋。
-                // マップサイズは「1部屋あたりの規模」と全体の床面積の目安として別管理する。
-                const targetRoomCount = Math.max(3, 13 - this.currentFloor);
-                const roomVariance = Math.random() < 0.25 ? (Math.random() < 0.5 ? -1 : 1) : 0;
-                const roomCount = Math.max(3, targetRoomCount + roomVariance);
-                const lowerTarget = Math.floor(profile.target * 0.84);
-                const upperTarget = Math.ceil(profile.target * 1.24);
-                // 部屋数が多い階層では、部屋そのものを小さくして「部屋数の増加」を優先する。
-                // これによりB10Fの少部屋構成からB1Fの多部屋構成へ自然に変化する。
-                const roomScale = targetRoomCount >= 10 ? { min:2, max:3 }
-                    : targetRoomCount >= 8 ? { min:3, max:4 }
-                    : targetRoomCount >= 6 ? { min:3, max:5 }
-                    : { min:profile.minSize, max:profile.maxSize };
 
                 let attempts = 0;
-                while(this.rooms.length < roomCount && attempts < 900){
+                while (this.rooms.length < targetRooms && attempts < 800) {
                     attempts++;
-                    const w = Math.floor(Math.random()*(roomScale.max-roomScale.min+1))+roomScale.min;
-                    const h = Math.floor(Math.random()*(roomScale.max-roomScale.min+1))+roomScale.min;
-                    const x = Math.floor(Math.random()*(GRID_WIDTH-w-2))+1;
-                    const y = Math.floor(Math.random()*(GRID_HEIGHT-h-2))+1;
+                    const band = roomSizeBands[Math.floor(Math.random() * roomSizeBands.length)];
+                    const w = Math.floor(Math.random() * (band.max - band.min + 1)) + band.min;
+                    const h = Math.floor(Math.random() * (band.max - band.min + 1)) + band.min;
+                    const x = Math.floor(Math.random() * (GRID_WIDTH - w - 2)) + 1;
+                    const y = Math.floor(Math.random() * (GRID_HEIGHT - h - 2)) + 1;
 
-                    let overlap=false;
-                    for(const room of this.rooms){
-                        if(x < room.x+room.w+2 && x+w+2 > room.x && y < room.y+room.h+2 && y+h+2 > room.y){
-                            overlap=true; break;
+                    let overlap = false;
+                    for (const room of this.rooms) {
+                        if (x < room.x + room.w + 2 && x + w + 2 > room.x &&
+                            y < room.y + room.h + 2 && y + h + 2 > room.y) {
+                            overlap = true;
+                            break;
                         }
                     }
-                    if(overlap) continue;
 
-                    // 仮に部屋と接続路を掘って、サイズ上限を大きく超える候補は捨てる。
-                    const before = this.map.map(row=>row.slice());
-                    for(let ry=y;ry<y+h;ry++) for(let rx=x;rx<x+w;rx++) this.map[ry][rx]=TILE.FLOOR;
-                    if(this.rooms.length>0){
-                        const prev=roomCenter(this.rooms[this.rooms.length-1]);
-                        let cx=Math.floor(x+w/2), cy=Math.floor(y+h/2);
-                        let px=prev.x, py=prev.y;
-                        while(cx!==px){ this.map[cy][cx]=TILE.FLOOR; cx+=(px>cx)?1:-1; }
-                        while(cy!==py){ this.map[cy][cx]=TILE.FLOOR; cy+=(py>cy)?1:-1; }
-                    }
-                    const area=countFloorTiles();
-                    const minimumRoomAndCorridorArea = targetRoomCount * (roomScale.min * roomScale.min) + Math.max(0, targetRoomCount - 1);
-                    const allowedArea = Math.max(upperTarget, minimumRoomAndCorridorArea + 8);
-                    if(area > allowedArea && this.rooms.length>=1){
-                        this.map=before;
-                        continue;
-                    }
+                    if (!overlap) {
+                        for (let ry = y; ry < y + h; ry++) {
+                            for (let rx = x; rx < x + w; rx++) {
+                                this.map[ry][rx] = TILE.FLOOR;
+                            }
+                        }
 
-                    this.rooms.push({x,y,w,h});
-                    // 部屋上部の壁際に候補松明を置き、後で必ず壁マスへ正規化する。
-                    if(y-1>=0){
-                        this.torches.push({x,y:y-1});
-                        this.torches.push({x:x+w-1,y:y-1});
+                        if (this.rooms.length > 0) {
+                            const prev = this.rooms[this.rooms.length - 1];
+                            let cx = Math.floor(x + w / 2);
+                            let cy = Math.floor(y + h / 2);
+                            let px = Math.floor(prev.x + prev.w / 2);
+                            let py = Math.floor(prev.y + prev.h / 2);
+
+                            while (cx !== px) {
+                                this.map[cy][cx] = TILE.FLOOR;
+                                cx += (px > cx) ? 1 : -1;
+                            }
+                            while (cy !== py) {
+                                this.map[cy][cx] = TILE.FLOOR;
+                                cy += (py > cy) ? 1 : -1;
+                            }
+                        }
+
+                        this.rooms.push({ x, y, w, h });
+
+                        if (y - 1 >= 0) {
+                            this.torches.push({ x, y: y - 1 });
+                            this.torches.push({ x: x + w - 1, y: y - 1 });
+                        }
                     }
-                    // 部屋数カーブを最優先。指定部屋数に達するまでは、床面積が下限を超えても生成を続ける。
-                    if(this.rooms.length>=roomCount) break;
                 }
 
-                // 何らかの理由で部屋生成が足りなかった場合の安全なフォールバック。
-                if(this.rooms.length===0){
-                    this.rooms.push({x:2,y:2,w:6,h:6});
-                    for(let ry=2;ry<8;ry++) for(let rx=2;rx<8;rx++) this.map[ry][rx]=TILE.FLOOR;
+                if (this.rooms.length === 0) {
+                    this.rooms.push({ x: 2, y: 2, w: 10, h: 8 });
+                    for (let ry = 2; ry < 10; ry++) {
+                        for (let rx = 2; rx < 12; rx++) {
+                            this.map[ry][rx] = TILE.FLOOR;
+                        }
+                    }
                 }
 
-                const startRoom=this.rooms[0];
-                this.player.x=Math.floor(startRoom.x+startRoom.w/2);
-                this.player.y=Math.floor(startRoom.y+startRoom.h/2);
-                this.player.renderX=this.player.x*TILE_SIZE;
-                this.player.renderY=this.player.y*TILE_SIZE;
+                const startRoom = this.rooms[0];
+                this.player.x = Math.floor(startRoom.x + startRoom.w / 2);
+                this.player.y = Math.floor(startRoom.y + startRoom.h / 2);
+                this.player.renderX = this.player.x * TILE_SIZE;
+                this.player.renderY = this.player.y * TILE_SIZE;
 
-                // 階段は最後の部屋の中心に固定。湖や障害物はこの後に置き、階段を避ける。
-                if(this.currentFloor>0){
-                    const lastRoom=this.rooms[this.rooms.length-1];
-                    const stairsX=Math.floor(lastRoom.x+lastRoom.w/2);
-                    const stairsY=Math.floor(lastRoom.y+lastRoom.h/2);
-                    this.map[stairsY][stairsX]=TILE.STAIRS;
+                // まず地形オブジェクトを配置。階段はその後、最終部屋の中央固定を避けて置く。
+                // 通路や部屋の入口を塞がないよう、部屋の内側から候補を選ぶ。
+                const totalRoomArea = this.rooms.reduce((sum, r) => sum + r.w * r.h, 0);
+                const obstacleCount = Math.min(42, Math.max(16, Math.floor(totalRoomArea / 24)));
+                this.placeStageObstacles(obstacleCount);
+                this.placeStageLakes();
+
+                if (this.currentFloor > 0) {
+                    const lastRoom = this.rooms[this.rooms.length - 1];
+                    const candidates = [];
+                    for (let y = lastRoom.y + 1; y < lastRoom.y + lastRoom.h - 1; y++) {
+                        for (let x = lastRoom.x + 1; x < lastRoom.x + lastRoom.w - 1; x++) {
+                            if (this.map[y]?.[x] !== TILE.FLOOR) continue;
+                            if (this.isOccupied(x,y)) continue;
+                            // 最終部屋の入口付近・壁際を避け、中央一点固定にならないよう重みをつける。
+                            const edge = Math.min(x-lastRoom.x, lastRoom.x+lastRoom.w-1-x, y-lastRoom.y, lastRoom.y+lastRoom.h-1-y);
+                            const centerDist = Math.abs(x-(lastRoom.x+lastRoom.w/2)) + Math.abs(y-(lastRoom.y+lastRoom.h/2));
+                            if (edge < 1) continue;
+                            candidates.push({x,y,score: centerDist + Math.random()*8 + edge*0.15});
+                        }
+                    }
+                    candidates.sort((a,b)=>b.score-a.score);
+                    const stair = candidates[0] || {x:lastRoom.x+Math.floor(lastRoom.w/2), y:lastRoom.y+Math.floor(lastRoom.h/2)};
+                    this.map[stair.y][stair.x] = TILE.STAIRS;
+                    this.stairsPosition = {x:stair.x,y:stair.y};
                 }
-
-                // まず「湖」を作る。湖は部屋の内部にのみ生成し、通路には置かない。
-                // 仮配置後に床ネットワークを検査するので、階段までの道を分断しない。
-                const lakeCount = profile.waterMin + Math.floor(Math.random()*(profile.waterMax-profile.waterMin+1));
-                this.placeWaterLakes(lakeCount, profile.target);
-
-                // 湖のあとに固形障害物を配置。水マスは候補から除外するため、湖の中に柱・石などは入らない。
-                const solidCount = Math.max(6, Math.round(profile.target * profile.solidRatio));
-                this.placeStageObstacles(solidCount);
 
                 this.normalizeTorchPositions();
                 this.spawnEntities();
                 this.updateFieldOfView();
             }
 
-            placeWaterLakes(count, targetArea) {
-                if(this.currentFloor===0 || !this.rooms.length) return;
-                let placedLakes=0, attempts=0;
-                const lakeMin = targetArea<=60 ? 6 : targetArea<=120 ? 9 : 12;
-                const lakeMax = targetArea<=60 ? 10 : targetArea<=120 ? 17 : 24;
-
-                while(placedLakes<count && attempts<500){
-                    attempts++;
-                    const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
-                    // 湖は部屋の縁から1マス以上離し、出入口・通路に食い込まないようにする。
-                    if(room.w<6 || room.h<6) continue;
-
-                    const seedX=Math.floor(room.x+2+Math.random()*Math.max(1,room.w-4));
-                    const seedY=Math.floor(room.y+2+Math.random()*Math.max(1,room.h-4));
-                    if(this.map[seedY]?.[seedX]!==TILE.FLOOR) continue;
-                    if(Math.abs(seedX-this.player.x)+Math.abs(seedY-this.player.y)<5) continue;
-
-                    const wanted=Math.floor(Math.random()*(lakeMax-lakeMin+1))+lakeMin;
-                    const cells=[{x:seedX,y:seedY}];
-                    const used=new Set([`${seedX},${seedY}`]);
-                    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-
-                    for(let n=1;n<wanted;n++){
-                        const base=cells[Math.floor(Math.random()*cells.length)];
-                        const shuffled=dirs.slice().sort(()=>Math.random()-0.5);
-                        let added=false;
-                        for(const [dx,dy] of shuffled){
-                            const x=base.x+dx, y=base.y+dy;
-                            const key=`${x},${y}`;
-                            if(x<=room.x || x>=room.x+room.w-1 || y<=room.y || y>=room.y+room.h-1) continue;
-                            if(used.has(key) || this.map[y]?.[x]!==TILE.FLOOR) continue;
-                            if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<5) continue;
-                            cells.push({x,y}); used.add(key); added=true; break;
-                        }
-                        if(!added) break;
-                    }
-                    if(cells.length<Math.max(5,Math.floor(wanted*0.55))) continue;
-
-                    for(const c of cells) this.map[c.y][c.x]=TILE.OBSTACLE;
-                    if(!this.isFloorNetworkConnected()){
-                        for(const c of cells) this.map[c.y][c.x]=TILE.FLOOR;
-                        continue;
-                    }
-
-                    for(const c of cells) this.obstacles.push({x:c.x,y:c.y,kind:'water'});
-                    placedLakes++;
-                }
-            }
-
             normalizeTorchPositions() {
                 if (!this.torches || !this.map) return;
-                const dirs = [
-                    { x: 0, y: -1, name: 'N' },
-                    { x: 1, y: 0, name: 'E' },
-                    { x: 0, y: 1, name: 'S' },
-                    { x: -1, y: 0, name: 'W' }
-                ];
+                const dirs = [DIRECTION.N, DIRECTION.E, DIRECTION.S, DIRECTION.W];
                 const isFloorLike = (x, y) => {
                     const t = this.map[y]?.[x];
                     return t === TILE.FLOOR || t === TILE.STAIRS;
                 };
-                // 松明は「壁マスそのもの」に置き、隣接する床方向を向きとして保存する。
-                // これで通路の床に松明が残ったり、壁から浮いた向きで描画されたりしない。
-                const getMount = (x, y) => {
-                    if (this.map[y]?.[x] !== TILE.WALL) return null;
-                    const d = dirs.find(dir => isFloorLike(x + dir.x, y + dir.y));
-                    return d ? d.name : null;
+                const getWallSide = (x,y) => {
+                    // side は「壁マスから見て、床がある方向」。松明の炎・金具をその方向へ向ける。
+                    if (isFloorLike(x, y-1)) return 'N';
+                    if (isFloorLike(x+1, y)) return 'E';
+                    if (isFloorLike(x, y+1)) return 'S';
+                    if (isFloorLike(x-1, y)) return 'W';
+                    return 'S';
                 };
-                const isValidWall = (x, y) => !!getMount(x, y);
+                const isValidWall = (x, y) => {
+                    return this.map[y]?.[x] === TILE.WALL && dirs.some(d => isFloorLike(x+d.x, y+d.y));
+                };
                 const used = new Set();
                 const normalized = [];
                 const add = (x, y) => {
-                    const mount = getMount(x, y);
-                    if (!mount) return false;
+                    if (!isValidWall(x, y)) return false;
                     const key = `${x},${y}`;
                     if (used.has(key)) return false;
                     used.add(key);
-                    normalized.push({ x, y, mount });
+                    normalized.push({x, y, side:getWallSide(x,y)});
                     return true;
                 };
 
-                // まず既存位置を維持できるものを採用。
                 for (const torch of this.torches) add(torch.x, torch.y);
 
                 const allWallCandidates = [];
                 for (let y = 1; y < GRID_HEIGHT - 1; y++) {
                     for (let x = 1; x < GRID_WIDTH - 1; x++) {
-                        if (isValidWall(x, y)) allWallCandidates.push({ x, y });
+                        if (isValidWall(x, y)) allWallCandidates.push({x, y});
                     }
                 }
 
-                // 不正位置は最寄りの「床に接した壁」へ移す。
+                // 通路へ入り込んだ古い松明は、元位置に近い壁へ移し、必ず壁接地状態にする。
                 for (const torch of this.torches) {
                     if (isValidWall(torch.x, torch.y)) continue;
                     let candidates = allWallCandidates.filter(c =>
@@ -1955,9 +2048,9 @@
                     );
                     if (!candidates.length) candidates = allWallCandidates.filter(c => !used.has(`${c.x},${c.y}`));
                     if (!candidates.length) continue;
-                    candidates.sort((a, b) =>
-                        (Math.abs(a.x - torch.x) + Math.abs(a.y - torch.y)) -
-                        (Math.abs(b.x - torch.x) + Math.abs(b.y - torch.y))
+                    candidates.sort((a,b) =>
+                        (Math.abs(a.x-torch.x)+Math.abs(a.y-torch.y)) -
+                        (Math.abs(b.x-torch.x)+Math.abs(b.y-torch.y))
                     );
                     add(candidates[0].x, candidates[0].y);
                 }
@@ -2007,17 +2100,18 @@
 
             placeStageObstacles(count) {
                 if(this.currentFloor===0) return;
-                // 水は placeWaterLakes() で先に配置済み。ここでは固形物だけを置く。
-                const kinds=this.currentFloor>=8?['bush','stone','stump']:this.currentFloor>=5?['rock','pillar']:['brick','column','lava'];
+                const kinds=this.currentFloor>=8?['bush','stone','stump']:this.currentFloor>=5?['rock','pillar','water']:['brick','column','lava'];
                 let placed=0, attempts=0;
 
-                // 1～4個程度の小さな塊を作り、部屋が広すぎて何もない印象にならないよう密度を上げる。
-                while(placed<count && attempts<1200){
+                // 1～4個程度をひとまとまりにして配置する。
+                // 「壁際に沿って置く」「通路の入口を塞ぐ」ことを避けるため、
+                // 部屋の外周1マスは候補から外し、配置のたびに床全体の連結性を確認する。
+                while(placed<count && attempts<900){
                     attempts++;
                     const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
                     if(room.w<5 || room.h<5) continue;
 
-                    const clusterSize=Math.min(count-placed,1+Math.floor(Math.random()*4));
+                    const clusterSize=Math.min(count-placed, 1 + Math.floor(Math.random()*4));
                     const seedX=Math.floor(room.x+1+Math.random()*Math.max(1,room.w-2));
                     const seedY=Math.floor(room.y+1+Math.random()*Math.max(1,room.h-2));
                     if(this.map[seedY]?.[seedX]!==TILE.FLOOR || this.isOccupied(seedX,seedY)) continue;
@@ -2029,15 +2123,14 @@
                     for(let n=1;n<clusterSize;n++){
                         const base=cells[Math.floor(Math.random()*cells.length)];
                         const dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
-                        const shuffled=dirs.slice().sort(()=>Math.random()-0.5);
+                        const shuffled=dirs.sort(()=>Math.random()-0.5);
                         let added=false;
                         for(const [dx,dy] of shuffled){
-                            const x=base.x+dx,y=base.y+dy,key=`${x},${y}`;
+                            const x=base.x+dx, y=base.y+dy;
+                            const key=`${x},${y}`;
                             // 部屋の外周・通路接続部から1マス以上離す。
                             if(x<=room.x || x>=room.x+room.w-1 || y<=room.y || y>=room.y+room.h-1) continue;
-                            // 湖（水）や階段は固形障害物の候補から完全に除外。
-                            if(used.has(key) || this.map[y]?.[x]!==TILE.FLOOR || this.obstacles.some(o=>o.x===x&&o.y===y&&o.kind==='water')) continue;
-                            if(this.isOccupied(x,y)) continue;
+                            if(used.has(key) || this.map[y]?.[x]!==TILE.FLOOR || this.isOccupied(x,y)) continue;
                             if(this.items.some(i=>i.x===x&&i.y===y) || this.traps.some(t=>t.x===x&&t.y===y)) continue;
                             if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<3) continue;
                             cells.push({x,y}); used.add(key); added=true; break;
@@ -2045,7 +2138,11 @@
                         if(!added) break;
                     }
 
+                    if(!cells.length) continue;
+                    // 仮配置。1マスの障害物だけでなく、連続した塊が通路を間接的に塞ぐケースも
+                    // 4方向の床連結性チェックで弾く。
                     for(const c of cells) this.map[c.y][c.x]=TILE.OBSTACLE;
+
                     if(!this.isFloorNetworkConnected()){
                         for(const c of cells) this.map[c.y][c.x]=TILE.FLOOR;
                         continue;
@@ -2055,6 +2152,50 @@
                         this.obstacles.push({x:c.x,y:c.y,kind:kinds[placed%kinds.length]});
                         placed++;
                         if(placed>=count) break;
+                    }
+                }
+            }
+
+            placeStageLakes() {
+                if(this.currentFloor < 1 || !this.rooms.length) return;
+                // 湖の大きさを部屋面積の割合で決める。大部屋ほど明確に大きくする。
+                const candidates = this.rooms.map((room,index)=>({room,index,area:room.w*room.h}))
+                    .filter(v=>v.room.w>=7&&v.room.h>=7).sort((a,b)=>b.area-a.area);
+                if(!candidates.length) return;
+                const desired=candidates.length>=4?2:1; let placed=0;
+                for(const entry of candidates){
+                    if(placed>=desired) break;
+                    const room=entry.room, baseArea=room.w*room.h;
+                    const minCells=Math.max(8,Math.floor(baseArea*0.18));
+                    const maxCells=Math.min(48,Math.max(minCells,Math.floor(baseArea*0.30)));
+                    const wanted=minCells+Math.floor(Math.random()*(maxCells-minCells+1));
+                    for(let attempt=0;attempt<120&&placed<desired;attempt++){
+                        const sx=room.x+2+Math.floor(Math.random()*Math.max(1,room.w-4));
+                        const sy=room.y+2+Math.floor(Math.random()*Math.max(1,room.h-4));
+                        if(this.map[sy]?.[sx]!==TILE.FLOOR) continue;
+                        if(Math.abs(sx-this.player.x)+Math.abs(sy-this.player.y)<5) continue;
+                        const cells=[{x:sx,y:sy}], used=new Set([`${sx},${sy}`]);
+                        const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+                        for(let i=1;i<wanted;i++){
+                            const frontier=[];
+                            for(const base of cells) for(const [dx,dy] of dirs){
+                                const x=base.x+dx,y=base.y+dy,key=`${x},${y}`;
+                                if(x<=room.x||x>=room.x+room.w-1||y<=room.y||y>=room.y+room.h-1) continue;
+                                if(used.has(key)||this.map[y]?.[x]!==TILE.FLOOR) continue;
+                                if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<5) continue;
+                                if(this.obstacles.some(o=>o.x===x&&o.y===y)||this.items.some(it=>it.x===x&&it.y===y)||this.traps.some(t=>t.x===x&&t.y===y)) continue;
+                                frontier.push({x,y});
+                            }
+                            if(!frontier.length) break;
+                            const unique=[],seen=new Set();
+                            for(const c of frontier){const key=`${c.x},${c.y}`;if(!seen.has(key)){seen.add(key);unique.push(c);}}
+                            const pick=unique[Math.floor(Math.random()*unique.length)]; cells.push(pick); used.add(`${pick.x},${pick.y}`);
+                        }
+                        if(cells.length<Math.max(8,Math.floor(wanted*0.60))) continue;
+                        for(const c of cells) this.map[c.y][c.x]=TILE.OBSTACLE;
+                        if(!this.isFloorNetworkConnected()){for(const c of cells)this.map[c.y][c.x]=TILE.FLOOR;continue;}
+                        for(const c of cells)this.obstacles.push({x:c.x,y:c.y,kind:'water'});
+                        placed++;
                     }
                 }
             }
@@ -2088,21 +2229,23 @@
             }
 
             getRandomEnemyForFloor() {
-                const unlockIndex = Math.min(ENEMY_SPECIES.length - 1, Math.max(0, 10 - this.currentFloor));
-                let floorPool = [];
+                const unlockIndex = Math.min(9, Math.max(0, 10 - this.currentFloor));
+                const floorPool = [];
                 for (let i = 0; i <= unlockIndex; i++) {
                     const species = ENEMY_SPECIES[i];
-                    const depthDiff = unlockIndex - i; 
-                    let weight = Math.max(10, 100 - (depthDiff * 30));
+                    const depthDiff = unlockIndex - i;
+                    const weight = Math.max(10, 100 - (depthDiff * 30));
                     floorPool.push({ species, weight });
                 }
 
+                // 特殊敵は通常敵プールから完全に分離し、1%/1%/2%を独立した枠として適用する。
+                const specialRoll = Math.random();
                 const meatball = ENEMY_SPECIES.find(e => e.id === 'meatball');
-                if (meatball && Math.random() < 0.01) return meatball;
                 const yasuo = ENEMY_SPECIES.find(e => e.id === 'yasuo');
-                if (yasuo && Math.random() < 0.01) return yasuo;
-                // ジェットババァはB7F～B1F限定で、通常敵の抽選とは別に2%で出現。
-                if (this.currentFloor >= 1 && this.currentFloor <= 7 && Math.random() < 0.02) return JET_BABAA_SPEC;
+                if (meatball && specialRoll < 0.01) return meatball;
+                if (yasuo && specialRoll < 0.02) return yasuo;
+                // ジェットばばぁはB7F～B1F限定で2%。
+                if (this.currentFloor >= 1 && this.currentFloor <= 7 && specialRoll < 0.04) return JET_BABAA_SPEC;
                 const totalWeight = floorPool.reduce((sum, item) => sum + item.weight, 0);
                 let rand = Math.random() * totalWeight;
                 for (const entry of floorPool) {
@@ -2118,6 +2261,12 @@
                 const maxEnemies = Math.min(12, Math.floor(this.rooms.length * 1.8));
                 if (this.enemies.length >= maxEnemies) return;
 
+                // プロローグ直後／階段で降りた直後はしばらく自然スポーンしない。
+                if ((this.spawnGraceTurns || 0) > 0) {
+                    this.spawnGraceTurns--;
+                    return;
+                }
+
                 // 18ターンごと、または毎ターン約2.5%の確率で自然スポーン発生
                 if (this.turn % 18 === 0 || Math.random() < 0.025) {
                     this.spawnNaturalEnemy();
@@ -2126,7 +2275,7 @@
 
             spawnNaturalEnemy() {
                 const selectedSpecies = this.getRandomEnemyForFloor();
-                // ジェットババァは通路上から出現させ、以後も通路を走り回る。
+                // ジェットばばぁは通路上から出現させ、以後も通路を走り回る。
                 const requireCorridor = selectedSpecies.id === 'jet_babaa';
                 // プレイヤーから6マス以上離れた空き床タイルを検索
                 const candidates = [];
@@ -2134,6 +2283,7 @@
                     for (let x = 0; x < GRID_WIDTH; x++) {
                         if (this.map[y][x] === TILE.FLOOR && !this.isOccupied(x, y)) {
                             if (requireCorridor && !this.isCorridorTile(x, y)) continue;
+                            if (this.rooms[0] && x >= this.rooms[0].x && x < this.rooms[0].x + this.rooms[0].w && y >= this.rooms[0].y && y < this.rooms[0].y + this.rooms[0].h) continue;
                             const dist = Math.abs(x - this.player.x) + Math.abs(y - this.player.y);
                             if (dist >= 6) candidates.push({ x, y });
                         }
@@ -2142,7 +2292,7 @@
                 if (candidates.length === 0 && requireCorridor) {
                     // 通路が確保できない特殊な地形では通常床へフォールバック。
                     for (let y = 0; y < GRID_HEIGHT; y++) for (let x = 0; x < GRID_WIDTH; x++) {
-                        if (this.map[y][x] === TILE.FLOOR && !this.isOccupied(x, y) && Math.abs(x-this.player.x)+Math.abs(y-this.player.y) >= 6) candidates.push({x,y});
+                        if (this.map[y][x] === TILE.FLOOR && !this.isOccupied(x, y) && !(this.rooms[0] && x >= this.rooms[0].x && x < this.rooms[0].x + this.rooms[0].w && y >= this.rooms[0].y && y < this.rooms[0].y + this.rooms[0].h) && Math.abs(x-this.player.x)+Math.abs(y-this.player.y) >= 6) candidates.push({x,y});
                     }
                 }
                 if (candidates.length === 0) return;
@@ -2198,20 +2348,26 @@
                     return;
                 }
 
+                // 階層開始時の最初の部屋には初期敵を配置しない。
+                // 階段直後に複数体が重なって即詰みになるのを防ぎ、最初の一手を保証する。
+                const startRoom = this.rooms[0];
+                const spawnRooms = this.rooms.length > 1 ? this.rooms.slice(1) : [];
                 const enemyCount = Math.floor(this.rooms.length * 1.2) + 1;
-                for (let i = 0; i < enemyCount; i++) {
-                    const room = this.rooms[Math.floor(Math.random() * this.rooms.length)];
+                let spawned = 0;
+                for (let i = 0; i < enemyCount * 4 && spawned < enemyCount; i++) {
+                    const room = spawnRooms.length ? spawnRooms[Math.floor(Math.random() * spawnRooms.length)] : null;
+                    if (!room) break;
                     const ex = Math.floor(room.x + Math.random() * room.w);
                     const ey = Math.floor(room.y + Math.random() * room.h);
-
+                    if (this.map[ey]?.[ex] !== TILE.FLOOR) continue;
                     if ((ex !== this.player.x || ey !== this.player.y) && !this.isOccupied(ex, ey)) {
                         const selectedSpecies = this.getRandomEnemyForFloor();
-
-                        this.enemies.push({ 
-                            ...selectedSpecies, 
+                        this.enemies.push({
+                            ...selectedSpecies,
                             x: ex, y: ey,
-                            renderX: ex * TILE_SIZE, renderY: ey * TILE_SIZE 
+                            renderX: ex * TILE_SIZE, renderY: ey * TILE_SIZE
                         });
+                        spawned++;
                     }
                 }
 
@@ -3036,6 +3192,17 @@
                 next();
             }
 
+            dropYasuoGoldEgg(enemy) {
+                if (!enemy || enemy.id !== 'yasuo') return;
+                // 番犬やすお撃破時は必ず倒れたマスに金の卵を置く。
+                this.items.push({
+                    id: `gold_egg_yasuo_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                    name: '金の卵', type: 'USABLE', effect: 'LEVEL_UP', val: 0,
+                    desc: 'レベルを1上げ、経験値を0にする', x: enemy.x, y: enemy.y
+                });
+                this.log('🥚 番犬やすおは金の卵を落とした！', 'text-yellow-300 font-bold');
+            }
+
             attackEnemy(enemy, onComplete = null) {
                 if (!enemy || !this.enemies.includes(enemy)) { if (onComplete) onComplete(); return; }
                 sound.playAttack();
@@ -3086,6 +3253,7 @@
                         this.addDeathEffect(hitX, hitY, enemy.color || '#ffffff');
                         this.log(`💥 ${enemy.name} を倒した！ (+${enemy.exp} EXP)`, 'text-yellow-300 font-bold');
                         this.enemies = this.enemies.filter(e => e !== enemy);
+                        this.dropYasuoGoldEgg(enemy);
                         this.gainExp(enemy.exp);
                     }
                     if (onComplete) onComplete();
@@ -3143,20 +3311,24 @@
             }
 
             gainExp(amount) {
-                this.player.exp += amount;
-                if (this.player.exp >= this.player.nextExp) {
-                    sound.playLevelUp();
-                    this.player.level++;
+                this.player.exp += Math.max(0, Number(amount) || 0);
+                // Lv12以降だけ急激に伸びる旧式の1.5倍成長を廃止し、1.30倍で緩やかに上昇。
+                // 大きなEXPを一度に得た場合は、その分だけ複数レベル上がる。
+                let leveled = false;
+                while (this.player.exp >= this.player.nextExp) {
                     this.player.exp -= this.player.nextExp;
-                    this.player.nextExp = Math.floor(this.player.nextExp * 1.5);
+                    this.player.level++;
+                    this.player.nextExp = Math.max(20, Math.floor(20 * Math.pow(1.30, this.player.level - 1)));
                     this.player.baseMaxHp = (this.player.baseMaxHp ?? this.player.maxHp ?? 30) + 15;
                     this.player.maxHp = this.getPlayerMaxHp();
                     this.player.hp = this.getPlayerMaxHp();
                     this.player.baseAtk += 3;
                     this.player.baseDef += 1;
+                    leveled = true;
                     this.log(`🎉 レベルアップ！ Lv.${this.player.level} になった！`, 'text-cyan-300 font-bold');
                     this.showActionMessage(`レベルアップ！ Lv.${this.player.level}`, '#67e8f9');
                 }
+                if (leveled) sound.playLevelUp();
             }
 
             turnWait() {
@@ -3174,7 +3346,7 @@
                 const attackers = [];
                 for (const enemy of [...this.enemies]) {
                     if ((enemy.paralyzedTurns || 0) > 0) { enemy.paralyzedTurns--; this.showActionMessage(`${enemy.name}は麻痺して動けない！`, '#a5f3fc'); continue; }
-                    if (enemy.suicide) {
+                    if (enemy.suicide && enemy.id !== 'yasuo') {
                         const d = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
                         if (d <= enemy.suicideRadius) {
                             const dmg = Math.max(1, Math.ceil(this.getPlayerMaxHp() * enemy.suicideDamageRate));
@@ -3192,6 +3364,16 @@
                     }
                     const dx = Math.abs(enemy.x - this.player.x), dy = Math.abs(enemy.y - this.player.y), dist = dx + dy;
                     const visible = this.isEnemyVisibleToPlayer(enemy);
+                    // 番犬やすおは常に逃げ腰。1ターンに2マス動き、隣接時だけ1回攻撃してから離れる。
+                    // 自爆敵の処理には絶対に入れない。
+                    if (enemy.id === 'yasuo') {
+                        if (Math.max(dx, dy) === 1 && !(dx === 1 && dy === 1 && (this.isCorridorTile(enemy.x, enemy.y) || this.isCorridorTile(this.player.x, this.player.y)))) {
+                            attackers.push(enemy);
+                        } else {
+                            this.moveFleeingEnemy(enemy, 2);
+                        }
+                        continue;
+                    }
                     // 視認していない敵は、距離に関係なく毎敵ターンにランダム徘徊する。
                     // 「足踏み」でも必ず敵ターンが発生するため、止まって待つだけでも敵が動く。
                     if (!visible && enemy.id !== 'jet_babaa' && !enemy.flee) {
@@ -3205,7 +3387,16 @@
                     } else if (Math.max(dx, dy) === 1 && !(dx === 1 && dy === 1 && (this.isCorridorTile(enemy.x, enemy.y) || this.isCorridorTile(this.player.x, this.player.y)))) attackers.push(enemy);
                     else if (dist <= 6) {
                         if (enemy.flee) this.moveFleeingEnemy(enemy, 2);
-                        else this.moveEnemyTowardPlayer(enemy);
+                        else {
+                            // 通路へ入った敵は、プレイヤーが同じフロアの到達可能な部屋にいる限り、
+                            // 視線が一度切れても通路→部屋まで追跡を継続する。
+                            const corridorChase = this.isCorridorTile(enemy.x, enemy.y);
+                            this.moveEnemyTowardPlayer(enemy, { corridorOnly: corridorChase });
+                        }
+                    } else if (this.isCorridorTile(enemy.x, enemy.y)) {
+                        // 通路に入った敵は、距離や一時的な視線切れに関係なく、
+                        // プレイヤーのいる部屋への経路を追跡する。
+                        this.moveEnemyTowardPlayer(enemy, { corridorOnly: true });
                     } else if (!visible) {
                         this.moveEnemyRandomly(enemy);
                     }
@@ -3279,13 +3470,14 @@
                             if (enemy.hp <= 0 && !isBoss) {
                                 this.addDeathEffect(ex, ey, enemy.color || '#fb7185');
                                 this.enemies = this.enemies.filter(e => e !== enemy);
+                                this.dropYasuoGoldEgg(enemy);
                                 this.gainExp(enemy.exp);
                             }
                         }
                         if (this.player.hp <= 0) { this.gameOver(`${isBoss ? '全能神しるぺん' : enemy.name} に倒された...`); return; }
                         if (!isBoss && enemy.flee && this.enemies.includes(enemy)) {
-                            // やすおの20%強襲だけは、攻撃後に通常より大きく距離を取る。
-                            this.moveFleeingEnemy(enemy, yasuoPowerStrike ? 2 : 1);
+                            // 攻撃後は必ず2マス逃げる。強襲の有無で逃走距離を変えない。
+                            this.moveFleeingEnemy(enemy, 2);
                         }
                         setTimeout(() => perform(idx + 1), 160);
                     }, 220);
@@ -3338,39 +3530,53 @@
                 this.enemyTurnTimer = 55;
             }
 
-            getNextStepTowardPlayer(entity) {
-                const start={x:entity.x,y:entity.y};
-                const q=[start]; const came=new Map([[start.x+','+start.y,null]]);
-                const cardinal=[DIRECTION.N,DIRECTION.E,DIRECTION.S,DIRECTION.W];
-                const diagonal=[DIRECTION.NE,DIRECTION.SE,DIRECTION.SW,DIRECTION.NW];
+            getNextStepTowardPlayer(entity, options = {}) {
+                const start={x:entity.x,y:entity.y}, corridorOnly=!!options.corridorOnly;
+                const q=[start], came=new Map([[start.x+','+start.y,null]]);
+                const cardinal=[DIRECTION.N,DIRECTION.E,DIRECTION.S,DIRECTION.W], diagonal=[DIRECTION.NE,DIRECTION.SE,DIRECTION.SW,DIRECTION.NW];
                 let found=null;
+                // 通路追跡中でも「プレイヤーがいる部屋」には入れるようにする。
+                // 以前は corridorOnly=true のとき部屋マスを全面禁止していたため、
+                // 部屋の入口まで来た敵が、プレイヤーを見失ったように停止していた。
+                const playerRoom=this.rooms.find(r=>this.player.x>=r.x&&this.player.x<r.x+r.w&&this.player.y>=r.y&&this.player.y<r.y+r.h);
+                const inPlayerRoom=(x,y)=>!!playerRoom&&x>=playerRoom.x&&x<playerRoom.x+playerRoom.w&&y>=playerRoom.y&&y<playerRoom.y+playerRoom.h;
+                const canTraverse=(x,y)=>{
+                    if(!this.isWalkable(x,y)) return false;
+                    if(x===this.player.x&&y===this.player.y) return true;
+                    if(corridorOnly&&!this.isCorridorTile(x,y)&&!inPlayerRoom(x,y)) return false;
+                    return true;
+                };
                 while(q.length){
                     const cur=q.shift();
-                    if(cur.x===this.player.x && cur.y===this.player.y){ found=cur; break; }
-                    const dirs=this.isCorridorTile(cur.x,cur.y) ? cardinal : cardinal.concat(diagonal);
-                    dirs.sort((a,b)=>{
-                        const ad=Math.abs(cur.x+a.x-this.player.x)+Math.abs(cur.y+a.y-this.player.y);
-                        const bd=Math.abs(cur.x+b.x-this.player.x)+Math.abs(cur.y+b.y-this.player.y);
-                        return ad-bd;
-                    });
+                    if(cur.x===this.player.x&&cur.y===this.player.y){found=cur;break;}
+                    const dirs=this.isCorridorTile(cur.x,cur.y)?cardinal:cardinal.concat(diagonal);
+                    dirs.sort((a,b)=>(Math.abs(cur.x+a.x-this.player.x)+Math.abs(cur.y+a.y-this.player.y))-(Math.abs(cur.x+b.x-this.player.x)+Math.abs(cur.y+b.y-this.player.y)));
                     for(const d of dirs){
-                        const nx=cur.x+d.x, ny=cur.y+d.y, key=nx+','+ny;
-                        if(came.has(key) || !this.isWalkable(nx,ny)) continue;
-                        if(d.x!==0 && d.y!==0 && this.isCorridorTile(cur.x,cur.y)) continue;
-                        if((nx!==this.player.x || ny!==this.player.y) && this.isOccupied(nx,ny)) continue;
-                        if(d.x!==0 && d.y!==0 && (!this.isWalkable(cur.x+d.x,cur.y) || !this.isWalkable(cur.x,cur.y+d.y))) continue;
-                        came.set(key,cur); q.push({x:nx,y:ny});
+                        const nx=cur.x+d.x,ny=cur.y+d.y,key=nx+','+ny;
+                        if(came.has(key)||!canTraverse(nx,ny))continue;
+                        if(d.x!==0&&d.y!==0&&this.isCorridorTile(cur.x,cur.y))continue;
+                        if(d.x!==0&&d.y!==0&&(!this.isWalkable(cur.x+d.x,cur.y)||!this.isWalkable(cur.x,cur.y+d.y)))continue;
+                        came.set(key,cur);q.push({x:nx,y:ny});
                     }
                 }
-                if(!found) return null;
+                if(!found)return null;
                 let cur=found;
-                while(came.get(cur.x+','+cur.y) && !(came.get(cur.x+','+cur.y).x===start.x && came.get(cur.x+','+cur.y).y===start.y)) cur=came.get(cur.x+','+cur.y);
+                while(came.get(cur.x+','+cur.y)&&!(came.get(cur.x+','+cur.y).x===start.x&&came.get(cur.x+','+cur.y).y===start.y))cur=came.get(cur.x+','+cur.y);
                 return {x:cur.x,y:cur.y};
             }
 
-            moveEnemyTowardPlayer(enemy) {
-                const next=this.getNextStepTowardPlayer(enemy);
-                if(next){ enemy.x=next.x; enemy.y=next.y; return true; }
+            moveEnemyTowardPlayer(enemy, options = {}) {
+                const corridorOnly=!!options.corridorOnly;
+                if(corridorOnly&&this.isCorridorTile(enemy.x,enemy.y)){
+                    // まず通常の経路探索を使う。これにより、入口が正面でなくても
+                    // 「通路→プレイヤーのいる部屋」へ曲がって進める。
+                    const next=this.getNextStepTowardPlayer(enemy,{corridorOnly:true});
+                    if(next&&!this.isOccupied(next.x,next.y)){enemy.x=next.x;enemy.y=next.y;return true;}
+                    // 前方の敵に詰まった場合だけ停止。部屋側へ逃げることはしない。
+                    return false;
+                }
+                const next=this.getNextStepTowardPlayer(enemy,{corridorOnly});
+                if(next&&!this.isOccupied(next.x,next.y)){enemy.x=next.x;enemy.y=next.y;return true;}
                 return false;
             }
 
@@ -3491,6 +3697,9 @@
             }
 
             closeInventory() {
+                this.swapGroundMode = false;
+                const swapNote = document.getElementById('inventory-swap-note');
+                if (swapNote) swapNote.remove();
                 document.getElementById('inventory-modal').classList.add('hidden');
                 document.getElementById('item-action-menu').classList.add('hidden');
                 document.getElementById('enchant-target-menu').classList.add('hidden');
@@ -3520,11 +3729,16 @@
                     return;
                 }
 
-                this.player.inventory.sort((a, b) => {
-                    const ae = this.isItemEquipped(a) ? 0 : 1;
-                    const be = this.isItemEquipped(b) ? 0 : 1;
-                    return ae - be;
-                });
+                // 表示順を変えるためにinventory本体をsortしない。
+                // 元配列を並べ替えると「前にタップしたindex」と実物の対応が崩れ、
+                // 入れ替え時に別アイテムを勝手に選んだり削除したりする原因になる。
+                const inventoryDisplay = this.player.inventory
+                    .map((item, idx) => ({item, idx}))
+                    .sort((a, b) => {
+                        const ae = this.isItemEquipped(a.item) ? 0 : 1;
+                        const be = this.isItemEquipped(b.item) ? 0 : 1;
+                        return ae - be || a.idx - b.idx;
+                    });
 
                 const makeItemElement = (item, idx, isGround = false) => {
                     const itemEl = document.createElement('div');
@@ -3548,11 +3762,16 @@
                     itemEl.addEventListener('click', e => {
                         e.stopPropagation();
                         if (isGround) {
+                            if (this.swapGroundMode) return;
                             this.selectedInvIndex = 'ground';
                             this.renderInventory();
                             const fresh = document.querySelector('#inventory-list > div[data-inventory-index="ground"]');
                             if (fresh) this.openGroundItemMenu(fresh);
                         } else {
+                            if (this.swapGroundMode) {
+                                this.swapGroundEquipment(idx);
+                                return;
+                            }
                             this.selectedInvIndex = idx;
                             this.renderInventory();
                             const fresh = Array.from(document.querySelectorAll('#inventory-list > div')).find(el => Number(el.dataset.inventoryIndex) === idx);
@@ -3563,7 +3782,7 @@
                 };
 
                 if (groundItem) list.appendChild(makeItemElement(groundItem, -1, true));
-                this.player.inventory.forEach((item, idx) => list.appendChild(makeItemElement(item, idx, false)));
+                inventoryDisplay.forEach(({item, idx}) => list.appendChild(makeItemElement(item, idx, false)));
 
                 const selectedEl = this.selectedInvIndex === 'ground'
                     ? list.querySelector('[data-inventory-index="ground"]')
@@ -3605,6 +3824,7 @@
                 const item = this.getGroundItemAtPlayer();
                 if (!item) return;
                 this.selectedInvIndex='ground';
+                this.swapGroundMode = false;
                 const menu=document.getElementById('item-action-menu');
                 const container=document.getElementById('game-container');
                 const cr=container.getBoundingClientRect(), ir=itemElement.getBoundingClientRect();
@@ -3613,7 +3833,13 @@
                 document.getElementById('act-use').classList.toggle('hidden', false);
                 document.getElementById('act-use').innerHTML = item.type==='WEAPON'||item.type==='ARMOR'||canEquip ? '<i class="fa-solid fa-play mr-1"></i> 使う/装備' : '<i class="fa-solid fa-play mr-1"></i> 使う';
                 document.getElementById('act-pickup').classList.remove('hidden');
-                document.getElementById('act-swap').classList.toggle('hidden', !canEquip || !equippedSame);
+                const hasSwapCandidate = canEquip && this.player.inventory.some(i => i && i !== ground && (
+                    (ground.type === 'WEAPON' && i.type === 'WEAPON') ||
+                    (ground.type === 'ARMOR' && i.type === 'ARMOR') ||
+                    (ground.effect === 'HELMET' && i.effect === 'HELMET') ||
+                    (ground.effect === 'AMULET' && i.effect === 'AMULET')
+                ));
+                document.getElementById('act-swap').classList.toggle('hidden', !hasSwapCandidate);
                 document.getElementById('act-throw').classList.remove('hidden');
                 document.getElementById('act-place').classList.add('hidden');
                 document.getElementById('act-enchant').classList.add('hidden');
@@ -3639,24 +3865,87 @@
                 this.closeInventory(); this.processTurn();
             }
 
-            swapGroundEquipment() {
-                const ground=this.getGroundItemAtPlayer(); if(!ground) return;
-                let equipped=null;
-                if(ground.type==='WEAPON') equipped=this.player.weapon;
-                else if(ground.type==='ARMOR') equipped=this.player.armor;
-                else if(ground.effect==='HELMET') equipped=this.player.inventory.find(i=>i.effect==='HELMET'&&i.equipped===true);
-                else if(ground.effect==='AMULET') equipped=this.player.inventory.find(i=>i.effect==='AMULET'&&i.equipped===true);
-                if(!equipped){ this.useGroundItem(); return; }
-                const idx=this.items.indexOf(ground); if(idx<0) return;
-                const invIdx=this.player.inventory.indexOf(equipped);
-                if(invIdx<0){ this.log('入れ替える装備がバッグ内にありません。','text-slate-400'); return; }
-                this.items[idx]=equipped;
-                this.player.inventory[invIdx]=ground;
-                if(ground.type==='WEAPON') this.player.weapon=ground;
-                else if(ground.type==='ARMOR') this.player.armor=ground;
-                else { equipped.equipped=false; ground.equipped=true; if(ground.effect==='HELMET') this.player.helmetReady=true; if(ground.effect==='AMULET') this.player.amuletReady=true; if(equipped.effect==='HELMET') this.player.helmetReady=false; if(equipped.effect==='AMULET') this.player.amuletReady=false; }
-                sound.playItem(); this.log(`【${ground.name}】と装備中の【${equipped.name}】を入れ替えた。`,'text-amber-300 font-bold');
-                this.closeInventory(); this.processTurn();
+            openGroundSwapSelection() {
+                const ground = this.getGroundItemAtPlayer();
+                if (!ground) return;
+                const valid = (item) => !!item && item !== ground && (
+                    (ground.type === 'WEAPON' && item.type === 'WEAPON') ||
+                    (ground.type === 'ARMOR' && item.type === 'ARMOR') ||
+                    (ground.effect === 'HELMET' && item.effect === 'HELMET') ||
+                    (ground.effect === 'AMULET' && item.effect === 'AMULET')
+                );
+                if (!this.player.inventory.some(valid)) {
+                    this.log(`【${ground.name}】と入れ替えられるバッグ内アイテムがありません。`, 'text-slate-400');
+                    return;
+                }
+                this.swapGroundMode = true;
+                this.selectedInvIndex = this.player.inventory.findIndex(valid);
+                document.getElementById('item-action-menu').classList.add('hidden');
+                document.getElementById('enchant-target-menu').classList.add('hidden');
+                document.getElementById('synthesis-target-menu').classList.add('hidden');
+                this.openInventory();
+                const list = document.getElementById('inventory-list');
+                if (list) {
+                    const note = document.createElement('div');
+                    note.className = 'sfc-window p-2 border-amber-400/70 bg-amber-950/30 text-amber-200 text-xs font-bold';
+                    note.id = 'inventory-swap-note';
+                    note.innerText = `【${ground.name}】と入れ替えるアイテムをバッグから選択`;
+                    list.insertBefore(note, list.firstChild);
+                }
+            }
+
+            swapGroundEquipment(targetIndex) {
+                const ground = this.getGroundItemAtPlayer();
+                const replacement = Number.isInteger(targetIndex) ? this.player.inventory[targetIndex] : null;
+                if (!ground || !replacement) return;
+                const valid = (
+                    (ground.type === 'WEAPON' && replacement.type === 'WEAPON') ||
+                    (ground.type === 'ARMOR' && replacement.type === 'ARMOR') ||
+                    (ground.effect === 'HELMET' && replacement.effect === 'HELMET') ||
+                    (ground.effect === 'AMULET' && replacement.effect === 'AMULET')
+                );
+                if (!valid) {
+                    this.log('同じ種類の装備を選んでください。', 'text-red-300');
+                    return;
+                }
+
+                const groundIndex = this.items.indexOf(ground);
+                if (groundIndex < 0) return;
+
+                // 選択したバッグ側アイテムを、足元へ確実に落とす。
+                replacement.equipped = false;
+                if (replacement.effect === 'HELMET') this.player.helmetReady = false;
+                if (replacement.effect === 'AMULET') this.player.amuletReady = false;
+                this.player.inventory.splice(targetIndex, 1);
+                this.items[groundIndex] = {...replacement, x:this.player.x, y:this.player.y};
+
+                // 足元装備をバッグへ移し、装備状態を切り替える。
+                ground.x = undefined; ground.y = undefined;
+                ground.equipped = (ground.effect === 'HELMET' || ground.effect === 'AMULET') ? true : ground.equipped;
+                this.player.inventory.push(ground);
+                if (ground.type === 'WEAPON') {
+                    if (this.player.weapon) this.player.weapon.equipped = false;
+                    this.player.weapon = ground;
+                } else if (ground.type === 'ARMOR') {
+                    if (this.player.armor) this.player.armor.equipped = false;
+                    this.player.armor = ground;
+                } else if (ground.effect === 'HELMET') {
+                    const old = this.player.inventory.find(i => i !== ground && i.effect === 'HELMET' && i.equipped === true);
+                    if (old) old.equipped = false;
+                    ground.equipped = true;
+                    this.player.helmetReady = true;
+                } else if (ground.effect === 'AMULET') {
+                    const old = this.player.inventory.find(i => i !== ground && i.effect === 'AMULET' && i.equipped === true);
+                    if (old) old.equipped = false;
+                    ground.equipped = true;
+                    this.player.amuletReady = true;
+                }
+
+                this.swapGroundMode = false;
+                sound.playItem();
+                this.log(`【${ground.name}】を装備し、【${replacement.name}】を足元に置いた。`, 'text-amber-300 font-bold');
+                this.closeInventory();
+                this.processTurn();
             }
 
             openGroundEnhanceTargetMenu() {
@@ -3937,8 +4226,9 @@
                     btn.addEventListener('click', () => this.synthesizeItem(sourceIndex, targetIndex));
                     content.appendChild(btn);
                 });
-                // 足元アイテムは常に合成候補として扱う。同一オブジェクト参照でも除外しない。
-                if(ground && ground.id===source.id && ground.type===source.type){
+                // バッグ内アイテムを合成元にした場合だけ、足元の同種装備を合成先として表示する。
+                // 足元アイテム自身を合成元にした場合は、自分自身を合成先に出さない。
+                if(sourceIndex!=='ground' && ground && ground.id===source.id && ground.type===source.type){
                     const btn=document.createElement('button'); btn.className='btn-sfc w-full p-1.5 text-left text-fuchsia-200 rounded hover:brightness-125';
                     btn.innerText=`【足元】 ${ground.name} [強化+${this.getItemEnhance(ground)}]`;
                     btn.addEventListener('click',()=>this.synthesizeItem(sourceIndex,'ground')); content.appendChild(btn);
@@ -4053,7 +4343,7 @@
                 const weaponInventoryIndex=this.player.weapon?this.player.inventory.indexOf(this.player.weapon):-1;
                 const armorInventoryIndex=this.player.armor?this.player.inventory.indexOf(this.player.armor):-1;
                 const playerData={...this.player, weapon:null, armor:null};
-                return {version:7,currentFloor:this.currentFloor,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep};
+                return {version:7,currentFloor:this.currentFloor,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep,spawnGraceTurns:this.spawnGraceTurns};
             }
 
             openSaveSlots(mode) {
@@ -4111,7 +4401,7 @@
                         player: playerData, weaponInventoryIndex, armorInventoryIndex,
                         map: this.map, explored: this.explored,
                         rooms: this.rooms, enemies: this.enemies, items: this.items,
-                        torches: this.torches, traps: this.traps, trapsVisible: this.trapsVisible, boss: this.boss, logs: this.logs, storyStep: this.storyStep
+                        torches: this.torches, traps: this.traps, trapsVisible: this.trapsVisible, boss: this.boss, logs: this.logs, storyStep: this.storyStep, spawnGraceTurns: this.spawnGraceTurns
                     };
                     localStorage.setItem(this.getSaveSlotKey(slot), JSON.stringify(data));
                     if (!silent) this.log(`💾 SAVE ${slot} に現在の冒険をセーブした。`, 'text-emerald-300 font-bold');
@@ -4136,6 +4426,7 @@
                     // ロードは保存時がゲームオーバー状態でも、そこから再開できるようにする。
                     // これをtrueのまま復元するとkeydown冒頭のガードで全キー入力が無視される。
                     this.isGameOver = false;
+                    this.floorTransitionBusy = false;
                     this.deathSequenceActive = false;
                     clearTimeout(this.deathOverlayTimer);
                     this.specialMovement = null;
@@ -4175,9 +4466,22 @@
                         : findLegacyEquippedItem(savedArmor, 'ARMOR');
 
                     if (this.player.baseMaxHp === undefined) this.player.baseMaxHp = this.player.maxHp || 30;
+                    this.player.nextExp = Math.max(20, Math.floor(20 * Math.pow(1.30, Math.max(0, (this.player.level || 1) - 1))));
                     this.player.maxHp = this.getPlayerMaxHp();
                     this.player.helmetReady = !!this.player.helmetReady;
                     this.player.amuletReady = !!this.player.amuletReady;
+                    // 旧セーブで装備フラグが複数残っていた場合は1個だけを正とする。
+                    const normalizeEquippedConsumable = (effect, readyProp) => {
+                        const equipped = this.player.inventory.filter(i => i.effect === effect && i.equipped === true);
+                        if (equipped.length > 1) equipped.slice(1).forEach(i => i.equipped = false);
+                        if (this.player[readyProp] && equipped.length === 0) {
+                            const fallback = this.player.inventory.find(i => i.effect === effect);
+                            if (fallback) fallback.equipped = true;
+                        }
+                        this.player[readyProp] = !!this.player.inventory.some(i => i.effect === effect && i.equipped === true);
+                    };
+                    normalizeEquippedConsumable('HELMET', 'helmetReady');
+                    normalizeEquippedConsumable('AMULET', 'amuletReady');
                     this.player.paralyzedTurns = Number(this.player.paralyzedTurns || 0);
                     this.player.slowCurseTurns = Number(this.player.slowCurseTurns || 0);
                     this.player.slowCurseSkipNext = !!this.player.slowCurseSkipNext;
@@ -4204,6 +4508,7 @@
                     this.boss = data.boss || null;
                     this.logs = data.logs || [];
                     this.storyStep = data.storyStep || 0;
+                    this.spawnGraceTurns = Math.max(0, Number(data.spawnGraceTurns || 0));
                     this.effects = [];
                     this.screenShake = 0;
                     this.actionTimer = 0;
@@ -4246,7 +4551,7 @@
                     } else if (item.effect === 'LEVEL_UP') {
                         this.player.level++;
                         this.player.exp = 0;
-                        this.player.nextExp = Math.floor(20 * Math.pow(1.5, this.player.level - 1));
+                        this.player.nextExp = Math.max(20, Math.floor(20 * Math.pow(1.30, this.player.level - 1)));
                         this.player.baseMaxHp = (this.player.baseMaxHp ?? this.player.maxHp ?? 30) + 15;
                         this.player.maxHp = this.getPlayerMaxHp();
                         this.player.hp = this.getPlayerMaxHp();
@@ -4582,9 +4887,8 @@
                     }
                 } else {
                     if (wallHit) {
-                        // 壁に当たったマスの手前に落とす。
-                        endX -= this.facing.x;
-                        endY -= this.facing.y;
+                        // ループ終了時のendX/endYはすでに「壁の1マス手前」。
+                        // ここでもう1マス戻すと、壁のさらに手前へずれてしまうため戻さない。
                     }
                     const occupied = this.items.some(it => it.x === endX && it.y === endY);
                     let pos = occupied ? this.findItemPlacement(endX, endY) : {x:endX, y:endY};
@@ -4616,8 +4920,10 @@
                 // 天使のお守りは万能なので、落石以外の罠や、ヘルメットを使い切った後の罠のために温存する。
                 if (trap.type === 'rockfall' && this.player.helmetReady) {
                     this.player.helmetReady = false;
-                    const helmet = this.player.inventory.find(i => i.effect === 'HELMET' && i.equipped === true);
-                    if (helmet) helmet.equipped = false;
+                    const helmetIndex = this.player.inventory.findIndex(i => i.effect === 'HELMET' && i.equipped === true);
+                    const helmet = helmetIndex >= 0 ? this.player.inventory[helmetIndex] : null;
+                    // 落石を1回防いだヘルメットは「壊れた」扱いで、装備解除だけでなく実物も1個消費する。
+                    if (helmetIndex >= 0) this.player.inventory.splice(helmetIndex, 1);
                     trap.active = false;
                     const cx = this.player.x*TILE_SIZE+16;
                     const cy = this.player.y*TILE_SIZE+16;
@@ -5076,7 +5382,7 @@
                 // 2. 松明描画
                 this.torches.forEach(t => {
                     if (this.explored[t.y] && this.explored[t.y][t.x]) {
-                        this.drawSFCTorch(this.ctx, t.x * TILE_SIZE, t.y * TILE_SIZE, t.mount || 'S');
+                        this.drawSFCTorch(this.ctx, t.x * TILE_SIZE, t.y * TILE_SIZE, t.side || 'S');
                     }
                 });
 
@@ -5277,14 +5583,13 @@
                         this.pixelRect(ctx,sx+14,sy+16,5,3,'#4a1721'); this.pixelRect(ctx,sx+22,sy+13,3,8,'#4c1720');
                     }
                 } else if(k==='water'){
-                    // 湖：隣接する水マス同士が一続きに見えるよう、境界を接続して描く。
-                    // 水源そのものは map 上で OBSTACLE なので、柱・石などは湖内部に侵入しない。
+                    // 湖：隣接する水マス同士の境界を消して、一枚の連続した水面に見せる。
                     const isWater=(x,y)=>this.map[y]?.[x]===TILE.OBSTACLE && this.obstacles.some(v=>v.x===x&&v.y===y&&v.kind==='water');
                     const n=isWater(o.x,o.y-1), e=isWater(o.x+1,o.y), s=isWater(o.x,o.y+1), w=isWater(o.x-1,o.y);
                     const left=w?0:3, top=n?0:3, right=e?32:29, bottom=s?32:29;
                     ctx.fillStyle='#111827'; ctx.fillRect(sx,sy,32,32);
                     ctx.fillStyle='#155e75'; ctx.fillRect(sx+left,sy+top,Math.max(1,right-left),Math.max(1,bottom-top));
-                    // 湖岸側だけ暗い縁を残し、内部は水面のハイライトを散らす。
+                    // 岸だけ縁を残し、湖の内部は水面を連続させる。
                     ctx.fillStyle='#0b3d52';
                     if(!n) ctx.fillRect(sx+2,sy+1,28,2);
                     if(!s) ctx.fillRect(sx+2,sy+29,28,2);
@@ -5436,56 +5741,38 @@
                 ctx.fillRect(px + 15, py + 2 + pulse, 2, 2);
             }
 
-            drawSFCTorch(ctx, px, py, mount = 'S') {
+            drawSFCTorch(ctx, px, py, side = 'S') {
                 const flameFrame = this.animFrame % 4;
                 const flicker = [0, 1.5, -1, 1][flameFrame];
 
-                // 壁のどちら側に床があるかで、松明をその床側へ向ける。
-                const toward = {
-                    N: { x: 0, y: -1 },
-                    E: { x: 1, y: 0 },
-                    S: { x: 0, y: 1 },
-                    W: { x: -1, y: 0 }
-                }[mount] || { x: 0, y: 1 };
-
-                // 壁面に密着した台座位置。
-                let bx = px + 16, by = py + 16;
-                if (mount === 'N') by = py + 26;
-                if (mount === 'S') by = py + 6;
-                if (mount === 'W') bx = px + 26;
-                if (mount === 'E') bx = px + 6;
-
-                const fx = bx + toward.x * 3;
-                const fy = by + toward.y * 3;
-
-                // 多重の柔らかい光を重ねた簡易ブルーム。
+                // 壁に接地した面から床側へ光が漏れるよう、方向付きブルームを描く。
+                const face = side === 'N' ? {x:16,y:4} : side === 'E' ? {x:28,y:16} : side === 'W' ? {x:4,y:16} : {x:16,y:28};
                 ctx.save();
                 ctx.globalCompositeOperation = 'lighter';
-                const glow = ctx.createRadialGradient(fx, fy, 2, fx, fy, 42);
-                glow.addColorStop(0, 'rgba(255,250,205,0.48)');
-                glow.addColorStop(0.16, 'rgba(255,214,105,0.28)');
-                glow.addColorStop(0.42, 'rgba(255,157,45,0.13)');
-                glow.addColorStop(0.72, 'rgba(255,105,25,0.055)');
-                glow.addColorStop(1, 'rgba(255,80,10,0)');
+                const glow = ctx.createRadialGradient(px + face.x, py + face.y, 2, px + face.x, py + face.y, 32);
+                glow.addColorStop(0, 'rgba(255,245,180,0.40)');
+                glow.addColorStop(0.25, 'rgba(255,190,70,0.20)');
+                glow.addColorStop(0.58, 'rgba(255,135,35,0.09)');
+                glow.addColorStop(1, 'rgba(255,90,20,0)');
                 ctx.fillStyle = glow;
-                ctx.fillRect(px - 30, py - 30, TILE_SIZE + 60, TILE_SIZE + 60);
+                ctx.fillRect(px - 18, py - 18, TILE_SIZE + 36, TILE_SIZE + 36);
                 ctx.restore();
 
-                // 壁にめり込む金具＋台座。必ず壁側に残す。
-                ctx.fillStyle = '#111827';
-                if (mount === 'N' || mount === 'S') {
-                    ctx.fillRect(px + 13, mount === 'S' ? py + 2 : py + 24, 6, 7);
-                    ctx.fillStyle = '#94a3b8';
-                    ctx.fillRect(px + 12, mount === 'S' ? py + 4 : py + 22, 8, 3);
-                    ctx.fillStyle = '#475569';
-                    ctx.fillRect(px + 11, mount === 'S' ? py + 6 : py + 20, 10, 2);
-                } else {
-                    ctx.fillRect(mount === 'E' ? px + 2 : px + 24, py + 13, 7, 6);
-                    ctx.fillStyle = '#94a3b8';
-                    ctx.fillRect(mount === 'E' ? px + 4 : px + 22, py + 12, 3, 8);
-                    ctx.fillStyle = '#475569';
-                    ctx.fillRect(mount === 'E' ? px + 6 : px + 20, py + 11, 2, 10);
-                }
+                const flameX = px + (side === 'E' ? 23 : side === 'W' ? 9 : 13);
+                const flameY = py + (side === 'S' ? 5 : side === 'N' ? 1 : 11);
+                const mountX = px + (side === 'E' ? 25 : side === 'W' ? 2 : 14);
+                const mountY = py + (side === 'S' ? 25 : side === 'N' ? 2 : 13);
+
+                // 壁面に接地する金具＋台座。
+                ctx.fillStyle = '#1f2937';
+                if (side === 'E' || side === 'W') ctx.fillRect(mountX, mountY, 5, 8);
+                else ctx.fillRect(mountX, mountY, 8, 5);
+                ctx.fillStyle = '#94a3b8';
+                if (side === 'E' || side === 'W') ctx.fillRect(mountX + (side==='E' ? 0 : 1), mountY + 1, 5, 3);
+                else ctx.fillRect(mountX + 1, mountY + (side==='S' ? 0 : 1), 5, 3);
+                ctx.fillStyle = '#475569';
+                if (side === 'E' || side === 'W') ctx.fillRect(mountX + (side==='E' ? -3 : 3), mountY + 2, 5, 3);
+                else ctx.fillRect(mountX + 2, mountY + (side==='S' ? -3 : 3), 3, 5);
 
                 const fireColors = [
                     ['#ef4444', '#f97316', '#fde047'],
@@ -5494,24 +5781,16 @@
                     ['#ef4444', '#f97316', '#fef08a']
                 ][flameFrame];
 
-                // 炎は床側へ寄せ、壁から浮いて見えないようにする。
-                let flameX = fx, flameY = fy + flicker;
-                if (mount === 'N') flameY += 4;
-                if (mount === 'S') flameY -= 4;
-                if (mount === 'W') flameX += 4;
-                if (mount === 'E') flameX -= 4;
-
                 ctx.fillStyle = fireColors[0];
-                ctx.fillRect(flameX - 3, flameY - 4, 6, 8);
+                ctx.fillRect(flameX, flameY + flicker, 6, 8);
                 ctx.fillStyle = fireColors[1];
-                ctx.fillRect(flameX - 2, flameY - 2, 4, 5);
+                ctx.fillRect(flameX + 1, flameY + 2 + flicker, 4, 5);
                 ctx.fillStyle = fireColors[2];
-                ctx.fillRect(flameX - 1, flameY, 2, 2);
+                ctx.fillRect(flameX + 2, flameY + 4 + flicker, 2, 2);
 
                 ctx.fillStyle = fireColors[1];
-                const sparkX = flameX + (flameFrame % 3) - 1;
-                const sparkY = flameY - 7 - (flameFrame % 2);
-                ctx.fillRect(sparkX, sparkY, 1.5, 1.5);
+                const sparkY = flameY - 2 - (flameFrame % 3) + flicker * 0.5;
+                ctx.fillRect(flameX - 1 + (flameFrame % 4), sparkY, 1.5, 1.5);
             }
 
             drawNicoSprite(ctx, centerX, centerY, facing = DIRECTION.S, scale = 1.0) {
@@ -5798,7 +6077,7 @@
                     pixel(-9,6,18,8,'#554a3c'); pixel(-6,7,12,5,'#85755b'); pixel(-11,8,4,6,'#6b5b47'); pixel(7,8,4,6,'#6b5b47');
                     pixel(-5,11,4,4,'#302a25'); pixel(1,11,4,4,'#302a25'); pixel(-7,-11,4,2,'#fff8dc'); pixel(4,-10,4,2,'#d8f7ff');
                 }else if(enemy.id==='jet_babaa'){
-                    // ジェットババァ：白い死に装束の鬼婆。長い白髪、痩せた顔、赤い目、黒い口。
+                    // ジェットばばぁ：白い死に装束の鬼婆。長い白髪、痩せた顔、赤い目、黒い口。
                     // 走行中は髪と袖がanimFrameに合わせて揺れる。
                     const run=this.animFrame%4; const hair=run===1?-2:run===3?2:0;
                     pixel(-8,-13,16,18,'#eadfd8'); pixel(-11,-9,22,15,'#f5f0eb');
@@ -5825,11 +6104,11 @@
                     pixel(-5,-4,2,2,'#fef08a'); pixel(3,-4,2,2,'#fef08a'); pixel(-5,2,10,3,'#7c2d12'); pixel(-3,3,2,3,'#431407'); pixel(1,3,2,3,'#431407');
                     pixel(-8,8,5,4,'#9a3412'); pixel(3,8,5,4,'#9a3412'); pixel(-4,-10,8,2,'#fb923c'); pixel(-2,7,4,2,'#fdba74');
                 }else if(enemy.id==='yasuo'){
-                    // 番犬やすお：小型犬の丸い頭・耳・首輪・脚。
-                    pixel(-9,-8,18,15,'#1e3a8a'); pixel(-7,-11,14,18,'#60a5fa'); pixel(-11,-11,5,8,'#2563eb'); pixel(6,-11,5,8,'#2563eb');
-                    pixel(-6,-5,4,4,'#0f172a'); pixel(2,-5,4,4,'#0f172a'); pixel(-5,-4,2,2,'#fef08a'); pixel(3,-4,2,2,'#fef08a');
-                    pixel(-2,0,4,3,'#e2e8f0'); pixel(-1,1,2,2,'#0f172a'); pixel(-8,6,16,3,'#1d4ed8'); pixel(-5,7,10,2,'#facc15');
-                    pixel(-7,10,4,5,'#2563eb'); pixel(3,10,4,5,'#2563eb'); pixel(-10,13,6,2,'#1e3a8a'); pixel(4,13,6,2,'#1e3a8a');
+                    // 番犬やすお：柴犬系の茶色。青い旧配色は使わない。
+                    pixel(-9,-8,18,15,'#8b5e34'); pixel(-7,-11,14,18,'#b9783c'); pixel(-11,-11,5,8,'#7a4a27'); pixel(6,-11,5,8,'#7a4a27');
+                    pixel(-6,-5,4,4,'#24170f'); pixel(2,-5,4,4,'#24170f'); pixel(-5,-4,2,2,'#fef08a'); pixel(3,-4,2,2,'#fef08a');
+                    pixel(-2,0,4,3,'#f1e0c8'); pixel(-1,1,2,2,'#24170f'); pixel(-8,6,16,3,'#6f3f24'); pixel(-5,7,10,2,'#d7a24d');
+                    pixel(-7,10,4,5,'#8a552d'); pixel(3,10,4,5,'#8a552d'); pixel(-10,13,6,2,'#5b351f'); pixel(4,13,6,2,'#5b351f');
                 }else{
                     pixel(-10,-9,20,18,enemy.color||'#ef4444'); pixel(-7,-12,14,4,'#fecaca');
                     pixel(-5,-3,3,3,'#fff'); pixel(2,-3,3,3,'#fff');
