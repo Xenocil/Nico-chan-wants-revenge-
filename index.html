@@ -213,6 +213,62 @@
         #scene-transition.soft { background:#020617; transition:opacity .65s ease; }
         #title-screen.title-leaving { animation:titleLeave .72s ease forwards; }
         @keyframes titleLeave { 0%{opacity:1;transform:scale(1)} 65%{opacity:1;transform:scale(1.025)} 100%{opacity:0;transform:scale(1.06)} }
+
+        /* ===== Platform-specific layout (v1.0 base: display/input only) ===== */
+        html.platform-mobile, body.platform-mobile { overscroll-behavior: none; }
+        body.platform-mobile { padding: max(4px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); }
+        body.platform-mobile #game-container { border-radius: 4px; }
+        body.platform-mobile #game-canvas { touch-action: none; }
+        body.platform-mobile #direct-status-overlay { transform: scale(.82); transform-origin: top left; }
+        body.platform-mobile #direct-title-overlay { transform: scale(.84); transform-origin: top right; }
+        body.platform-mobile #direct-title-overlay .floor-label { font-size: 1rem !important; }
+        body.platform-mobile #game-log-overlay { max-width: 72%; max-height: 120px; font-size: 13px !important; line-height: 1.35 !important; }
+        body.platform-mobile #direct-controls-overlay { bottom: max(6px, env(safe-area-inset-bottom)); right: max(6px, env(safe-area-inset-right)); }
+        body.platform-mobile #touch-dpad { width: 172px; }
+        body.platform-mobile #touch-dpad button { min-height: 42px; font-size: 17px; }
+        body.platform-mobile #mini-map { width: 200px; height: 123px; }
+        body.platform-mobile #title-screen .title-core { width: min(94vw, 560px); }
+        body.platform-mobile #title-screen .title-logo { font-size: clamp(30px, 9vw, 52px); line-height: 1.05; }
+        body.platform-mobile #title-screen .title-menu button { min-height: 48px; font-size: 14px; }
+        body.platform-mobile #story-dialogue-box { margin: 0 8px; }
+        body.platform-mobile #save-slot-menu > .sfc-window { max-height: 92vh; overflow-y: auto; }
+
+        /* Portrait phones: keep the game readable and make touch controls reachable. */
+        @media (max-width: 700px) and (orientation: portrait) {
+            body.platform-mobile > .flex-1 { flex-direction: column; }
+            body.platform-mobile #game-container { min-height: 0; }
+            body.platform-mobile #game-canvas { width: 100%; height: auto; max-height: 58vh; aspect-ratio: 16 / 9; object-fit: contain; }
+            body.platform-mobile #direct-status-overlay { top: 6px; left: 6px; }
+            body.platform-mobile #direct-status-overlay > div { gap: 7px; }
+            body.platform-mobile #direct-title-overlay { top: 6px; right: 6px; }
+            body.platform-mobile #direct-title-overlay > span { max-width: 42vw; white-space: normal; text-align: right; }
+            body.platform-mobile #direct-controls-overlay { left: 6px; right: 6px; bottom: max(6px, env(safe-area-inset-bottom)); align-items: center; }
+            body.platform-mobile #direct-controls-overlay > div:first-child { width: min(92vw, 360px); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+            body.platform-mobile #direct-controls-overlay > div:first-child button { min-height: 40px; }
+            body.platform-mobile #touch-dpad { width: min(54vw, 210px); }
+            body.platform-mobile #touch-dpad button { min-height: 38px; padding: 6px 0; }
+            body.platform-mobile #mini-map { width: 200px; height: 123px; }
+            body.platform-mobile footer { display: none; }
+        }
+
+        @media (max-width: 420px) and (orientation: portrait) {
+            body.platform-mobile #mini-map { width: 180px; height: 110px; }
+            body.platform-mobile #direct-status-overlay { transform: scale(.70); }
+            body.platform-mobile #direct-title-overlay { transform: scale(.72); }
+            body.platform-mobile #touch-dpad { width: 190px; }
+            body.platform-mobile #touch-dpad button { min-height: 34px; }
+        }
+
+        /* Landscape phones get the desktop-style board while enlarging touch targets. */
+        @media (max-width: 900px) and (orientation: landscape) {
+            body.platform-mobile #touch-dpad { width: 180px; }
+            body.platform-mobile #touch-dpad button { min-height: 38px; }
+            body.platform-mobile #direct-controls-overlay > div:first-child { width: 170px; }
+        }
+
+        body.platform-ios.platform-safari #game-container { padding-bottom: max(2px, env(safe-area-inset-bottom)); }
+        body.platform-ios.platform-safari #save-slot-menu { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        #save-slot-menu button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.35); }
 </style>
 </head>
 <body class="h-screen w-screen flex flex-col p-1.5 sm:p-2 gap-1.5 max-h-screen overflow-hidden">
@@ -267,7 +323,7 @@
                     <span class="text-slate-300 floor-label">階層:</span>
                     <span id="floor-display" class="text-amber-400">B10F</span>
                 </div>
-                <canvas id="mini-map" width="156" height="96" class="mt-1 rounded border border-slate-500/40 bg-black/35 opacity-70"></canvas>
+                <canvas id="mini-map" width="200" height="123" class="mt-1 rounded border border-slate-500/40 bg-black/35 opacity-70"></canvas>
             </div>
 
             <!-- Canvas -->
@@ -303,7 +359,7 @@
                 </div>
 
                 <!-- Floating D-Pad -->
-                <div class="grid grid-cols-3 gap-1 w-36 sm:w-44 bg-slate-950/60 p-1 rounded-lg backdrop-blur-sm border border-slate-700/50 shadow-xl">
+                <div id="touch-dpad" class="grid grid-cols-3 gap-1 w-36 sm:w-44 bg-slate-950/60 p-1 rounded-lg backdrop-blur-sm border border-slate-700/50 shadow-xl">
                     <button id="btn-nw" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↖</button>
                     <button id="btn-n" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↑</button>
                     <button id="btn-ne" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↗</button>
@@ -848,8 +904,13 @@
                 this.combatSequenceBusy = false;
                 this.logScrollOffset = 0;
                 this.logHover = false;
+                this.saveMenuReturn = 'game';
+                this.platformInfo = this.detectPlatform();
 
                 this.initUI();
+                this.updatePlatformLayout();
+                window.addEventListener('resize', () => this.updatePlatformLayout(), { passive: true });
+                if (window.visualViewport) window.visualViewport.addEventListener('resize', () => this.updatePlatformLayout(), { passive: true });
                 this.showTitleScreen();
 
                 const gameLoop = (timestamp) => {
@@ -858,6 +919,45 @@
                     requestAnimationFrame(gameLoop);
                 };
                 requestAnimationFrame(gameLoop);
+            }
+
+            detectPlatform() {
+                const ua = navigator.userAgent || '';
+                const platform = navigator.platform || '';
+                const touch = (navigator.maxTouchPoints || 0) > 0;
+                const ios = /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && touch);
+                const android = /Android/i.test(ua);
+                const mobile = ios || android || /Mobile|Windows Phone/i.test(ua) || (touch && Math.min(window.innerWidth, window.innerHeight) <= 900);
+                let browser = 'other';
+                if (/CriOS\//i.test(ua)) browser = 'chrome-ios';
+                else if (/FxiOS\//i.test(ua)) browser = 'firefox-ios';
+                else if (/EdgiOS\//i.test(ua)) browser = 'edge-ios';
+                else if (/OPiOS\//i.test(ua)) browser = 'opera-ios';
+                else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) browser = 'chrome';
+                else if (/Edg\//i.test(ua)) browser = 'edge';
+                else if (/Firefox\//i.test(ua)) browser = 'firefox';
+                else if (/Safari\//i.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/i.test(ua)) browser = 'safari';
+                const info = { ios, android, mobile, browser, portrait: window.matchMedia ? window.matchMedia('(orientation: portrait)').matches : window.innerHeight >= window.innerWidth };
+                document.body.classList.toggle('platform-mobile', mobile);
+                document.body.classList.toggle('platform-ios', ios);
+                document.body.classList.toggle('platform-android', android);
+                document.body.classList.toggle('platform-desktop', !mobile);
+                document.body.classList.toggle('platform-portrait', info.portrait);
+                document.body.classList.toggle('platform-landscape', !info.portrait);
+                document.body.classList.toggle(`platform-${browser}`, true);
+                return info;
+            }
+
+            updatePlatformLayout() {
+                this.platformInfo = this.detectPlatform();
+                const mobile = !!this.platformInfo.mobile;
+                const portrait = !!this.platformInfo.portrait;
+                document.body.classList.toggle('platform-portrait', portrait);
+                document.body.classList.toggle('platform-landscape', !portrait);
+                const canvas = this.canvas;
+                if (canvas) {
+                    canvas.style.touchAction = mobile ? 'none' : 'auto';
+                }
             }
 
             initUI() {
@@ -904,8 +1004,8 @@
                 document.getElementById('btn-wait-turn').addEventListener('click', () => this.turnWait());
                 document.getElementById('inv-close-btn').addEventListener('click', () => this.closeInventory());
                 document.getElementById('btn-save').addEventListener('click', () => this.openSaveSlots('save'));
-                document.getElementById('btn-load').addEventListener('click', () => this.openSaveSlots('load'));
-                document.getElementById('save-slot-close').addEventListener('click', () => document.getElementById('save-slot-menu').classList.add('hidden'));
+                document.getElementById('btn-load').addEventListener('click', () => { this.saveMenuReturn = 'game'; this.openSaveSlots('load'); });
+                document.getElementById('save-slot-close').addEventListener('click', () => this.closeSaveSlotMenu());
                 document.getElementById('btn-reset-highscore').addEventListener('click', () => {
                     if (!window.confirm('ハイスコアをリセットしますか？')) return;
                     this.highScore = 0;
@@ -976,7 +1076,7 @@
                 document.getElementById('new-game-btn').addEventListener('click', () => this.showStoryPrologue());
                 document.getElementById('title-new-game').addEventListener('click', () => this.startFromTitle());
                 document.getElementById('title-continue').addEventListener('click', () => this.continueFromTitle());
-                document.getElementById('game-over-load-btn').addEventListener('click', () => this.openSaveSlots('load'));
+                document.getElementById('game-over-load-btn').addEventListener('click', () => { this.saveMenuReturn = 'gameover'; this.openSaveSlots('load'); });
 
                 const bindDpad = (id, dir) => {
                     const btn = document.getElementById(id);
@@ -1232,6 +1332,7 @@
                 if (title) title.classList.add('title-leaving');
                 this.playSceneTransition('soft', () => {
                     if (title) { title.classList.add('hidden'); title.style.display='none'; }
+                    this.saveMenuReturn = 'title';
                     this.openSaveSlots('load');
                 });
             }
@@ -3625,22 +3726,56 @@
                 if(autoSummary) autoSummary.innerText=autoData?this.getSaveSummary(autoData):'オートセーブはありません';
                 if(autoBtn){
                     autoBtn.innerText=mode==='save'?'オートセーブを更新':'ロード';
-                    autoBtn.onclick=()=>{ if(mode==='save'){ this.saveAutoGame(); this.openSaveSlots(mode); } else { this.loadGame('auto'); menu.classList.add('hidden'); } };
                     autoBtn.classList.toggle('hidden', mode==='save');
+                    autoBtn.disabled = mode==='load' && !autoData;
+                    autoBtn.title = mode==='load' && !autoData ? 'オートセーブはありません' : '';
+                    autoBtn.onclick=()=>{
+                        if(mode==='save'){
+                            this.saveAutoGame();
+                            this.openSaveSlots(mode);
+                        } else if(autoData){
+                            if(this.loadGame('auto')) menu.classList.add('hidden');
+                        }
+                    };
                 }
                 for(let slot=1;slot<=3;slot++){
-                    const raw=localStorage.getItem(this.getSaveSlotKey(slot)); const data=raw?JSON.parse(raw):null;
+                    const raw=localStorage.getItem(this.getSaveSlotKey(slot));
+                    const data=raw?JSON.parse(raw):null;
                     const row=document.createElement('div'); row.className='sfc-window p-3 flex flex-col sm:flex-row sm:items-center gap-2';
                     const info=document.createElement('div'); info.className='flex-1 text-sm';
                     info.innerHTML=`<div class="text-amber-300 font-bold">SAVE ${slot}</div><div class="text-slate-200">${data?this.getSaveSummary(data):'空きスロット'}</div>`; row.appendChild(info);
                     const action=document.createElement('div'); action.className='flex gap-1';
                     const main=document.createElement('button'); main.className='btn-sfc px-3 py-1 text-sm rounded text-emerald-300'; main.innerText=mode==='save'?(data?'上書き':'保存'):'ロード';
-                    main.onclick=()=>{ if(mode==='save'){ if(data&&!confirm(`SAVE ${slot} を上書きしますか？`))return; this.saveGame(false,slot); menu.classList.add('hidden'); } else { this.loadGame(slot); menu.classList.add('hidden'); } };
+                    main.disabled = mode==='load' && !data;
+                    if(mode==='load' && !data) main.title='このスロットにはセーブデータがありません';
+                    main.onclick=()=>{
+                        if(mode==='save'){
+                            if(data&&!confirm(`SAVE ${slot} を上書きしますか？`))return;
+                            this.saveGame(false,slot); menu.classList.add('hidden');
+                        } else if(data){
+                            if(this.loadGame(slot)) menu.classList.add('hidden');
+                        }
+                    };
                     action.appendChild(main);
-                    if(data){ const del=document.createElement('button'); del.className='btn-sfc px-3 py-1 text-sm rounded text-red-300'; del.innerText='削除'; del.onclick=()=>{if(confirm(`SAVE ${slot} を削除しますか？`)){localStorage.removeItem(this.getSaveSlotKey(slot));this.openSaveSlots(mode);}}; action.appendChild(del); }
+                    if(data){
+                        const del=document.createElement('button'); del.className='btn-sfc px-3 py-1 text-sm rounded text-red-300'; del.innerText='削除';
+                        del.onclick=()=>{if(confirm(`SAVE ${slot} を削除しますか？`)){localStorage.removeItem(this.getSaveSlotKey(slot));this.openSaveSlots(mode);}};
+                        action.appendChild(del);
+                    }
                     row.appendChild(action); list.appendChild(row);
                 }
                 menu.classList.remove('hidden');
+            }
+
+            closeSaveSlotMenu() {
+                const menu=document.getElementById('save-slot-menu');
+                if(menu) menu.classList.add('hidden');
+                if(this.saveMenuReturn==='title') {
+                    this.showTitleScreen();
+                } else if(this.saveMenuReturn==='gameover') {
+                    document.getElementById('game-overlay')?.classList.remove('hidden');
+                }
+                this.saveMenuReturn='game';
             }
 
             saveAutoGame() {
@@ -3683,7 +3818,7 @@
                 try {
                     let raw = slot === 'auto' ? localStorage.getItem(this.getAutoSaveKey()) : localStorage.getItem(this.getSaveSlotKey(slot));
                     if (!raw && slot===1) raw = localStorage.getItem('nico_roguelike_save_v1');
-                    if (!raw) { this.log('セーブデータがありません。', 'text-slate-400'); return; }
+                    if (!raw) { this.log('セーブデータがありません。', 'text-slate-400'); return false; }
                     const data = JSON.parse(raw);
                     this.currentFloor = data.currentFloor;
                     this.medalScore = Number(data.medalScore || 0);
@@ -3773,9 +3908,11 @@
                     this.closeInventory();
                     this.updateUI();
                     this.log('📂 セーブデータをロードした。', 'text-sky-300 font-bold');
+                    return true;
                 } catch (err) {
                     this.log('ロードに失敗した。', 'text-red-300 font-bold');
                     console.error(err);
+                    return false;
                 }
             }
 
@@ -4517,6 +4654,15 @@
                 if (inlineCap) inlineCap.innerText = `${this.player.inventory.length}/${this.getInventoryCapacity()}`;
             }
 
+            getRenderZoom() {
+                // v1.0の座標・当たり判定は変更せず、描画だけ少し拡大する。
+                const mobile = !!this.platformInfo?.mobile;
+                const portrait = !!this.platformInfo?.portrait;
+                if (mobile && portrait) return 1.06;
+                if (mobile) return 1.10;
+                return 1.16;
+            }
+
             render() {
                 this.ctx.fillStyle = '#020307';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -4566,6 +4712,10 @@
                 if (!this.map || this.map.length === 0) return;
 
                 this.ctx.save();
+                const zoom = this.getRenderZoom();
+                this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+                this.ctx.scale(zoom, zoom);
+                this.ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2);
                 const pRenderX = this.player.renderX !== undefined ? this.player.renderX : this.player.x * TILE_SIZE;
                 const pRenderY = this.player.renderY !== undefined ? this.player.renderY : this.player.y * TILE_SIZE;
 
