@@ -485,6 +485,9 @@
             }
         }
         @media (orientation: landscape) and (max-width: 900px) and (max-height: 430px) {
+            #direct-title-overlay { transform: scale(.70) !important; transform-origin: top right !important; }
+            #mini-map { width: 145px !important; height: 89px !important; }
+            #map-action-buttons .btn-sfc { font-size: 8.5px !important; padding: 2px 3px !important; }
             #title-screen .title-core {
                 transform: scale(.82) !important;
                 gap: 5px !important;
@@ -510,14 +513,25 @@
             html, body { height: var(--app-vh, 100dvh) !important; min-height: var(--app-vh, 100dvh) !important; }
             body > .flex-1 { height: var(--app-vh, 100dvh) !important; min-height: 0 !important; max-height: var(--app-vh, 100dvh) !important; }
             #game-container { height: 100% !important; min-height: 0 !important; max-height: 100% !important; }
-            #game-log-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 34px) !important; }
-            #direct-controls-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 34px) !important; }
+            #game-log-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 18px) !important; }
+            #direct-controls-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 18px) !important; }
             #game-canvas { object-fit: contain !important; object-position: center center !important; }
         }
         @media (max-width: 900px) and (orientation: landscape) {
             #game-canvas { object-fit: contain !important; }
-            #game-log-overlay { bottom: calc(max(6px, env(safe-area-inset-bottom)) + 28px) !important; }
-            #direct-controls-overlay { bottom: calc(max(6px, env(safe-area-inset-bottom)) + 28px) !important; }
+            #game-log-overlay { bottom: calc(max(6px, env(safe-area-inset-bottom)) + 14px) !important; }
+            #direct-controls-overlay { bottom: calc(max(6px, env(safe-area-inset-bottom)) + 14px) !important; }
+
+            /* 横向きは縦が短いため、ミニマップ＋4ボタンをD-Padと干渉しない高さに収める。 */
+            #direct-title-overlay { gap: 1px !important; }
+            #mini-map { width: 150px !important; height: 92px !important; }
+            #map-action-buttons { gap: 2px !important; }
+            #map-action-buttons .btn-sfc {
+                padding: 2px 4px !important;
+                font-size: 9px !important;
+                line-height: 1.15 !important;
+                min-height: 0 !important;
+            }
         }
         @media (max-width: 420px) and (orientation: portrait) {
             #game-log-overlay { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 38px) !important; }
@@ -544,7 +558,7 @@
                     <div class="title-kicker">PIXEL ROGUELIKE ADVENTURE</div>
                     <div class="title-logo">駄天使<span class="nico">nicoちゃん</span>は<br>復讐したい</div>
                     <div class="title-sub">THE FALLEN ANGEL'S REVENGE</div>
-                    <div id="title-version" class="title-version">Ver. 1.0</div>
+                    <div id="title-version" class="title-version">Ver. 1.11</div>
                     <div id="title-highscore-panel" class="title-highscore-panel">
                         <div class="title-highscore-label">HIGH SCORE</div>
                         <div id="title-highscore-display">0</div>
