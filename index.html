@@ -617,6 +617,202 @@
             #direct-controls-overlay > button { min-height: 37px !important; }
         }
 
+        /* The three auxiliary actions occupy exactly one D-Pad row. */
+        .mobile-action-row { display: contents; }
+        .control-mobile-label { display: none; }
+        @media (max-width: 900px) {
+            .mobile-action-row {
+                display: grid !important;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                width: 176px !important;
+                height: 55px !important;
+                gap: 4px;
+                padding: 4px;
+                background: rgba(2,6,23,.7);
+                border: 1px solid rgba(100,116,139,.5);
+                border-radius: 8px;
+            }
+            .mobile-action-row > button {
+                width: 100% !important;
+                min-width: 0 !important;
+                height: 100% !important;
+                min-height: 0 !important;
+                padding: 2px 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0 !important;
+                font-size: 10px !important;
+                line-height: 1.1 !important;
+                white-space: nowrap !important;
+            }
+            .mobile-action-row > button > i,
+            .mobile-action-row .shift-facing-indicator { font-size: 17px !important; line-height: 1.1 !important; }
+            .control-mobile-label { display: inline !important; }
+            .control-desktop-label { display: none !important; }
+            #direct-status-overlay .score-row { width: max-content; max-width: 65vw; }
+            #save-slot-menu {
+                align-items: flex-start !important;
+                padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
+            }
+            #save-slot-menu > .sfc-window {
+                width: min(100%, 680px) !important;
+                max-height: calc(var(--app-vh, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)) - 4px) !important;
+                overflow-y: auto !important;
+                overscroll-behavior: contain;
+                padding: 10px !important;
+                margin: auto !important;
+            }
+            #save-slot-menu .save-slot-spacer { display: none !important; }
+            #save-slot-menu #save-slot-list { gap: 6px !important; }
+            #save-slot-menu #save-slot-list > div { padding: 7px !important; }
+            #auto-save-summary, #save-slot-list .flex-1 { overflow-wrap: anywhere; min-width: 0; }
+            #save-slot-menu > .sfc-window > div:first-child {
+                position: sticky;
+                top: -10px;
+                z-index: 1;
+                background: #021235;
+                padding: 4px 0;
+            }
+        }
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 340px) {
+            .mobile-action-row { width: 150px !important; height: 48px !important; margin-left: auto !important; }
+        }
+
+        /* Keep button labels fully opaque while letting the map show through
+           the mobile control surfaces. Opacity on the parent would fade labels. */
+        @media (max-width: 900px) {
+            #direct-controls-overlay > .grid.grid-cols-3,
+            #direct-controls-overlay > .mobile-action-row {
+                background: rgba(2, 6, 23, .18) !important;
+                border-color: rgba(148, 163, 184, .38) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 > button,
+            #direct-controls-overlay > .mobile-action-row > button {
+                background: rgba(15, 23, 42, .58) !important;
+                border-color: rgba(148, 163, 184, .62) !important;
+                box-shadow: inset 1px 1px 0 rgba(203, 213, 225, .28),
+                            0 2px 6px rgba(0, 0, 0, .35) !important;
+                text-shadow: 0 1px 3px #020617, 0 0 5px #020617 !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 > button:active,
+            #direct-controls-overlay > .mobile-action-row > button:active {
+                background: rgba(51, 65, 85, .88) !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 > #btn-center {
+                background: rgba(120, 53, 15, .68) !important;
+                border-color: rgba(245, 158, 11, .75) !important;
+            }
+            #direct-controls-overlay > .mobile-action-row > #shift-facing-toggle.is-on {
+                background: rgba(146, 64, 14, .88) !important;
+                border-color: #f59e0b !important;
+            }
+        }
+
+        /* Both rows use the same 176px grid, 4px gaps and 4px padding.
+           D-Pad cells are about 53px square; auxiliary cells match exactly. */
+        @media (max-width: 900px) {
+            #direct-controls-overlay > .mobile-action-row {
+                height: 63px !important;
+                box-sizing: border-box !important;
+                gap: 4px !important;
+                padding: 4px !important;
+            }
+            #direct-controls-overlay > .mobile-action-row > button {
+                padding: 0 !important;
+                font-size: 11px !important;
+            }
+            #direct-controls-overlay > .mobile-action-row > button > i,
+            #direct-controls-overlay > .mobile-action-row .shift-facing-indicator {
+                display: none !important;
+            }
+            #direct-controls-overlay > .mobile-action-row .control-mobile-label {
+                display: inline !important;
+                font-size: 11px !important;
+                line-height: 1.2 !important;
+            }
+        }
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 340px) {
+            #direct-controls-overlay > .mobile-action-row { height: 54px !important; }
+        }
+
+        /* Fourth row shares exactly the same grid cells as the movement keys,
+           regardless of the browser's reported CSS viewport width. */
+        #direct-controls-overlay > .grid.grid-cols-3 {
+            grid-template-rows: repeat(4, minmax(0, 1fr)) !important;
+            height: 204px !important;
+            background: rgba(2,6,23,.18) !important;
+            border-color: rgba(148,163,184,.38) !important;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > button {
+            background: rgba(15,23,42,.58) !important;
+            border-color: rgba(148,163,184,.62) !important;
+            text-shadow: 0 1px 3px #020617, 0 0 5px #020617 !important;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > #btn-center { background: rgba(120,53,15,.68) !important; }
+        #direct-controls-overlay > .grid.grid-cols-3 > #shift-facing-toggle,
+        #direct-controls-overlay > .grid.grid-cols-3 > #btn-wait-turn,
+        #direct-controls-overlay > .grid.grid-cols-3 > #btn-inventory {
+            min-width: 0 !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+        }
+        #direct-controls-overlay .control-mobile-label { display: inline !important; }
+        #direct-controls-overlay .control-desktop-label,
+        #direct-controls-overlay > .grid.grid-cols-3 > button > i,
+        #direct-controls-overlay .shift-facing-indicator { display: none !important; }
+        @media (max-width: 900px) {
+            #direct-controls-overlay > .grid.grid-cols-3 { height: 233px !important; }
+        }
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 340px) {
+            #direct-controls-overlay > .grid.grid-cols-3 { height: 198px !important; }
+        }
+
+        /* A narrow divider track separates movement from utility controls.
+           The four button tracks keep their previous square dimensions. */
+        #direct-controls-overlay > .grid.grid-cols-3 {
+            grid-template-rows: repeat(3, minmax(0, 1fr)) 8px minmax(0, 1fr) !important;
+            height: 216px !important;
+            background: rgba(2, 6, 23, .03) !important;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > .control-divider {
+            grid-column: 1 / -1;
+            grid-row: 4;
+            align-self: center;
+            height: 1px;
+            width: 100%;
+            background: rgba(226, 232, 240, .75);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+            pointer-events: none;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > button {
+            background: rgba(15, 23, 42, .10) !important;
+            color: #f8fafc;
+            text-shadow: 0 1px 3px #020617, 0 0 6px #020617 !important;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > #btn-center {
+            background: rgba(120, 53, 15, .10) !important;
+            color: #fde68a;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > button:active {
+            background: rgba(51, 65, 85, .42) !important;
+        }
+        #direct-controls-overlay > .grid.grid-cols-3 > #shift-facing-toggle.is-on {
+            background: rgba(146, 64, 14, .32) !important;
+        }
+        @media (max-width: 900px) {
+            #direct-controls-overlay > .grid.grid-cols-3 { height: 245px !important; }
+        }
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 340px) {
+            #direct-controls-overlay > .grid.grid-cols-3 { height: 210px !important; }
+        }
+
         /* ===== 向き変更ボタン：タップ状態を視覚化 ===== */
         #shift-facing-toggle.is-on {
             background: linear-gradient(180deg, #92400e 0%, #78350f 100%) !important;
@@ -641,7 +837,7 @@
                     <div class="title-kicker">PIXEL ROGUELIKE ADVENTURE</div>
                     <div class="title-logo">駄天使<span class="nico">nicoちゃん</span>は<br>復讐したい</div>
                     <div class="title-sub">THE FALLEN ANGEL'S REVENGE</div>
-                    <div id="title-version" class="title-version">Ver. 1.76</div>
+                    <div id="title-version" class="title-version">Ver. …</div>
                     <div id="title-highscore-panel" class="title-highscore-panel">
                         <div class="title-highscore-label">HIGH SCORE</div>
                         <div id="title-highscore-display">0</div>
@@ -663,8 +859,9 @@
                         <div id="exp-gauge" class="h-full bg-cyan-400/80" style="width:0%"></div>
                     </div>
                     <span id="exp-display" class="text-cyan-200 whitespace-nowrap text-sm sm:text-base">0/20</span>
-                    <span class="ml-3 text-yellow-300 whitespace-nowrap">Score <span id="score-display">0</span></span>
                 </div>
+                <!-- Separate row: score and its number cannot be covered by the right-side options button. -->
+                <div class="score-row log-shadow text-lg sm:text-2xl font-bold text-yellow-300 whitespace-nowrap">Score <span id="score-display">0</span></div>
                 <div class="flex items-center gap-5 log-shadow text-lg sm:text-2xl font-bold">
                     <span class="text-green-400">HP <span id="hp-display">30/30</span></span>
                     <span class="text-amber-400">空腹 <span id="fullness-display">100/100</span></span>
@@ -700,11 +897,6 @@
             <!-- Direct Overlay Control Panel (Bottom-Right) -->
             <div id="direct-controls-overlay" class="absolute bottom-2 right-2 z-10 flex flex-col items-end gap-1.5 select-none">
                 
-                <!-- バッグ：D-Padの上に配置 -->
-                <button id="btn-inventory" class="btn-sfc w-36 sm:w-44 px-2 py-3 sm:py-3.5 text-sm sm:text-base font-bold text-amber-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-bag-shopping"></i> バッグ (X)
-                </button>
-
                 <!-- 移動キー -->
                 <!-- Floating D-Pad -->
                 <div class="grid grid-cols-3 gap-1 w-36 sm:w-44 bg-slate-950/60 p-1 rounded-lg backdrop-blur-sm border border-slate-700/50 shadow-xl">
@@ -719,18 +911,19 @@
                     <button id="btn-sw" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↙</button>
                     <button id="btn-s" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↓</button>
                     <button id="btn-se" class="btn-sfc py-2.5 sm:py-3 text-sm sm:text-base text-slate-200 rounded bg-slate-900/80 active:bg-slate-700">↘</button>
+                    <div class="control-divider" aria-hidden="true"></div>
+                    <!-- 移動キーと同じグリッドの最下段。 -->
+                    <button id="shift-facing-toggle" type="button" aria-pressed="false" aria-label="向き変更" class="btn-sfc text-slate-200 rounded transition-none">
+                        <span class="shift-facing-indicator">○</span><span class="control-mobile-label">向き</span><span class="control-desktop-label">向き変更 (Shift)</span>
+                        <input type="checkbox" tabindex="-1" aria-hidden="true" class="sr-only">
+                    </button>
+                    <button id="btn-wait-turn" aria-label="足踏み" class="btn-sfc text-cyan-300 rounded">
+                        <i class="fa-solid fa-hourglass-half"></i><span class="control-mobile-label">足踏み</span><span class="control-desktop-label">足踏み (Space)</span>
+                    </button>
+                    <button id="btn-inventory" aria-label="バッグ" class="btn-sfc text-amber-300 rounded">
+                        <i class="fa-solid fa-bag-shopping"></i><span class="control-mobile-label">バッグ</span><span class="control-desktop-label">バッグ (X)</span>
+                    </button>
                 </div>
-
-                <!-- 足踏みはD-Padの下。さらにその下に向き変更ボタン。 -->
-                <button id="btn-wait-turn" class="btn-sfc w-36 sm:w-44 px-2 py-3 sm:py-3.5 text-sm sm:text-base font-bold text-cyan-300 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md hover:bg-slate-800 active:bg-slate-700 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-hourglass-half"></i> 足踏み (Space)
-                </button>
-
-                <button id="shift-facing-toggle" type="button" aria-pressed="false" class="btn-sfc w-36 sm:w-44 px-2 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-200 rounded bg-slate-900/80 backdrop-blur-sm border border-slate-600/80 shadow-md flex items-center justify-center gap-1.5 transition-none">
-                    <span class="shift-facing-indicator">○</span> 向き変更 (Shift)
-                    <input type="checkbox" tabindex="-1" aria-hidden="true" class="sr-only">
-                </button>
-
             </div>
 
             <!-- Novel-game style Story Dialogue Overlay -->
@@ -788,7 +981,7 @@
                             <button id="auto-save-load-btn" class="btn-sfc px-3 py-1 text-sm rounded text-violet-300">ロード</button>
                         </div>
                     </div>
-                    <div class="h-[50px]"></div>
+                    <div class="save-slot-spacer h-[50px]"></div>
                     <div id="save-slot-list" class="grid gap-2"></div>
                 </div>
             </div>
@@ -1276,7 +1469,9 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '1.92';
+        const GAME_VERSION = '1.97';
+        // One source of truth for the title; no stale hard-coded HTML version.
+        document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
 
         class Game {
             constructor() {
@@ -7145,8 +7340,6 @@
         window.addEventListener('orientationchange', () => setTimeout(syncVisualViewport, 120), { passive: true });
 
         window.onload = function() {
-            const versionEl = document.getElementById('title-version');
-            if (versionEl) versionEl.textContent = `Ver. ${GAME_VERSION}`;
             window.game = new Game();
         };
     </script>
