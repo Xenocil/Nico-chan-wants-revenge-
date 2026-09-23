@@ -195,7 +195,7 @@
             content:''; position:absolute; inset:0; pointer-events:none;
             background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.68) 100%);
         }
-        .title-star { position:absolute; width:3px; height:3px; background:#fde68a; opacity:.65; box-shadow:0 0 7px #fde68a; animation:titleTwinkle 2.4s steps(2,end) infinite; }
+        .title-star { position:absolute; width:3px; height:3px; background:#fffdf0; opacity:.65; border-radius:50%; box-shadow:0 0 4px #fff7bf,0 0 10px rgba(253,230,138,.78),0 0 18px rgba(253,230,138,.34); animation:titleTwinkle 2.4s steps(2,end) infinite; }
         @keyframes titleTwinkle { 0%,100%{opacity:.2;transform:scale(.7)} 50%{opacity:.9;transform:scale(1.35)} }
         .title-ruins { position:absolute; left:0; right:0; bottom:0; height:38%; opacity:.72; background:linear-gradient(135deg,transparent 0 10%,#111827 10% 13%,transparent 13% 18%,#0f172a 18% 23%,transparent 23% 30%,#111827 30% 37%,transparent 37% 44%,#0f172a 44% 51%,transparent 51% 60%,#111827 60% 66%,transparent 66% 74%,#0f172a 74% 82%,transparent 82%); clip-path:polygon(0 42%,7% 30%,13% 43%,20% 18%,27% 40%,35% 25%,43% 44%,51% 15%,59% 38%,67% 22%,75% 44%,83% 28%,91% 42%,100% 20%,100% 100%,0 100%); }
         .title-core { position:relative; z-index:2; width:min(92%,980px); display:flex; flex-direction:column; align-items:center; gap:clamp(22px,4vh,42px); padding:4vh 2vw; }
@@ -570,7 +570,7 @@
                     <div class="title-kicker">PIXEL ROGUELIKE ADVENTURE</div>
                     <div class="title-logo">駄天使<span class="nico">nicoちゃん</span>は<br>復讐したい</div>
                     <div class="title-sub">THE FALLEN ANGEL'S REVENGE</div>
-                    <div id="title-version" class="title-version">Ver. 1.72</div>
+                    <div id="title-version" class="title-version">Ver. 1.76</div>
                     <div id="title-highscore-panel" class="title-highscore-panel">
                         <div class="title-highscore-label">HIGH SCORE</div>
                         <div id="title-highscore-display">0</div>
@@ -1205,7 +1205,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '1.72';
+        const GAME_VERSION = '1.82';
 
         class Game {
             constructor() {
@@ -1213,6 +1213,10 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.canvas.width = 800;
                 this.canvas.height = 450;
+                this.postCanvas = document.createElement('canvas');
+                this.postCanvas.width = this.canvas.width;
+                this.postCanvas.height = this.canvas.height;
+                this.postCtx = this.postCanvas.getContext('2d');
 
                 this.currentFloor = 10;
                 this.heavenFloor = 0;
@@ -1275,9 +1279,26 @@
                 this.showTitleScreen();
 
                 const gameLoop = (timestamp) => {
-                    this.update(timestamp);
-                    this.render();
+                    // 例外発生時も次のフレームを予約し、画面に原因と座標を残す。
+                    // 同じ例外を連続発生させないよう、診断中は更新と描画を停止する。
                     requestAnimationFrame(gameLoop);
+                    if (this.frameFailure) return;
+                    let phase = 'update';
+                    try {
+                        this.update(timestamp);
+                        phase = 'render';
+                        this.render();
+                    } catch (err) {
+                        this.frameFailure = true;
+                        const message = err && (err.stack || err.message) ? String(err.stack || err.message) : String(err);
+                        const info = `v${GAME_VERSION} | ${phase} | floor=${this.currentFloor} | turn=${this.turn} | x=${this.player?.x} y=${this.player?.y} | facing=${this.facing?.x},${this.facing?.y}`;
+                        console.error('Game loop stopped:', info, err);
+                        const box = document.createElement('pre');
+                        box.id = 'game-error-report';
+                        box.style.cssText = 'position:fixed;z-index:99999;top:8px;left:8px;right:8px;max-height:45vh;overflow:auto;padding:14px;background:#2b1020;color:#fff;border:2px solid #ff8ca7;white-space:pre-wrap;word-break:break-word;font:14px monospace;user-select:text';
+                        box.textContent = `描画・更新エラー（この内容を送ってね）\n${info}\n${message}`;
+                        document.body.appendChild(box);
+                    }
                 };
                 requestAnimationFrame(gameLoop);
             }
@@ -2835,6 +2856,267 @@
                 }
                 return { x, y, flash: obj.hitTimer > 0 && Math.floor(obj.hitTimer / 45) % 2 === 0 };
             }
+
+            // HD-2D風：装備中の武器・盾をnicoちゃんとは別レイヤーで描画する。
+            // ドット絵本体はぼかさず、装備と光だけを後段で動かすことでシャープさを維持する。
+            drawEquippedGear(ctx, centerX, centerY, facing = DIRECTION.S, layer = 'front') {
+                const weapon = this.player?.weapon;
+                const shield = this.player?.armor;
+                const rawDx = facing?.x || 0, rawDy = facing?.y || 1;
+                // nico本体は斜め方向も左右の横向きスプライトとして描画しているため、
+                // 装備側も同じ見た目方向へ正規化する。
+                // これをしないと SE/NE が「右向きのnico + 正面/背面用の四角い盾」になり、
+                // SEでは盾がfrontレイヤーに回って顔の手前へ出てしまう。
+                const dx = rawDx !== 0 ? rawDx : 0;
+                const dy = rawDx !== 0 ? 0 : rawDy;
+                const attackActive = (this.player?.attackTimer || 0) > 0;
+                const attackDuration = weapon?.id === 'sylpain' ? 480 : 420;
+                const attackP = attackActive ? Math.min(1, 1 - this.player.attackTimer / attackDuration) : 0;
+                const swing = attackActive ? Math.sin(Math.min(1, attackP) * Math.PI) : 0;
+                const dirAngle = Math.atan2(dy, dx);
+                const base = dirAngle - Math.PI / 2;
+
+                // キャラクターから見た「右手」。画面上の右固定ではなく、向きに応じて右手側へ回り込む。
+                const rightX = dy;
+                const rightY = -dx;
+                const isBackFacing = dy < 0;
+                const isSideFacing = dx !== 0 && dy === 0;
+                const isEast = dx > 0 && dy === 0;
+                const isWest = dx < 0 && dy === 0;
+                // 左手の盾は上向きと横向きでは必ずnicoちゃん本体より奥へ描画する。
+                // 特に右向きは盾が顔・髪を覆わないよう、frontパスでは絶対に描かない。
+                const shieldBehindPlayer = isBackFacing || isSideFacing;
+                const shouldDrawShieldBack = shieldBehindPlayer && layer === 'back';
+                const shouldDrawShieldFront = !shieldBehindPlayer && layer === 'front';
+
+                ctx.save();
+                ctx.imageSmoothingEnabled = false;
+
+                // ===== 盾 =====
+                // 左手の盾：上向き・横向きは背面、正面だけ前面。
+                if (shield && (shouldDrawShieldBack || shouldDrawShieldFront)) {
+                    const sideSign = dx < 0 ? -1 : (dx > 0 ? 1 : 0);
+                    let sx, sy;
+                    // 盾だけに座標・透明度を適用し、描画後は必ず元の状態へ戻す。
+                    // v1.79ではこのsave/translateが抜け、下のrestoreが装備全体の状態を壊していた。
+                    if (isSideFacing) {
+                        sx = centerX + (isEast ? 8 : -6);
+                        sy = centerY + (isEast ? 12 : 9);
+                    } else {
+                        sx = centerX + (rightX * 8) + (dx * 1);
+                        sy = centerY + (rightY * 8) + (dy * 2) + (isBackFacing ? -1 : 2);
+                    }
+                    ctx.save();
+                    ctx.translate(Math.round(sx), Math.round(sy));
+                    ctx.scale(0.82, 0.82);
+                    ctx.globalAlpha = 0.98;
+                    if (isSideFacing) {
+                        // 横向きでも「地面に落ちている時の物体形状」を維持する。
+                        // 盾種を一律の盾型へ潰さず、まな板・鍋蓋・各盾を個別描画する。
+                        if (shield.id === 'board') {
+                            // まな板：地面アイコンと同じ木板。側面では厚みを見せる。
+                            ctx.fillStyle='#78350f'; ctx.fillRect(isEast?-4:-5,-9,8,18);
+                            ctx.fillStyle='#d97706'; ctx.fillRect(isEast?-3:-4,-8,6,16);
+                            ctx.fillStyle='#f59e0b'; ctx.fillRect(isEast?-2:-3,-7,2,11);
+                            ctx.fillStyle='#92400e'; ctx.fillRect(isEast?2:1,-5,1,10);
+                        } else if (shield.id === 'lid') {
+                            // 取っ手付き鍋蓋：横から見ても円盤＋中央の取っ手と分かる形。
+                            ctx.fillStyle='#475569'; ctx.beginPath(); ctx.ellipse(0,0,5,10,0,0,Math.PI*2); ctx.fill();
+                            ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.ellipse(isEast?-1:1,0,3.5,8,0,0,Math.PI*2); ctx.fill();
+                            ctx.fillStyle='#cbd5e1'; ctx.fillRect(isEast?-2:0,-6,2,11);
+                            ctx.fillStyle='#64748b'; ctx.fillRect(isEast?-7:4,-3,5,6);
+                            ctx.fillStyle='#e2e8f0'; ctx.fillRect(isEast?-6:4,-2,3,3);
+                        } else if (shield.id === 'hungerless_shield') {
+                            ctx.fillStyle='#5b21b6'; ctx.beginPath();
+                            if(isEast){ctx.moveTo(-3,-9);ctx.lineTo(4,-7);ctx.lineTo(5,5);ctx.lineTo(0,10);ctx.lineTo(-4,5);}
+                            else{ctx.moveTo(-5,-8);ctx.lineTo(2,-9);ctx.lineTo(4,5);ctx.lineTo(-1,10);ctx.lineTo(-5,6);} ctx.closePath();ctx.fill();
+                            ctx.fillStyle='#a78bfa';ctx.fillRect(isEast?-1:-3,-5,3,10);ctx.fillStyle='#f5f3ff';ctx.fillRect(isEast?0:-2,-4,1,7);
+                        } else if (shield.id === 'mirage_shield') {
+                            ctx.globalAlpha=.82; ctx.fillStyle='#312e81'; ctx.beginPath();
+                            if(isEast){ctx.moveTo(-3,-9);ctx.lineTo(4,-7);ctx.lineTo(5,5);ctx.lineTo(0,10);ctx.lineTo(-4,5);}
+                            else{ctx.moveTo(-5,-8);ctx.lineTo(2,-9);ctx.lineTo(4,5);ctx.lineTo(-1,10);ctx.lineTo(-5,6);} ctx.closePath();ctx.fill();
+                            ctx.fillStyle='#818cf8';ctx.fillRect(isEast?-1:-3,-5,3,10);ctx.strokeStyle='#e9d5ff';ctx.lineWidth=1;ctx.stroke();
+                        } else {
+                            // 漆黒の盾：地面アイコンと同じ黒紺＋青い意匠。
+                            ctx.fillStyle='#0f172a'; ctx.beginPath();
+                            if(isEast){ctx.moveTo(-3,-9);ctx.lineTo(4,-7);ctx.lineTo(5,5);ctx.lineTo(0,10);ctx.lineTo(-4,5);}
+                            else{ctx.moveTo(-5,-8);ctx.lineTo(2,-9);ctx.lineTo(4,5);ctx.lineTo(-1,10);ctx.lineTo(-5,6);} ctx.closePath();ctx.fill();
+                            ctx.fillStyle='#1e1b4b';ctx.fillRect(isEast?-1:-3,-5,3,10);ctx.fillStyle='#0ea5e9';ctx.fillRect(isEast?0:-2,-2,1,5);
+                        }
+                    } else if (shield.id === 'board') {
+                        // まな板：地面アイコンの木板形状・配色へ統一。
+                        ctx.fillStyle='#78350f'; ctx.beginPath();ctx.moveTo(-8,-10);ctx.lineTo(7,-9);ctx.lineTo(9,-5);ctx.lineTo(8,8);ctx.lineTo(4,10);ctx.lineTo(-7,8);ctx.lineTo(-9,4);ctx.closePath();ctx.fill();
+                        ctx.fillStyle='#d97706';ctx.beginPath();ctx.moveTo(-6,-8);ctx.lineTo(5,-7);ctx.lineTo(7,-4);ctx.lineTo(6,6);ctx.lineTo(-5,6);ctx.lineTo(-7,3);ctx.closePath();ctx.fill();
+                        ctx.fillStyle='#f59e0b';ctx.fillRect(-5,-6,7,2);ctx.fillStyle='#92400e';ctx.fillRect(3,-3,2,7);ctx.fillStyle='#fbbf24';ctx.fillRect(-2,-8,3,2);
+                    } else if (shield.id === 'lid') {
+                        // 取っ手付き鍋蓋：盾型ではなく、地面アイコンと同じ丸い金属蓋＋取っ手。
+                        ctx.fillStyle='#475569';ctx.beginPath();ctx.arc(0,1,10,0,Math.PI*2);ctx.fill();
+                        ctx.fillStyle='#94a3b8';ctx.beginPath();ctx.arc(0,0,8,0,Math.PI*2);ctx.fill();
+                        ctx.fillStyle='#cbd5e1';ctx.fillRect(-6,-3,10,3);ctx.fillStyle='#64748b';ctx.fillRect(-3,-6,6,3);ctx.fillStyle='#e2e8f0';ctx.fillRect(-2,-5,4,2);
+                    } else if (shield.id === 'hungerless_shield') {
+                        ctx.fillStyle='#5b21b6';ctx.beginPath();ctx.moveTo(-9,-9);ctx.lineTo(9,-9);ctx.lineTo(8,4);ctx.lineTo(0,12);ctx.lineTo(-8,4);ctx.closePath();ctx.fill();
+                        ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.moveTo(-7,-7);ctx.lineTo(7,-7);ctx.lineTo(6,3);ctx.lineTo(0,9);ctx.lineTo(-6,3);ctx.closePath();ctx.fill();
+                        ctx.fillStyle='#f5f3ff';ctx.fillRect(-4,-5,8,2);ctx.fillStyle='#7c3aed';ctx.fillRect(-2,-4,4,8);ctx.fillStyle='#c4b5fd';ctx.fillRect(-5,4,10,2);
+                    } else if (shield.id === 'mirage_shield') {
+                        ctx.globalAlpha=.82;ctx.fillStyle='#312e81';ctx.beginPath();ctx.moveTo(-9,-8);ctx.lineTo(9,-8);ctx.lineTo(7,4);ctx.lineTo(0,11);ctx.lineTo(-7,4);ctx.closePath();ctx.fill();
+                        ctx.fillStyle='#818cf8';ctx.beginPath();ctx.moveTo(-7,-6);ctx.lineTo(7,-6);ctx.lineTo(5,3);ctx.lineTo(0,8);ctx.lineTo(-5,3);ctx.closePath();ctx.fill();
+                        ctx.strokeStyle='#e9d5ff';ctx.lineWidth=1;ctx.strokeRect(-5,-4,10,7);ctx.fillStyle='#ffffff';ctx.fillRect(-4,-5,5,1);ctx.fillStyle='#c4b5fd';ctx.fillRect(3,2,3,2);
+                    } else {
+                        // 漆黒の盾：地面アイコンの黒紺＋青い意匠へ統一。
+                        ctx.fillStyle='#0f172a';ctx.beginPath();ctx.moveTo(-10,-9);ctx.lineTo(10,-9);ctx.lineTo(9,4);ctx.lineTo(0,12);ctx.lineTo(-9,4);ctx.closePath();ctx.fill();
+                        ctx.fillStyle='#1e1b4b';ctx.beginPath();ctx.moveTo(-8,-7);ctx.lineTo(8,-7);ctx.lineTo(7,3);ctx.lineTo(0,9);ctx.lineTo(-7,3);ctx.closePath();ctx.fill();
+                        ctx.strokeStyle='#38bdf8';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#312e81';ctx.fillRect(-5,-5,10,2);ctx.fillStyle='#0ea5e9';ctx.fillRect(-2,-3,4,6);ctx.fillStyle='#facc15';ctx.fillRect(-1,-2,2,3);ctx.fillStyle='#111827';ctx.fillRect(-5,5,10,2);
+                    }
+                    ctx.restore();
+                }
+
+                // 武器は基本的に前景。ただし上向き時は身体の奥側（背面レイヤー）に描く。
+                // これで背を向けた時に武器がnicoちゃんの身体を不自然に横切らない。
+                const weaponLayer = isBackFacing ? 'back' : 'front';
+                if (weapon && layer === weaponLayer) {
+                    // 右手位置は4方向それぞれ専用。横向きは盾位置の反転流用をしない。
+                    let handX = centerX, handY = centerY;
+                    let weaponBase = base;
+                    if (dy > 0) { // 正面：本人の右手＝画面左。身体中央から離す。
+                        handX -= 10; handY += 5; weaponBase = -Math.PI * 0.08;
+                    } else if (dy < 0) { // 背面：右手側・身体の奥。武器先端が上を向くよう上下を反転。
+                        handX += 9; handY += 3; weaponBase = -Math.PI * 0.08;
+                    } else if (isEast) { // 右向き：武器は手前、右下。
+                        handX += 12; handY += 8; weaponBase = Math.PI * 0.48;
+                    } else if (isWest) { // 左向き：専用位置で盾と間隔を取る。
+                        handX -= 13; handY += 6; weaponBase = -Math.PI * 0.52;
+                    }
+                    let angle = weaponBase;
+                    // 振り始めは右手の後方へ引き、振り抜き時に前へ大きく出す。
+                    if (attackActive) angle = weaponBase - 0.72 + swing * 1.75;
+                    const reach = attackActive ? 1 + swing * 0.24 : 1;
+                    const wx = handX + dx * (3 + swing * 5);
+                    const wy = handY + dy * (3 + swing * 5);
+                    ctx.save();
+                    ctx.translate(Math.round(wx), Math.round(wy));
+                    ctx.rotate(angle);
+                    ctx.scale(reach, reach);
+                    ctx.lineJoin='miter';
+
+                    if (weapon.id === 'nico_belos_whip') {
+                        ctx.strokeStyle='#db2777'; ctx.lineWidth=2.5; ctx.beginPath();
+                        ctx.moveTo(-2,5); ctx.quadraticCurveTo(5,1,12,-5); ctx.quadraticCurveTo(18,-10,21,-2); ctx.stroke();
+                        ctx.strokeStyle='#fbcfe8'; ctx.lineWidth=1; ctx.beginPath();
+                        ctx.moveTo(0,5); ctx.quadraticCurveTo(7,1,13,-4); ctx.quadraticCurveTo(18,-8,22,-1); ctx.stroke();
+                        ctx.fillStyle='#831843'; ctx.fillRect(-4,3,7,3); ctx.fillStyle='#f9a8d4'; ctx.fillRect(-3,2,3,4);
+                    } else if (weapon.id === 'sylpain') {
+                        ctx.fillStyle='#713f12'; ctx.fillRect(-2,0,4,17);
+                        ctx.fillStyle='#94a3b8'; ctx.fillRect(-1,-13,2,14);
+                        ctx.fillStyle='#e0f2fe'; ctx.beginPath(); ctx.moveTo(0,-18); ctx.lineTo(5,-11); ctx.lineTo(0,-8); ctx.lineTo(-5,-11); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle='#ffffff'; ctx.fillRect(-1,-15,2,5);
+                    } else if (weapon.id === 'nico_stick') {
+                        ctx.fillStyle='#c0c7d4'; ctx.fillRect(-2,-1,4,18); ctx.fillStyle='#e5e7eb'; ctx.fillRect(-1,-3,2,17);
+                        ctx.fillStyle='#f9a8d4'; ctx.beginPath(); ctx.arc(0,-7,5,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#fecdd3'; ctx.fillRect(-1,-11,2,7); ctx.fillRect(-4,-8,7,2); ctx.fillStyle='#ffffff'; ctx.fillRect(-2,-8,2,2); ctx.fillStyle='#f8fafc'; ctx.beginPath(); ctx.moveTo(-3,-8);ctx.lineTo(-10,-11);ctx.lineTo(-12,-7);ctx.lineTo(-7,-5);ctx.lineTo(-3,-5);ctx.closePath();ctx.fill(); ctx.beginPath();ctx.moveTo(3,-8);ctx.lineTo(10,-11);ctx.lineTo(12,-7);ctx.lineTo(7,-5);ctx.lineTo(3,-5);ctx.closePath();ctx.fill();
+                    } else if (weapon.id === 'sword') {
+                        ctx.fillStyle='#7c2d12'; ctx.fillRect(-2,3,4,8); ctx.fillStyle='#f59e0b'; ctx.fillRect(-5,2,10,2);
+                        ctx.fillStyle='#dbeafe'; ctx.beginPath(); ctx.moveTo(0,-16); ctx.lineTo(4,2); ctx.lineTo(0,4); ctx.lineTo(-4,2); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle='#ffffff'; ctx.fillRect(-1,-13,2,10);
+                    } else if (weapon.id === 'bat') {
+                        ctx.fillStyle='#8b5e34'; ctx.fillRect(-2,-14,5,20); ctx.fillStyle='#c08457'; ctx.fillRect(-4,-16,8,5);
+                        ctx.fillStyle='#cbd5e1'; ctx.fillRect(3,-13,2,3); ctx.fillRect(3,-5,2,3); ctx.fillRect(3,2,2,3);
+                    } else {
+                        ctx.fillStyle='#8b5e34'; ctx.fillRect(-2,-13,4,22); ctx.fillStyle='#c08457'; ctx.fillRect(-3,-14,6,3); ctx.fillStyle='#f5d0a9'; ctx.fillRect(-1,-11,2,13);
+                    }
+                    ctx.restore();
+
+                    // 右手を起点にした斬撃軌跡。キャラクター中央から離して描く。
+                    if (attackActive && swing > 0.05) {
+                        ctx.save();
+                        ctx.globalAlpha = (1 - Math.abs(swing - 0.72) / 0.72) * 0.34;
+                        ctx.translate(handX, handY);
+                        ctx.rotate(weaponBase - 0.55 + swing * 1.35);
+                        ctx.strokeStyle = weapon.id === 'nico_belos_whip' ? '#d8b4fe' : weapon.id === 'nico_stick' ? '#fbcfe8' : '#f8fafc';
+                        ctx.lineWidth = weapon.id === 'sylpain' ? 3 : 2;
+                        ctx.beginPath(); ctx.arc(0,0,17 + swing*7,-0.9,0.75); ctx.stroke();
+                        ctx.restore();
+                    }
+                }
+                ctx.restore();
+            }
+
+            drawHD2DLightAndPostProcess(ctx, playerX, playerY) {
+                const now = performance.now();
+                const pulse = 0.90 + Math.sin(now / 760) * 0.12 + Math.sin(now / 1270) * 0.05;
+                const amulet = !!this.player?.amuletReady;
+                const weapon = this.player?.weapon;
+                const heaven = this.currentFloor < 0;
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+
+                // まず局所光源。ここはドットを直接ぼかさず、光源だけをScreen合成する。
+                ctx.save();
+                ctx.globalCompositeOperation = 'screen';
+                if (amulet) {
+                    const core = ctx.createRadialGradient(cx, cy-3, 0, cx, cy-3, 18);
+                    core.addColorStop(0, `rgba(255,255,255,${0.60*pulse})`);
+                    core.addColorStop(.22, `rgba(210,245,255,${0.42*pulse})`);
+                    core.addColorStop(1, 'rgba(103,232,249,0)');
+                    ctx.fillStyle=core; ctx.beginPath(); ctx.arc(cx,cy-3,18,0,Math.PI*2); ctx.fill();
+                    ctx.save(); ctx.filter='blur(9px)';
+                    const bloom=ctx.createRadialGradient(cx,cy,5,cx,cy,125);
+                    bloom.addColorStop(0,`rgba(125,211,252,${0.32*pulse})`);
+                    bloom.addColorStop(.34,`rgba(103,232,249,${0.18*pulse})`);
+                    bloom.addColorStop(.70,`rgba(186,230,253,${0.07*pulse})`);
+                    bloom.addColorStop(1,'rgba(103,232,249,0)');
+                    ctx.fillStyle=bloom; ctx.beginPath(); ctx.arc(cx,cy,125,0,Math.PI*2); ctx.fill();
+                    ctx.restore();
+                    const ground=ctx.createRadialGradient(cx,cy+15,2,cx,cy+15,90);
+                    ground.addColorStop(0,`rgba(220,250,255,${0.22*pulse})`); ground.addColorStop(1,'rgba(165,243,252,0)');
+                    ctx.fillStyle=ground; ctx.beginPath(); ctx.ellipse(cx,cy+15,90,34,0,0,Math.PI*2); ctx.fill();
+                    for(let i=0;i<7;i++){
+                        const a=now/1050+i*0.897; const r=15+((now/8+i*23)%42);
+                        const sx=cx+Math.cos(a)*r, sy=cy+Math.sin(a)*r*.72-6;
+                        ctx.globalAlpha=.25+((Math.sin(now/280+i)+1)*.13);
+                        ctx.fillStyle='#e0f2fe'; ctx.fillRect(Math.round(sx),Math.round(sy),2,2);
+                    }
+                }
+                if (weapon) {
+                    let color=null;
+                    if(weapon.id==='nico_stick') color='rgba(244,114,182,.18)';
+                    else if(weapon.id==='sylpain') color='rgba(125,211,252,.20)';
+                    else if(weapon.id==='sword') color='rgba(226,232,240,.14)';
+                    if(color){ ctx.save(); ctx.filter='blur(12px)'; ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,36+pulse*6,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+                }
+                ctx.restore();
+
+                // 画面全体Bloom：完成したフレームを低解像度ではなくそのまま複製し、
+                // 強くぼかしたコピーをScreen合成する。明るい部分だけが柔らかく滲む。
+                if (this.postCanvas && this.postCtx) {
+                    const pc=this.postCanvas, pctx=this.postCtx;
+                    if (pc.width!==this.canvas.width || pc.height!==this.canvas.height) { pc.width=this.canvas.width; pc.height=this.canvas.height; }
+                    pctx.setTransform(1,0,0,1,0,0);
+                    pctx.clearRect(0,0,pc.width,pc.height);
+                    pctx.globalAlpha=1;
+                    pctx.globalCompositeOperation='source-over';
+                    pctx.drawImage(this.canvas,0,0);
+                    ctx.save();
+                    ctx.globalCompositeOperation='screen';
+                    ctx.globalAlpha=0.22;
+                    ctx.filter='blur(5px)';
+                    ctx.drawImage(pc,0,0);
+                    ctx.globalAlpha=0.10;
+                    ctx.filter='blur(11px)';
+                    ctx.drawImage(pc,0,0);
+                    ctx.restore();
+                }
+
+                // ごく薄い色調処理＋ビネット。前版より少しだけ存在感を上げる。
+                ctx.save();
+                const vignette=ctx.createRadialGradient(cx,cy,Math.min(this.canvas.width,this.canvas.height)*.22,cx,cy,Math.max(this.canvas.width,this.canvas.height)*.72);
+                vignette.addColorStop(0,'rgba(0,0,0,0)');
+                vignette.addColorStop(.70,'rgba(4,7,18,.055)');
+                vignette.addColorStop(1,heaven?'rgba(30,58,138,.17)':'rgba(0,0,0,.20)');
+                ctx.fillStyle=vignette; ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+                if(heaven){ ctx.globalCompositeOperation='screen'; ctx.fillStyle='rgba(186,230,253,.045)'; ctx.fillRect(0,0,this.canvas.width,this.canvas.height); }
+                ctx.restore();
+            }
+
 
             drawCombatEffects(ctx) {
                 for (const e of this.effects) {
@@ -5769,7 +6051,12 @@
                     this.ctx.fillRect(pRenderX - 4, pRenderY - 4, TILE_SIZE + 8, TILE_SIZE + 8);
                     this.ctx.restore();
                 }
-                this.drawNicoSprite(this.ctx, pRenderX + 16 + pOffset.x, pRenderY + 16 + pOffset.y, this.facing, 1.0);
+                const playerCx = pRenderX + 16 + pOffset.x;
+                const playerCy = pRenderY + 16 + pOffset.y;
+                // 装備レイヤー：上向き時の盾はnicoちゃんの背後、それ以外は前後関係を自然に分離。
+                this.drawEquippedGear(this.ctx, playerCx, playerCy, this.facing, 'back');
+                this.drawNicoSprite(this.ctx, playerCx, playerCy, this.facing, 1.0);
+                this.drawEquippedGear(this.ctx, playerCx, playerCy, this.facing, 'front');
 
                 // 7. 戦闘エフェクトを最前面に描画
                 this.drawCombatEffects(this.ctx);
@@ -5848,7 +6135,9 @@
                     this.ctx.restore();
                 }
 
+                // ワールド座標のカメラ変換を解除してから、画面全体のHD-2D処理を行う。
                 this.ctx.restore();
+                this.drawHD2DLightAndPostProcess(this.ctx, this.canvas.width / 2, this.canvas.height / 2);
             }
 
             getStageTheme() {
@@ -6602,7 +6891,7 @@
                     pixel(-6,-5,4,4,'#24170f'); pixel(2,-5,4,4,'#24170f'); pixel(-5,-4,2,2,'#fef08a'); pixel(3,-4,2,2,'#fef08a');
                     pixel(-2,0,4,3,'#f1e0c8'); pixel(-1,1,2,2,'#24170f'); pixel(-8,6,16,3,'#6f3f24'); pixel(-5,7,10,2,'#d7a24d');
                     pixel(-7,10,4,5,'#8a552d'); pixel(3,10,4,5,'#8a552d'); pixel(-10,13,6,2,'#5b351f'); pixel(4,13,6,2,'#5b351f');
-                    this.drawHeavenEnemyFinish(ctx,id);
+                    this.drawSFCDetailOverlay(ctx, 'enemy', enemy.id);
                 }else{
                     pixel(-10,-9,20,18,enemy.color||'#ef4444'); pixel(-7,-12,14,4,'#fecaca');
                     pixel(-5,-3,3,3,'#fff'); pixel(2,-3,3,3,'#fff');
