@@ -546,6 +546,77 @@
             html, body { min-height: 100svh; }
         }
 
+        /* Mobile: use one world-pixel scale in both orientations. The portrait
+           scale is 80% of the previous full-height cover scale; landscape
+           keeps the same sprite size and exposes a wider horizontal view. */
+        @media (max-width: 900px) {
+            #game-container { overflow: hidden !important; }
+            #game-canvas {
+                position: absolute !important;
+                left: 50% !important;
+                top: 50% !important;
+                width: var(--mobile-canvas-width, 1200px) !important;
+                height: var(--mobile-canvas-height, 675px) !important;
+                max-width: none !important;
+                max-height: none !important;
+                transform: translate(-50%, -50%) !important;
+                object-fit: fill !important;
+                image-rendering: pixelated !important;
+            }
+            #direct-controls-overlay {
+                transform: none !important;
+                width: 176px !important;
+                gap: 5px !important;
+                bottom: max(8px, env(safe-area-inset-bottom)) !important;
+                right: max(8px, env(safe-area-inset-right)) !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 {
+                width: 176px !important;
+                height: 176px !important;
+                gap: 4px !important;
+                padding: 4px !important;
+                touch-action: none !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 > button {
+                font-size: 28px !important;
+                touch-action: none !important;
+            }
+            #direct-controls-overlay > .grid.grid-cols-3 > #btn-center { font-size: 15px !important; }
+            #direct-controls-overlay > button {
+                width: 176px !important;
+                min-width: 176px !important;
+                max-width: 176px !important;
+                min-height: 42px !important;
+                padding: 5px 8px !important;
+                font-size: 13px !important;
+            }
+            #map-action-buttons { width: auto !important; flex: 0 0 auto !important; }
+            #map-action-buttons #btn-options {
+                width: auto !important;
+                min-width: 0 !important;
+                min-height: 40px !important;
+                padding: 5px 8px !important;
+                font-size: 12px !important;
+            }
+            #direct-title-overlay .floor-header { display: flex; align-items: center; gap: 5px; }
+        }
+        @media (max-width: 900px) and (orientation: landscape) {
+            #direct-controls-overlay {
+                bottom: max(5px, env(safe-area-inset-bottom)) !important;
+                right: max(5px, env(safe-area-inset-right)) !important;
+            }
+            #map-action-buttons #btn-options { min-height: 36px !important; }
+        }
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 340px) {
+            #direct-controls-overlay { gap: 3px !important; }
+            #direct-controls-overlay > .grid.grid-cols-3 {
+                width: 150px !important;
+                height: 150px !important;
+                margin-left: auto !important;
+            }
+            #direct-controls-overlay > button { min-height: 37px !important; }
+        }
+
         /* ===== 向き変更ボタン：タップ状態を視覚化 ===== */
         #shift-facing-toggle.is-on {
             background: linear-gradient(180deg, #92400e 0%, #78350f 100%) !important;
@@ -606,16 +677,16 @@
 
             <!-- Direct Overlay Floor / Mini-map -->
             <div id="direct-title-overlay" class="absolute top-2 right-2 z-10 flex flex-col items-end gap-2 select-none pointer-events-none">
-                <div class="flex items-center gap-1 log-shadow text-base sm:text-xl font-bold">
+                <div class="floor-header flex items-center gap-1 log-shadow text-base sm:text-xl font-bold">
+                    <div id="map-action-buttons" class="pointer-events-auto">
+                        <button id="btn-options" class="btn-sfc px-3 py-2 text-sm font-bold text-amber-200 rounded bg-slate-950/85 backdrop-blur-sm border border-slate-600/80 shadow-md">
+                            <i class="fa-solid fa-gear"></i> オプション
+                        </button>
+                    </div>
                     <span class="text-slate-300 floor-label">階層:</span>
                     <span id="floor-display" class="text-amber-400">B10F</span>
                 </div>
                 <canvas id="mini-map" width="200" height="123" class="mt-1 rounded border border-slate-500/40 bg-black/35 opacity-70"></canvas>
-                <div id="map-action-buttons" class="pointer-events-auto w-full">
-                    <button id="btn-options" class="btn-sfc w-full px-3 py-2.5 text-sm font-bold text-amber-200 rounded bg-slate-950/85 backdrop-blur-sm border border-slate-600/80 shadow-md">
-                        <i class="fa-solid fa-gear"></i> オプション
-                    </button>
-                </div>
             </div>
 
             <!-- Canvas -->
@@ -1205,7 +1276,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '1.82';
+        const GAME_VERSION = '1.92';
 
         class Game {
             constructor() {
@@ -7059,6 +7130,14 @@
             const vv = window.visualViewport;
             const h = vv ? vv.height : window.innerHeight;
             if (h > 0) document.documentElement.style.setProperty('--app-vh', `${h}px`);
+            // 800×450 canvas: identical pixel scale in portrait and landscape.
+            // Long-side scaling gives portrait 20% less zoom than the old cover fit.
+            const w = vv ? vv.width : window.innerWidth;
+            if (h > 0 && w > 0) {
+                const scale = Math.max(w, h) * 0.8 / 450;
+                document.documentElement.style.setProperty('--mobile-canvas-width', `${800 * scale}px`);
+                document.documentElement.style.setProperty('--mobile-canvas-height', `${450 * scale}px`);
+            }
         };
         syncVisualViewport();
         window.addEventListener('resize', syncVisualViewport, { passive: true });
