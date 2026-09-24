@@ -225,7 +225,8 @@
         .presents-copy { display:flex; flex-direction:column; align-items:center; gap:clamp(12px,3vh,24px); padding:24px; }
         .presents-heading { font-size:clamp(28px,5vw,70px); font-weight:900; line-height:1.3; letter-spacing:.04em; }
         .presents-credit { font-size:clamp(13px,1.7vw,21px); letter-spacing:.08em; color:#cbd5e1; }
-        .presents-prompt { position:absolute; left:0; right:0; bottom:max(8vh,36px); font-size:clamp(16px,2vw,24px); font-weight:700; letter-spacing:.08em; animation:continueGlow 1.3s ease-in-out infinite alternate; }
+        .presents-prompt { position:absolute; left:0; right:0; bottom:max(8vh,36px); font-size:clamp(16px,2vw,24px); font-weight:700; letter-spacing:.08em; animation:presentsGlow 1.3s ease-in-out infinite alternate; }
+        @keyframes presentsGlow { from { text-shadow:0 0 2px #fbcfe8; } to { text-shadow:0 0 13px #f9a8d4; } }
         .title-ruins { position:absolute; left:0; right:0; bottom:0; height:38%; opacity:.72; background:linear-gradient(135deg,transparent 0 10%,#111827 10% 13%,transparent 13% 18%,#0f172a 18% 23%,transparent 23% 30%,#111827 30% 37%,transparent 37% 44%,#0f172a 44% 51%,transparent 51% 60%,#111827 60% 66%,transparent 66% 74%,#0f172a 74% 82%,transparent 82%); clip-path:polygon(0 42%,7% 30%,13% 43%,20% 18%,27% 40%,35% 25%,43% 44%,51% 15%,59% 38%,67% 22%,75% 44%,83% 28%,91% 42%,100% 20%,100% 100%,0 100%); }
         .title-core { position:relative; z-index:2; width:min(92%,980px); display:flex; flex-direction:column; align-items:center; gap:clamp(22px,4vh,42px); padding:4vh 2vw; }
         .title-kicker { color:#a5b4fc; font-size:clamp(10px,1.3vw,15px); letter-spacing:.55em; text-shadow:0 0 12px rgba(129,140,248,.8); }
@@ -890,7 +891,7 @@
 <body class="h-screen w-screen flex flex-col p-1.5 sm:p-2 gap-1.5 max-h-screen overflow-hidden">
     <div id="presents-screen" role="button" tabindex="0" aria-label="天使nicoちゃん Presents。タップしてタイトルへ進む">
         <div class="presents-copy"><div class="presents-heading">天使nicoちゃん Presents</div><div class="presents-credit">Created by Xenocil.</div></div>
-        <div class="presents-prompt">Tap to next!</div>
+        <div class="presents-prompt">Tap to next♡</div>
     </div>
 
     <!-- Main Content Area: Max-Sized Canvas with Direct Overlay HUD and Controls -->
@@ -1282,7 +1283,33 @@
                     });
                 } catch(e) {}
             }
-            playStep() { this.playTone(110, 'triangle', 0.045, 0.028); }
+            playStep(when=null,strength=1) {
+                if (!this.enabled || !this.ctx || this.ctx.state !== 'running' || this.level===0) return;
+                try {
+                    const ctx=this.ctx, time=when===null?ctx.currentTime:when;
+                    if (!this.stepNoise) {
+                        const length=Math.ceil(ctx.sampleRate*.11);
+                        this.stepNoise=ctx.createBuffer(1,length,ctx.sampleRate);
+                        const samples=this.stepNoise.getChannelData(0);
+                        for(let i=0;i<length;i++) samples[i]=(Math.random()*2-1)*(1-i/length);
+                    }
+                    const noise=ctx.createBufferSource(), filter=ctx.createBiquadFilter(), gain=ctx.createGain();
+                    noise.buffer=this.stepNoise;
+                    filter.type='lowpass'; filter.frequency.value=680+Math.random()*260;
+                    gain.gain.setValueAtTime(.0001,time);
+                    gain.gain.linearRampToValueAtTime(.13*strength,time+.012);
+                    gain.gain.exponentialRampToValueAtTime(.0001,time+.105);
+                    noise.connect(filter);filter.connect(gain);gain.connect(this.masterGain);
+                    if(!this.stepSources) this.stepSources=new Set();
+                    this.stepSources.add(noise);
+                    noise.onended=()=>{this.stepSources.delete(noise);noise.disconnect();filter.disconnect();gain.disconnect();};
+                    noise.start(time);noise.stop(time+.11);
+                } catch(e) { this.playTone(120,'triangle',.07,.07*strength); }
+            }
+            stopScheduledSteps() {
+                for(const source of this.stepSources || []) { try{source.stop()}catch(e){} }
+                this.stepSources?.clear();
+            }
             playDeath() {
                 this.playTone(180, 'sawtooth', 0.16, 0.10);
                 setTimeout(() => this.playTone(120, 'triangle', 0.18, 0.08), 150);
@@ -1326,11 +1353,10 @@
                 setTimeout(() => this.playTone(659.25, 'sine', 0.12, 0.1), 60);
             }
             playStairs() {
-                // 階段専用のメロディではなく、木/石の階段を数段上るような短い足音。
-                [0, 105, 210].forEach((delay, i) => setTimeout(() => {
-                    this.playTone(i===2 ? 92 : 108, 'triangle', 0.055, 0.045);
-                    setTimeout(() => this.playTone(i===2 ? 72 : 82, 'triangle', 0.045, 0.025), 38);
-                }, delay));
+                // 階段の「ザッ、ザッ、ザッ」を音声時刻で予約する。
+                if (!this.ctx || this.ctx.state !== 'running') return;
+                const now=this.ctx.currentTime;
+                [0,.18,.36].forEach((delay,i)=>this.playStep(now+delay,1.45+i*.11));
             }
             playLevelUp() {
                 const notes = [523.25, 659.25, 783.99, 1046.50];
@@ -1393,6 +1419,17 @@
                     osc.connect(gain); gain.connect(this.masterGain);
                     osc.start(now);
                     osc.stop(now + 0.3);
+                    // 着地シェイクと同時に低音の衝撃と短い砂埃の音を重ねる。
+                    const thud=this.ctx.createOscillator(), thudGain=this.ctx.createGain();
+                    thud.type='square';
+                    thud.frequency.setValueAtTime(105,now);
+                    thud.frequency.exponentialRampToValueAtTime(42,now+.19);
+                    thudGain.gain.setValueAtTime(.0001,now);
+                    thudGain.gain.linearRampToValueAtTime(.16,now+.012);
+                    thudGain.gain.exponentialRampToValueAtTime(.0001,now+.24);
+                    thud.connect(thudGain);thudGain.connect(this.masterGain);
+                    thud.start(now);thud.stop(now+.25);
+                    this.playStep(now,.95);
                 } catch(e) {}
             }
         }
@@ -1472,7 +1509,25 @@
                     this.decodedBuffer=buffer;
                     if(this.wantPlay && this.audio._activeMusic===this) this.play();
                     return buffer;
-                }).catch(()=>null);
+                }).catch(error=>{console.warn('BGMをデコードできません:',this.src,error);return null;});
+            }
+            primeOnGesture() {
+                // iOSでは曲を切り替えた後に初めて play() すると拒否される場合がある。
+                // ゲーム曲専用の要素をPresentsの操作中に一度だけ起動しておく。
+                if(this.primed || this.level===0) return;
+                this.primed=true;
+                this.audio.muted=!this.audio._bgmGain;
+                this.setOutputVolume(0);
+                try {
+                    const attempt=this.audio.play();
+                    if(attempt?.then) attempt.then(()=>{
+                        if(!this.wantPlay) {
+                            this.audio.pause();
+                            try {this.audio.currentTime=0;} catch(e) {}
+                        }
+                    }).catch(error=>{this.primed=false;console.warn('ゲーム曲の準備に失敗:',this.src,error);});
+                    else {this.audio.pause();try {this.audio.currentTime=0;} catch(e) {}}
+                } catch(error) {this.primed=false;console.warn('ゲーム曲の準備に失敗:',this.src,error);}
             }
             stopBuffer() {
                 if(!this.bufferSource) return;
@@ -1492,7 +1547,7 @@
                 source.buffer=this.decodedBuffer;
                 source.loop=true;
                 source.connect(this.audio._bgmGain || this.bufferGain);
-                source.start();
+                try {source.start();} catch(error){console.warn('BGMバッファ再生に失敗:',this.src,error);return false;}
                 this.bufferSource=source;
                 this.audio.pause();
                 this.starting=false;
@@ -1524,8 +1579,7 @@
             play(silent=null) {
                 if(silent!==null) this.silentUntilReveal=silent;
                 if(typeof document!=='undefined' && document.hidden){this.wantPlay=true;return;}
-                // iOSでは２つ目のAudioの再生が拒否され得るため、タイトルで解禁済みの
-                // 同じ音声要素の曲だけを入れ替える。旧曲のフェードタイマーも無効化する。
+                // 曲ごとに同じ音声要素を使い続け、iOSでの src/load による再解禁を避ける。
                 if(this.level>0 && this.audio._activeMusic!==this){
                     const previous=this.audio._activeMusic;
                     if(previous){
@@ -1537,24 +1591,19 @@
                         previous.stopBuffer();
                     }
                     this.audio._activeMusic=this;
-                    if(previous){
-                        this.audio.pause();
-                        this.audio.src=this.src;
-                        if(typeof this.audio.load==='function') this.audio.load();
-                    }
                 }
                 if(this.silentUntilReveal){
-                    // iOS Safari では audio.volume=0 が無視される。再生前に muted を設定する。
+                    // ミュートでの再生開始→操作後のミュート解除はiOSで停止され得る。
+                    // 対応環境では音声要素をミュートせずWeb Audioのゲインを0にする。
                     clearInterval(this.fadeTimer);
                     this.fadeTimer=null;
-                    this.audio.muted=true;
+                    this.audio.muted=false;
                 } else this.audio.muted=false;
                 if(this.level===0) return;
                 this.wantPlay=true;
                 if(this.decodedBuffer && !this.silentUntilReveal){
-                    if(!this.bufferSource) this.startBuffer();
-                    else this.fadeTo(this.targetVolume,500);
-                    return;
+                    if(this.bufferSource){this.fadeTo(this.targetVolume,500);return;}
+                    if(this.startBuffer()) return;
                 }
                 if (this.starting) return;
                 if(!this.audio.paused) {
@@ -1573,11 +1622,12 @@
                                 this.starting=false;
                                 if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800);
                             } else if(!this.wantPlay && this.audio._activeMusic===this) this.audio.pause();
-                        }).catch(()=>{
+                        }).catch(error=>{
                             if(request===this.playRequest) {
                                 this.starting=false;
+                                console.warn('BGMの再生が拒否されました:',this.src,error);
                                 // 初回のplay拒否時も、読み込み済みならWeb Audioへ切り替える。
-                                if(this.decodedBuffer && this.wantPlay) this.play();
+                                if(this.decodedBuffer && this.wantPlay) this.startBuffer();
                             }
                         });
                     else { this.starting=false; if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800); }
@@ -1589,6 +1639,7 @@
                 try { this.audio.currentTime=0; } catch(e) {}
                 this.audio.muted=false;
                 if(this.level===0) return;
+                if(this.decodedBuffer){this.play();return;}
                 if(!this.audio.paused){ this.fadeTo(this.targetVolume,500); return; }
                 // 最初の再生が未完了なら、完了後の処理が音量を上げる。
                 if(!this.starting) this.play();
@@ -1608,20 +1659,22 @@
             }
         }
         const titleMusic = new TitleMusic('Sounds/Welcome to the Hell.mp3');
-        const gameMusic = new TitleMusic('Sounds/Angel Goes to Hell.mp3',titleMusic.audio);
+        const gameMusic = new TitleMusic('Sounds/Angel Goes to Hell.mp3');
 
         let backgroundPaused=false;
         let musicToResume=null;
         function pauseForBackground() {
             if(backgroundPaused) return;
             backgroundPaused=true;
-            const active=titleMusic.audio._activeMusic;
+            sound.stopScheduledSteps();
+            const active=gameMusic.wantPlay ? gameMusic : titleMusic.wantPlay ? titleMusic : null;
             musicToResume=active?.wantPlay && active.level>0 ? active : null;
             for(const music of [titleMusic,gameMusic]){
                 clearInterval(music.fadeTimer); music.fadeTimer=null;
                 music.stopBuffer();
             }
             titleMusic.audio.pause();
+            gameMusic.audio.pause();
             if(sound.ctx?.state==='running') {
                 // すぐに画面へ戻った場合、遅れて完了した suspend が再生を止めないようにする。
                 sound.ctx.suspend().catch(()=>{}).then(()=>{
@@ -1678,7 +1731,7 @@
         }
         // 自動再生不可の環境ではタイトル画面での最初の操作を再生の起点にする。
         const retryTitleMusic=()=>{
-            if (window.game?.presentsDismissed && !backgroundPaused && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+            if (window.game?.presentsDismissed && !backgroundPaused && titleMusic.audio.paused && !titleMusic.bufferSource && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
                 titleMusic.play();
         };
         const retryGameMusic=()=>{
@@ -1690,7 +1743,7 @@
         document.addEventListener('pointerdown',retryGameMusic,{passive:true});
         document.addEventListener('touchstart',retryGameMusic,{passive:true});
         document.addEventListener('keydown', () => {
-            if (window.game?.presentsDismissed && !backgroundPaused && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+            if (window.game?.presentsDismissed && !backgroundPaused && titleMusic.audio.paused && !titleMusic.bufferSource && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
                 titleMusic.play();
             retryGameMusic();
         });
@@ -1734,7 +1787,7 @@
             { id: 'mist_wand', name: '霧幻の杖', type: 'USABLE', effect: 'MIST_WAND', val: 0, desc: '使うとこのフロアのどこかへ瞬間移動する', weight: 12 },
             { id: 'cross_wand', name: '交差の杖', type: 'USABLE', effect: 'CROSS_WAND', val: 0, desc: '向いている直線上のアイテムや敵と位置を入れ替える。壁なら壁の手前へ移動する', weight: 12 },
             { id: 'gold_egg', name: '金の卵', type: 'USABLE', effect: 'LEVEL_UP', val: 0, desc: 'レベルを1上げ、経験値を0にする', weight: 2 },
-            { id: 'believer_soul', name: '信者の魂', type: 'USABLE', effect: 'SOUL', val: 5, desc: '最大HPを5上げ、HPを5回復する', weight: 3 },
+            { id: 'believer_soul', name: '信者の魂', type: 'USABLE', effect: 'SOUL', val: 5, desc: '最大HPを5上げ、HPを5回復する', weight: 4 },
             { id: 'loud_bottle', name: '大爆音の瓶詰', type: 'USABLE', effect: 'LOUD_EXPLOSION', val: 5, desc: '割ると半径5マス以内の敵を5ターン麻痺させる', weight: 10 },
             { id: 'penginium', name: 'ペンギニウム', type: 'USABLE', effect: 'ENHANCE_EQUIPMENT', val: 0, desc: '武器や防具の性能を+1する', weight: 6 }
         ];
@@ -1921,7 +1974,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '2.00';
+        const GAME_VERSION = '2.11';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
 
@@ -2079,7 +2132,7 @@
                         const dy = y - logTouchLastY;
                         if (Math.abs(dy) < 12) return;
                         e.preventDefault();
-                        const direction = dy < 0 ? 1 : -1; // 上スワイプ＝過去、下スワイプ＝最新
+                        const direction = dy > 0 ? 1 : -1; // 下スワイプ＝過去、上スワイプ＝最新
                         const maxOlder = Math.max(0, Math.min(20, this.logs.length - 6));
                         this.logScrollOffset = Math.max(0, Math.min(maxOlder, this.logScrollOffset + direction));
                         logTouchLastY = y;
@@ -2460,7 +2513,10 @@
                 // 操作イベント内で無音の再生を開始し、音量はタイトルが見えてから上げる。
                 sound.init();
                 initMusicOutput(titleMusic.audio);
+                initMusicOutput(gameMusic.audio);
+                titleMusic.preloadBuffer();
                 gameMusic.preloadBuffer();
+                gameMusic.primeOnGesture();
                 titleMusic.play(true);
                 const presents=document.getElementById('presents-screen');
                 const title=document.getElementById('title-screen');
@@ -4039,8 +4095,7 @@
                 const cx = this.canvas.width / 2;
                 const cy = this.canvas.height / 2;
 
-                // Dark ambient air: about 8% reduction at the player, 42% outside five tiles.
-                // Erase soft holes for actual torches on a separate overlay; never erase map pixels.
+                // 中心は見やすく、周囲を暗くして松明の局所光が浮かぶようにする。
                 const lm=this.lightCanvas, lc=this.lightCtx;
                 if (lm.width!==this.canvas.width || lm.height!==this.canvas.height) {
                     lm.width=this.canvas.width; lm.height=this.canvas.height;
@@ -4048,23 +4103,26 @@
                 lc.setTransform(1,0,0,1,0,0);
                 lc.globalCompositeOperation='source-over';
                 lc.clearRect(0,0,lm.width,lm.height);
-                const darkness=lc.createRadialGradient(cx,cy,0,cx,cy,TILE_SIZE*5);
+                const darkness=lc.createRadialGradient(cx,cy,0,cx,cy,TILE_SIZE*5.5);
                 darkness.addColorStop(0,'rgba(3,9,22,0.07)');
-                darkness.addColorStop(.6,'rgba(3,9,22,0.10)');
-                darkness.addColorStop(1,'rgba(3,9,22,0.42)');
+                darkness.addColorStop(.28,'rgba(3,9,22,0.15)');
+                darkness.addColorStop(.65,'rgba(3,9,22,0.46)');
+                darkness.addColorStop(1,`rgba(3,9,22,${heaven ? .59 : .70})`);
                 lc.fillStyle=darkness; lc.fillRect(0,0,lm.width,lm.height);
                 lc.globalCompositeOperation='destination-out';
                 for (const torch of this.torches) {
                     if (!this.explored?.[torch.y]?.[torch.x]) continue;
                     const tx=torch.x*TILE_SIZE+16+offsetX;
                     const ty=torch.y*TILE_SIZE+16+offsetY;
-                    if (tx < -110 || ty < -110 || tx > lm.width+110 || ty > lm.height+110) continue;
+                    const radius=TILE_SIZE*2.3;
+                    if (tx < -radius || ty < -radius || tx > lm.width+radius || ty > lm.height+radius) continue;
                     const flicker=.92+.08*Math.sin(now/143+torch.x*3.1+torch.y*1.7);
-                    const hole=lc.createRadialGradient(tx,ty,0,tx,ty,96);
-                    hole.addColorStop(0,`rgba(0,0,0,${.80*flicker})`);
-                    hole.addColorStop(.40,`rgba(0,0,0,${.55*flicker})`);
+                    const hole=lc.createRadialGradient(tx,ty,0,tx,ty,radius);
+                    hole.addColorStop(0,`rgba(0,0,0,${.90*flicker})`);
+                    hole.addColorStop(.45,`rgba(0,0,0,${.68*flicker})`);
+                    hole.addColorStop(.85,`rgba(0,0,0,${.15*flicker})`);
                     hole.addColorStop(1,'rgba(0,0,0,0)');
-                    lc.fillStyle=hole; lc.fillRect(tx-96,ty-96,192,192);
+                    lc.fillStyle=hole; lc.fillRect(tx-radius,ty-radius,radius*2,radius*2);
                 }
                 lc.globalCompositeOperation='source-over';
                 ctx.drawImage(lm,0,0);
@@ -4076,12 +4134,12 @@
                     const tx=torch.x*TILE_SIZE+16+offsetX, ty=torch.y*TILE_SIZE+12+offsetY;
                     if (tx < -110 || ty < -110 || tx > lm.width+110 || ty > lm.height+110) continue;
                     const flicker=.80+.20*Math.sin(now/133+torch.x*2.3+torch.y*4.7);
-                    const halo=ctx.createRadialGradient(tx,ty,2,tx,ty,94);
-                    halo.addColorStop(0,`rgba(255,204,106,${.66*flicker})`);
-                    halo.addColorStop(.22,`rgba(255,135,48,${.26*flicker})`);
-                    halo.addColorStop(.60,`rgba(255,87,28,${.07*flicker})`);
+                    const halo=ctx.createRadialGradient(tx,ty,2,tx,ty,TILE_SIZE*2.3);
+                    halo.addColorStop(0,`rgba(255,204,106,${.74*flicker})`);
+                    halo.addColorStop(.28,`rgba(255,135,48,${.29*flicker})`);
+                    halo.addColorStop(.72,`rgba(255,87,28,${.06*flicker})`);
                     halo.addColorStop(1,'rgba(255,87,28,0)');
-                    ctx.fillStyle=halo; ctx.fillRect(tx-94,ty-94,188,188);
+                    ctx.fillStyle=halo; ctx.fillRect(tx-TILE_SIZE*2.3,ty-TILE_SIZE*2.3,TILE_SIZE*4.6,TILE_SIZE*4.6);
                 }
                 ctx.restore();
 
@@ -4518,7 +4576,7 @@
                 if (this.isWalkable(targetX, targetY)) {
                     this.player.x = targetX;
                     this.player.y = targetY;
-                    sound.playStep();
+                    if (this.map[targetY][targetX] !== TILE.STAIRS) sound.playStep();
 
                     const itemIdx = this.items.findIndex(it => it.x === targetX && it.y === targetY);
                     if (itemIdx !== -1) {
