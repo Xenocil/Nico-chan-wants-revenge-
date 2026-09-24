@@ -1400,12 +1400,15 @@
         const sound = new RetroSoundEngine();
 
         class TitleMusic {
-            constructor(src) {
+            constructor(src, sharedAudio=null) {
                 // index.html と同じ階層の Sounds フォルダを参照する。
-                this.audio = new Audio(src);
-                this.audio.loop = true;
-                this.audio.preload = 'auto';
-                this.audio.volume = 0;
+                this.src=src;
+                this.audio=sharedAudio || new Audio(src);
+                if(!sharedAudio){
+                    this.audio.loop=true;
+                    this.audio.preload='auto';
+                    this.audio.volume=0;
+                }
                 this.fadeTimer = null;
                 this.level = readAudioLevel('nico_bgm_volume');
                 this.playRequest = 0;
@@ -1436,6 +1439,30 @@
             }
             play(silent=null) {
                 if(silent!==null) this.silentUntilReveal=silent;
+                // iOSでは２つ目のAudioの再生が拒否され得るため、タイトルで解禁済みの
+                // 同じ音声要素の曲だけを入れ替える。旧曲のフェードタイマーも無効化する。
+                if(this.level>0 && this.audio._activeMusic!==this){
+                    const previous=this.audio._activeMusic;
+                    if(previous){
+                        clearInterval(previous.fadeTimer);
+                        previous.fadeTimer=null;
+                        previous.playRequest++;
+                        previous.starting=false;
+                        previous.wantPlay=false;
+                    }
+                    this.audio._activeMusic=this;
+                    if(previous){
+                        this.audio.pause();
+                        this.audio.src=this.src;
+                        if(typeof this.audio.load==='function') this.audio.load();
+                    }
+                }
+                if(this.silentUntilReveal){
+                    // iOS Safari では audio.volume=0 が無視される。再生前に muted を設定する。
+                    clearInterval(this.fadeTimer);
+                    this.fadeTimer=null;
+                    this.audio.muted=true;
+                } else this.audio.muted=false;
                 if(this.level===0) return;
                 this.wantPlay=true;
                 if (this.starting) return;
@@ -1454,7 +1481,7 @@
                             if(request===this.playRequest) {
                                 this.starting=false;
                                 if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800);
-                            } else if(!this.wantPlay) this.audio.pause();
+                            } else if(!this.wantPlay && this.audio._activeMusic===this) this.audio.pause();
                         }).catch(()=>{
                             if(request===this.playRequest) {
                                 this.starting=false;
@@ -1467,25 +1494,34 @@
                 this.silentUntilReveal=false;
                 // 無音で進んだ冒頭２秒を巻き戻し、タイトルと同時に曲の先頭を聞かせる。
                 try { this.audio.currentTime=0; } catch(e) {}
-                this.play();
+                this.audio.muted=false;
+                if(this.level===0) return;
+                if(!this.audio.paused){ this.fadeTo(this.targetVolume,500); return; }
+                // 最初の再生が未完了なら、完了後の処理が音量を上げる。
+                if(!this.starting) this.play();
             }
             stop(duration=600) {
                 this.wantPlay=false;
                 this.silentUntilReveal=false;
                 this.playRequest++;
                 this.starting=false;
+                if(this.audio._activeMusic!==this){
+                    clearInterval(this.fadeTimer);
+                    this.fadeTimer=null;
+                    return;
+                }
                 this.fadeTo(0,duration);
             }
         }
         const titleMusic = new TitleMusic('Sounds/Welcome to the Hell.mp3');
-        const gameMusic = new TitleMusic('Sounds/Angel Goes to Hell.mp3');
+        const gameMusic = new TitleMusic('Sounds/Angel Goes to Hell.mp3',titleMusic.audio);
 
         function setAudioLevel(kind, raw) {
             const level=Math.max(0,Math.min(10,Math.round(Number(raw)||0)));
             if(kind==='bgm') {
                 titleMusic.setLevel(level);
                 gameMusic.setLevel(level);
-                if(level>0 && window.game?.presentsDismissed && !document.getElementById('title-screen').classList.contains('hidden') && !window.game?.titleTransitionBusy)
+                if(level>0 && !titleMusic.wantPlay && window.game?.presentsDismissed && !document.getElementById('title-screen').classList.contains('hidden') && !window.game?.titleTransitionBusy)
                     titleMusic.play();
             } else sound.setLevel(level);
             try { localStorage.setItem(kind==='bgm'?'nico_bgm_volume':'nico_se_volume',String(level)); } catch(e) {}
@@ -1513,13 +1549,13 @@
         }
         // 自動再生不可の環境ではタイトル画面での最初の操作を再生の起点にする。
         const retryTitleMusic=()=>{
-            if (window.game?.presentsDismissed && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+            if (window.game?.presentsDismissed && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
                 titleMusic.play();
         };
         document.addEventListener('pointerdown', retryTitleMusic, {passive:true});
         document.addEventListener('touchstart', retryTitleMusic, {passive:true});
         document.addEventListener('keydown', () => {
-            if (window.game?.presentsDismissed && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+            if (window.game?.presentsDismissed && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
                 titleMusic.play();
         });
 
