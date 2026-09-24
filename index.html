@@ -1399,6 +1399,42 @@
 
         const sound = new RetroSoundEngine();
 
+        // iOSではHTMLAudioElement.volumeが効かない。HTTP(S)配信時はWeb Audioの
+        // ゲインを通し、file://ではメディア要素のCORS無音化を避けてバッファ再生へ回す。
+        function initMusicOutput(audio) {
+            if (!sound.ctx || !sound.ctx.createGain || audio._musicOutputReady) return;
+            audio._musicOutputReady=true;
+            const protocol=typeof location==='undefined'?'file:':location.protocol;
+            if(protocol==='file:' || !sound.ctx.createMediaElementSource) return;
+            try {
+                const source=sound.ctx.createMediaElementSource(audio);
+                const gain=sound.ctx.createGain();
+                gain.gain.value=0;
+                source.connect(gain);
+                gain.connect(sound.ctx.destination);
+                audio._bgmGain=gain;
+                audio.volume=1;
+            } catch(e) { /* 利用できない場合はメディア要素の再生を維持する。 */ }
+        }
+
+        function loadMusicBytes(src) {
+            const tryXHR=()=>new Promise((resolve,reject)=>{
+                if(typeof XMLHttpRequest==='undefined') { reject(new Error('BGMの読み込みに失敗')); return; }
+                const request=new XMLHttpRequest();
+                request.open('GET',src,true);
+                request.responseType='arraybuffer';
+                request.onload=()=> request.response && (request.status===200 || request.status===0)
+                    ? resolve(request.response) : reject(new Error(`BGM HTTP ${request.status}`));
+                request.onerror=()=>reject(new Error('BGMの読み込みに失敗'));
+                request.send();
+            });
+            if(typeof fetch!=='function') return tryXHR();
+            return fetch(src).then(response=>{
+                if(!response.ok) throw new Error(`BGM HTTP ${response.status}`);
+                return response.arrayBuffer();
+            }).catch(tryXHR);
+        }
+
         class TitleMusic {
             constructor(src, sharedAudio=null) {
                 // index.html と同じ階層の Sounds フォルダを参照する。
@@ -1415,30 +1451,79 @@
                 this.starting = false;
                 this.wantPlay = false;
                 this.silentUntilReveal = false;
+                this.outputVolume=0;
+                this.decodedBuffer=null;
+                this.bufferPromise=null;
+                this.bufferSource=null;
+                this.bufferGain=null;
             }
             get targetVolume() { return 0.38*this.level/10; }
+            setOutputVolume(value) {
+                this.outputVolume=value;
+                if(this.audio._bgmGain){
+                    this.audio._bgmGain.gain.value=value;
+                    this.audio.volume=1;
+                } else this.audio.volume=value;
+                if(this.bufferGain) this.bufferGain.gain.value=value;
+            }
+            preloadBuffer() {
+                if(this.bufferPromise || !sound.ctx || !sound.ctx.decodeAudioData) return;
+                this.bufferPromise=loadMusicBytes(this.src).then(bytes=>sound.ctx.decodeAudioData(bytes)).then(buffer=>{
+                    this.decodedBuffer=buffer;
+                    if(this.wantPlay && this.audio._activeMusic===this) this.play();
+                    return buffer;
+                }).catch(()=>null);
+            }
+            stopBuffer() {
+                if(!this.bufferSource) return;
+                try { this.bufferSource.stop(); this.bufferSource.disconnect(); } catch(e) {}
+                this.bufferSource=null;
+            }
+            startBuffer() {
+                if(this.bufferSource) return true;
+                const ctx=sound.ctx;
+                if(!ctx || !this.decodedBuffer || !ctx.createBufferSource) return false;
+                if(!this.audio._bgmGain && !this.bufferGain){
+                    this.bufferGain=ctx.createGain();
+                    this.bufferGain.gain.value=0;
+                    this.bufferGain.connect(ctx.destination);
+                }
+                const source=ctx.createBufferSource();
+                source.buffer=this.decodedBuffer;
+                source.loop=true;
+                source.connect(this.audio._bgmGain || this.bufferGain);
+                source.start();
+                this.bufferSource=source;
+                this.audio.pause();
+                this.starting=false;
+                this.setOutputVolume(0);
+                this.fadeTo(this.targetVolume,800);
+                return true;
+            }
             setLevel(level) {
                 this.level=level;
-                if(level===0) this.stop(160);
+                if(level===0) this.stop(0);
                 else if(this.wantPlay) this.play();
             }
             fadeTo(target, duration=600) {
                 clearInterval(this.fadeTimer);
                 this.fadeTimer = null;
-                const from=this.audio.volume;
-                if (duration<=0) { this.audio.volume=target; if(target===0)this.audio.pause(); return; }
+                const from=this.outputVolume;
+                const finish=()=>{ if(target===0){this.audio.pause();this.stopBuffer();} };
+                if (duration<=0) { this.setOutputVolume(target); finish(); return; }
                 const start=performance.now();
                 this.fadeTimer=setInterval(()=>{
                     const progress=Math.min(1,(performance.now()-start)/duration);
-                    this.audio.volume=from+(target-from)*progress;
+                    this.setOutputVolume(from+(target-from)*progress);
                     if(progress>=1) {
                         clearInterval(this.fadeTimer); this.fadeTimer=null;
-                        if(target===0)this.audio.pause();
+                        finish();
                     }
                 },30);
             }
             play(silent=null) {
                 if(silent!==null) this.silentUntilReveal=silent;
+                if(typeof document!=='undefined' && document.hidden){this.wantPlay=true;return;}
                 // iOSでは２つ目のAudioの再生が拒否され得るため、タイトルで解禁済みの
                 // 同じ音声要素の曲だけを入れ替える。旧曲のフェードタイマーも無効化する。
                 if(this.level>0 && this.audio._activeMusic!==this){
@@ -1449,6 +1534,7 @@
                         previous.playRequest++;
                         previous.starting=false;
                         previous.wantPlay=false;
+                        previous.stopBuffer();
                     }
                     this.audio._activeMusic=this;
                     if(previous){
@@ -1465,13 +1551,18 @@
                 } else this.audio.muted=false;
                 if(this.level===0) return;
                 this.wantPlay=true;
-                if (this.starting) return;
-                if(!this.audio.paused) {
-                    if(this.silentUntilReveal) { clearInterval(this.fadeTimer); this.fadeTimer=null; this.audio.volume=0; }
+                if(this.decodedBuffer && !this.silentUntilReveal){
+                    if(!this.bufferSource) this.startBuffer();
                     else this.fadeTo(this.targetVolume,500);
                     return;
                 }
-                this.audio.volume=0;
+                if (this.starting) return;
+                if(!this.audio.paused) {
+                    if(this.silentUntilReveal) { clearInterval(this.fadeTimer); this.fadeTimer=null; this.setOutputVolume(0); }
+                    else this.fadeTo(this.targetVolume,500);
+                    return;
+                }
+                this.setOutputVolume(0);
                 this.starting=true;
                 const request=++this.playRequest;
                 try {
@@ -1485,6 +1576,8 @@
                         }).catch(()=>{
                             if(request===this.playRequest) {
                                 this.starting=false;
+                                // 初回のplay拒否時も、読み込み済みならWeb Audioへ切り替える。
+                                if(this.decodedBuffer && this.wantPlay) this.play();
                             }
                         });
                     else { this.starting=false; if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800); }
@@ -1508,6 +1601,7 @@
                 if(this.audio._activeMusic!==this){
                     clearInterval(this.fadeTimer);
                     this.fadeTimer=null;
+                    this.stopBuffer();
                     return;
                 }
                 this.fadeTo(0,duration);
@@ -1516,6 +1610,39 @@
         const titleMusic = new TitleMusic('Sounds/Welcome to the Hell.mp3');
         const gameMusic = new TitleMusic('Sounds/Angel Goes to Hell.mp3',titleMusic.audio);
 
+        let backgroundPaused=false;
+        let musicToResume=null;
+        function pauseForBackground() {
+            if(backgroundPaused) return;
+            backgroundPaused=true;
+            const active=titleMusic.audio._activeMusic;
+            musicToResume=active?.wantPlay && active.level>0 ? active : null;
+            for(const music of [titleMusic,gameMusic]){
+                clearInterval(music.fadeTimer); music.fadeTimer=null;
+                music.stopBuffer();
+            }
+            titleMusic.audio.pause();
+            if(sound.ctx?.state==='running') {
+                // すぐに画面へ戻った場合、遅れて完了した suspend が再生を止めないようにする。
+                sound.ctx.suspend().catch(()=>{}).then(()=>{
+                    if(!backgroundPaused && !document.hidden) sound.ctx.resume().catch(()=>{});
+                });
+            }
+            if(window.game) window.game.lastFrameTime=0;
+        }
+        function resumeFromBackground() {
+            if(!backgroundPaused || document.hidden) return;
+            backgroundPaused=false;
+            if(window.game) window.game.lastFrameTime=0;
+            if(sound.ctx?.state==='suspended') sound.ctx.resume().catch(()=>{});
+            const desired=gameMusic.wantPlay ? gameMusic : titleMusic.wantPlay ? titleMusic : musicToResume;
+            musicToResume=null;
+            if(desired?.level>0) desired.play();
+        }
+        document.addEventListener('visibilitychange',()=>document.hidden?pauseForBackground():resumeFromBackground());
+        window.addEventListener('pagehide',pauseForBackground);
+        window.addEventListener('pageshow',resumeFromBackground);
+
         function setAudioLevel(kind, raw) {
             const level=Math.max(0,Math.min(10,Math.round(Number(raw)||0)));
             if(kind==='bgm') {
@@ -1523,6 +1650,8 @@
                 gameMusic.setLevel(level);
                 if(level>0 && !titleMusic.wantPlay && window.game?.presentsDismissed && !document.getElementById('title-screen').classList.contains('hidden') && !window.game?.titleTransitionBusy)
                     titleMusic.play();
+                if(level>0 && !gameMusic.wantPlay && gameMusic.audio._activeMusic===gameMusic && !backgroundPaused)
+                    gameMusic.play();
             } else sound.setLevel(level);
             try { localStorage.setItem(kind==='bgm'?'nico_bgm_volume':'nico_se_volume',String(level)); } catch(e) {}
             for(const prefix of ['title','options']) {
@@ -1549,14 +1678,21 @@
         }
         // 自動再生不可の環境ではタイトル画面での最初の操作を再生の起点にする。
         const retryTitleMusic=()=>{
-            if (window.game?.presentsDismissed && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+            if (window.game?.presentsDismissed && !backgroundPaused && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
                 titleMusic.play();
+        };
+        const retryGameMusic=()=>{
+            if(backgroundPaused || document.hidden || gameMusic.level===0 || !gameMusic.wantPlay || gameMusic.starting || gameMusic.bufferSource) return;
+            if(gameMusic.audio._activeMusic===gameMusic && gameMusic.audio.paused) gameMusic.play();
         };
         document.addEventListener('pointerdown', retryTitleMusic, {passive:true});
         document.addEventListener('touchstart', retryTitleMusic, {passive:true});
+        document.addEventListener('pointerdown',retryGameMusic,{passive:true});
+        document.addEventListener('touchstart',retryGameMusic,{passive:true});
         document.addEventListener('keydown', () => {
-            if (window.game?.presentsDismissed && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+            if (window.game?.presentsDismissed && !backgroundPaused && titleMusic.audio.paused && !titleMusic.starting && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
                 titleMusic.play();
+            retryGameMusic();
         });
 
         // iPhone/iPad等ではAudioContextがユーザー操作を受けるまで停止状態になるため、
@@ -1880,6 +2016,7 @@
                     // 例外発生時も次のフレームを予約し、画面に原因と座標を残す。
                     // 同じ例外を連続発生させないよう、診断中は更新と描画を停止する。
                     requestAnimationFrame(gameLoop);
+                    if(document.hidden || backgroundPaused){this.lastFrameTime=0;return;}
                     if (this.frameFailure) return;
                     let phase = 'update';
                     try {
@@ -2322,6 +2459,8 @@
                 this.presentsTransitioning=true;
                 // 操作イベント内で無音の再生を開始し、音量はタイトルが見えてから上げる。
                 sound.init();
+                initMusicOutput(titleMusic.audio);
+                gameMusic.preloadBuffer();
                 titleMusic.play(true);
                 const presents=document.getElementById('presents-screen');
                 const title=document.getElementById('title-screen');
