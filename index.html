@@ -1902,7 +1902,7 @@
             { name: '欲張り', capacity: 1 },
             { name: '強欲', capacity: 3 }
         ];
-        WEAPON_PREFIXES.push({ name: '神速', multiAttack: 2, atkMul: -0.50 });
+        WEAPON_PREFIXES.push({ name: '神速', multiAttack: 2, atkMul: -0.30 });
         WEAPON_PREFIXES.push({ name: '貫通', range: 2 });
         ARMOR_PREFIXES.push({ name: '罠食らい', trapChance: 0.30 });
         ARMOR_PREFIXES.push({ name: '痛み返し', reflect: 0.30 });
@@ -1923,7 +1923,7 @@
             if (e.execute) effects.push(`攻撃時${Math.round(e.execute * 100)}%で残りHPを削って確殺`);
             if (e.capacity) effects.push(`所持数上限 +${e.capacity}`);
             if (e.multiAttack) effects.push(`1ターンに${e.multiAttack}回攻撃`);
-            if (e.name === '神速') effects.push('攻撃力50%');
+            if (e.name === '神速') effects.push('攻撃力 -30%（２つ付けた場合はそれぞれ順に適用）');
             if (e.range) effects.push(`前方${e.range}マスの敵を貫通攻撃（シルペインはさらに+1マス）`);
             if (e.trapChance) effects.push(`罠発動率 ${Math.round(e.trapChance * 100)}%`);
             if (e.reflect) effects.push(`受けたダメージの${Math.round(e.reflect * 100)}%を反射`);
@@ -2004,7 +2004,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '2.22';
+        const GAME_VERSION = '2.23';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
 
@@ -3296,6 +3296,10 @@
                 // そのセーブを読み込んでも見た目・合成・装備判定が壊れないよう原本IDを名前から復元する。
                 const catalogs=[...(typeof WEAPON_ITEMS!=='undefined'?WEAPON_ITEMS:[]),...(typeof ARMOR_ITEMS!=='undefined'?ARMOR_ITEMS:[]),...(typeof CONSUMABLE_ITEMS!=='undefined'?CONSUMABLE_ITEMS:[])];
                 const normalize=(item)=>{
+                    // セーブ内の古いチャーム説明も現在の攻撃力補正に合わせる。
+                    if(item?.type==='CHARM' && item.enchantName==='神速') {
+                        item.desc=CHARM_ITEMS.find(charm=>charm.id===item.id)?.desc || item.desc;
+                    }
                     if(!item || !item.id || !String(item.id).startsWith('heaven_')) return item;
                     const exact=catalogs.find(db=>db.name===item.name && db.type===item.type);
                     if(exact){ item.id=exact.id; return item; }
@@ -4803,8 +4807,11 @@
             getPlayerAtk() {
                 const weaponBonus = this.player.weapon ? this.player.weapon.val : 0;
                 const baseAtk = this.player.baseAtk + weaponBonus;
-                const atkMul = getEnchantStat(this.player.weapon, 'atkMul');
-                return Math.max(1, Math.round(baseAtk * (1 + atkMul) * (this.hasHoneyBuff('attack') ? 1.3 : 1)));
+                const enchants = [this.player.weapon?.enchant?.prefix, this.player.weapon?.enchant?.suffix].filter(Boolean);
+                // 神速を２つ付けたら 0.7 × 0.7 = 0.49。既存セーブ内の古い -50% 値も名前で判定する。
+                const speedCount = enchants.filter(e => e.name === '神速').length;
+                const atkMul = enchants.filter(e => e.name !== '神速').reduce((sum, e) => sum + (e.atkMul || 0), 0);
+                return Math.max(1, Math.round(baseAtk * (1 + atkMul) * Math.pow(0.7, speedCount) * (this.hasHoneyBuff('attack') ? 1.3 : 1)));
             }
 
             getPlayerDef() {
