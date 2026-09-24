@@ -1826,7 +1826,7 @@
         const WEAPON_ITEMS = [
             { id: 'stick', name: '木の棒', type: 'WEAPON', effect: 'ATK', val: 1, baseVal: 1, desc: '攻撃力が1上昇する', weight: 65 },
             { id: 'bat', name: '釘付きバット', type: 'WEAPON', effect: 'ATK', val: 4, baseVal: 4, desc: '攻撃力が4上昇する', weight: 25 },
-            { id: 'sword', name: '堕天使の剣', type: 'WEAPON', effect: 'ATK', val: 10, baseVal: 10, desc: '攻撃力が10上昇する', weight: 10 },
+            { id: 'sword', name: '堕天使の剣', type: 'WEAPON', effect: 'ATK', val: 15, baseVal: 15, desc: '攻撃力が15上昇する', weight: 10 },
             { id: 'nico_belos_whip', name: 'ニコベロスの鞭', type: 'WEAPON', effect: 'ATK', val: 2, baseVal: 2, desc: '攻撃力が2上昇し、1ターンに2回攻撃できる', weight: 6 },
             { id: 'sylpain', name: '神槍シルペイン', type: 'WEAPON', effect: 'ATK', val: 7, baseVal: 7, desc: '攻撃力が7上昇し、前方2マスの敵を貫通攻撃する', weight: 5 },
             { id: 'nico_stick', name: 'nicoスティック', type: 'WEAPON', effect: 'ATK', val: 3, baseVal: 3, desc: '攻撃力が3上昇し、攻撃時に与えたダメージの20%を回復する', weight: 5.5 }
@@ -1835,7 +1835,7 @@
         const ARMOR_ITEMS = [
             { id: 'board', name: 'まな板', type: 'ARMOR', effect: 'DEF', val: 1, baseVal: 1, desc: '防御力が1上昇する', weight: 65 },
             { id: 'lid', name: '取っ手付き鍋蓋', type: 'ARMOR', effect: 'DEF', val: 4, baseVal: 4, desc: '防御力が4上昇する', weight: 25 },
-            { id: 'shield', name: '漆黒の盾', type: 'ARMOR', effect: 'DEF', val: 10, baseVal: 10, desc: '防御力が10上昇する', weight: 10 },
+            { id: 'shield', name: '漆黒の盾', type: 'ARMOR', effect: 'DEF', val: 15, baseVal: 15, desc: '防御力が15上昇する', weight: 10 },
             { id: 'hungerless_shield', name: '不食の盾', type: 'ARMOR', effect: 'DEF', val: 1, baseVal: 1, desc: '防御力が1上昇し、空腹値が減らなくなる', weight: 6 },
             { id: 'mirage_shield', name: '蜃気楼の盾', type: 'ARMOR', effect: 'DEF', val: 0, baseVal: 0, desc: '防御力が常に0になり、50%の確率で攻撃をかわす', weight: 5 },
             { id: 'heart_shield', name: 'ハートの盾', type: 'ARMOR', effect: 'DEF', val: 5, baseVal: 5, desc: '防御力が5上昇し、受けたダメージの10%を吸収してHPを回復する', weight: 6 }
@@ -2004,7 +2004,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '2.24';
+        const GAME_VERSION = '2.25';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
 
@@ -3300,16 +3300,37 @@
                     if(item?.type==='CHARM' && item.enchantName==='神速') {
                         item.desc=CHARM_ITEMS.find(charm=>charm.id===item.id)?.desc || item.desc;
                     }
-                    if(!item || !item.id || !String(item.id).startsWith('heaven_')) return item;
-                    const exact=catalogs.find(db=>db.name===item.name && db.type===item.type);
-                    if(exact){ item.id=exact.id; return item; }
-                    // エンチャント名付きでも元アイテム名を含むため、長い名前から優先して照合。
-                    const candidates=catalogs.filter(db=>db.type===item.type && String(item.name||'').includes(db.name)).sort((a,b)=>b.name.length-a.name.length);
-                    if(candidates.length) item.id=candidates[0].id;
+                    if(!item) return item;
+                    if(item.id && String(item.id).startsWith('heaven_')) {
+                        const exact=catalogs.find(db=>db.name===item.name && db.type===item.type);
+                        if(exact) item.id=exact.id;
+                        else {
+                            // エンチャント名付きでも元アイテム名を含むため、長い名前から優先して照合。
+                            const candidates=catalogs.filter(db=>db.type===item.type && String(item.name||'').includes(db.name)).sort((a,b)=>b.name.length-a.name.length);
+                            if(candidates.length) item.id=candidates[0].id;
+                        }
+                    }
+                    // 古いセーブ中の剣と盾にも新しい基礎値を適用。+強化値と装備の参照は維持する。
+                    if(item.id==='sword' || item.id==='shield') {
+                        const enhance=Math.max(0,Number(item.enhance)||0);
+                        item.baseVal=15;
+                        item.val=15*(1+enhance);
+                        item.desc=item.type==='WEAPON'?`攻撃力が${item.val}上昇する`:`防御力が${item.val}上昇する`;
+                    }
                     return item;
                 };
                 this.items=(this.items||[]).map(normalize);
                 if(this.player?.inventory) this.player.inventory=this.player.inventory.map(normalize);
+            }
+
+            normalizeLoadedHeavenEnemyExperience() {
+                if(this.currentFloor>=0) return;
+                for(const enemy of this.enemies||[]) {
+                    const hell=ENEMY_SPECIES.find(species=>species.id===enemy.id) || (enemy.id==='jet_babaa'?JET_BABAA_SPEC:null);
+                    const heaven=HEAVEN_ENEMY_SPECIES.find(species=>species.id===enemy.id);
+                    if(hell) enemy.exp=hell.exp*5;
+                    else if(heaven) enemy.exp=Math.floor(heaven.exp*2.5);
+                }
             }
 
             placeHeavenObstacles(count) {
@@ -3494,15 +3515,16 @@
                 // 1F～5Fに地獄の通常敵を２種ずつ解禁。6F～15Fは天上界の専用敵を１種ずつ追加。
                 const heavenUnlockCount=Math.min(10,Math.max(0,depth-5));
                 for(let i=0;i<heavenUnlockCount;i++){
-                    pool.push({species:HEAVEN_ENEMY_SPECIES[i],weight:Math.max(20,120-i*8)});
+                    const base=HEAVEN_ENEMY_SPECIES[i];
+                    pool.push({species:{...base,exp:Math.floor(base.exp*2.5)},weight:Math.max(20,120-i*8)});
                 }
                 const hellUnlockCount=Math.min(10,Math.ceil(Math.min(depth,5)*2));
                 for(let i=0;i<hellUnlockCount;i++){
                     const base=ENEMY_SPECIES[i];
-                    const scaled={...base, hp:base.hp*HEAVEN_HELL_MULTIPLIER, maxHp:base.maxHp*HEAVEN_HELL_MULTIPLIER, atk:base.atk*HEAVEN_HELL_MULTIPLIER, def:base.def*HEAVEN_HELL_MULTIPLIER, exp:Math.floor(base.exp*2.5)};
+                    const scaled={...base, hp:base.hp*HEAVEN_HELL_MULTIPLIER, maxHp:base.maxHp*HEAVEN_HELL_MULTIPLIER, atk:base.atk*HEAVEN_HELL_MULTIPLIER, def:base.def*HEAVEN_HELL_MULTIPLIER, exp:base.exp*5};
                     pool.push({species:scaled,weight:Math.max(8,70-i*4)});
                 }
-                // 特殊敵は各１％。固有行動・肉だるまの自爆率と経験値は維持し、戦闘能力だけ２倍にする。
+                // 特殊敵は各１％。固有行動・肉だるまの自爆率は維持し、経験値は地獄時の５倍にする。
                 const specialRoll=Math.random();
                 let species;
                 if(specialRoll<0.01) species=JET_BABAA_SPEC;
@@ -3519,7 +3541,7 @@
                         maxHp:species.maxHp*HEAVEN_HELL_MULTIPLIER,
                         atk:species.atk*HEAVEN_HELL_MULTIPLIER,
                         def:species.def*HEAVEN_HELL_MULTIPLIER,
-                        exp:species.exp*3};
+                        exp:species.exp*5};
                 }
                 // 20Fを＋５％として、以降は１階上がるたびに５％ずつ複利で強化。
                 if(depth<20) return species;
@@ -3538,8 +3560,10 @@
                     const species=this.getRandomHeavenEnemy();
                     this.enemies.push({...species,x:ex,y:ey,renderX:ex*TILE_SIZE,renderY:ey*TILE_SIZE}); spawned++;
                 }
-                const itemCount=Math.min(8,Math.floor(this.rooms.length*0.7)+1);
-                for(let i=0;i<itemCount;i++){
+                // 天上界では従来の２倍を目標に置く。位置が重なったら再抽選して数を確保する。
+                const itemCount=2*Math.min(8,Math.floor(this.rooms.length*0.7)+1);
+                let placed=0;
+                for(let attempt=0;attempt<itemCount*12 && placed<itemCount;attempt++){
                     const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
                     const ix=Math.floor(room.x+Math.random()*room.w), iy=Math.floor(room.y+Math.random()*room.h);
                     if(this.map[iy]?.[ix]!==TILE.FLOOR || this.items.some(it=>it.x===ix&&it.y===iy)) continue;
@@ -3547,7 +3571,8 @@
                     const dbItem=getRandomByWeight(categoryRoll<0.30?WEAPON_ITEMS:categoryRoll<0.55?ARMOR_ITEMS:categoryRoll<0.85?CONSUMABLE_ITEMS:CHARM_ITEMS);
                     // item.id は描画・合成・装備判定の基準IDなので、地上アイテムと同じく原本IDを保持する。
                     // 以前は heaven_... の一意IDで上書きしていたため、天上界でアイコンが汎用絵になる問題があった。
-                    this.items.push({...dbItem,x:ix,y:iy,uid:`heaven_${this.heavenFloor}_${i}_${Date.now()}_${Math.random().toString(36).slice(2)}`});
+                    this.items.push({...dbItem,x:ix,y:iy,uid:`heaven_${this.heavenFloor}_${placed}_${Date.now()}_${Math.random().toString(36).slice(2)}`});
+                    placed++;
                 }
                 this.log(`☁ 天上界 ${this.heavenFloor}F。雲海の彼方へ続く階段がある。`, 'text-cyan-200 font-bold');
             }
@@ -6417,6 +6442,7 @@
                     this.obstacles = data.obstacles || [];
                     this.repairObstacleMetadata();
                     this.enemies = data.enemies || [];
+                    this.normalizeLoadedHeavenEnemyExperience();
                     this.items = data.items || [];
                     this.normalizeLoadedItemIds();
                     this.torches = data.torches || [];
