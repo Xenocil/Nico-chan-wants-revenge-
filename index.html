@@ -134,22 +134,22 @@
     
         @keyframes fallStreak { from { transform: translateY(-140px) rotate(8deg); opacity:0; } 15% {opacity:1;} to { transform: translateY(620px) rotate(8deg); opacity:0.15; } }
         @keyframes prologueImpact {
-            0% { transform: translate(0,0); }
-            12% { transform: translate(-12px, 7px); }
-            24% { transform: translate(11px, -6px); }
-            38% { transform: translate(-8px, 5px); }
-            52% { transform: translate(6px, -3px); }
-            70% { transform: translate(-3px, 2px); }
+            0% { transform: scale(1.09) translate(0,0); }
+            12% { transform: scale(1.09) translate(-12px, 7px); }
+            24% { transform: scale(1.09) translate(11px, -6px); }
+            38% { transform: scale(1.09) translate(-8px, 5px); }
+            52% { transform: scale(1.09) translate(6px, -3px); }
+            70% { transform: scale(1.09) translate(-3px, 2px); }
             100% { transform: translate(0,0); }
         }
         .prologue-impact { animation: prologueImpact 420ms cubic-bezier(.2,.8,.3,1); }
         @keyframes nicoImpactShake {
-            0% { transform: translate(-50%,-50%) translateY(210px) rotate(14deg) scale(1.05); }
-            15% { transform: translate(calc(-50% - 12px), calc(-50% + 5px)) translateY(210px) rotate(12deg) scale(1.05); }
-            30% { transform: translate(calc(-50% + 11px), calc(-50% - 4px)) translateY(210px) rotate(16deg) scale(1.05); }
-            48% { transform: translate(calc(-50% - 8px), calc(-50% + 3px)) translateY(210px) rotate(13deg) scale(1.05); }
-            68% { transform: translate(calc(-50% + 5px), calc(-50% - 2px)) translateY(210px) rotate(15deg) scale(1.05); }
-            100% { transform: translate(-50%,-50%) translateY(210px) rotate(14deg) scale(1.05); }
+            0% { transform: translate(-50%,-50%) translateY(var(--landing-y, 210px)) rotate(14deg) scale(1.05); }
+            15% { transform: translate(calc(-50% - 12px), calc(-50% + 5px)) translateY(var(--landing-y, 210px)) rotate(12deg) scale(1.05); }
+            30% { transform: translate(calc(-50% + 11px), calc(-50% - 4px)) translateY(var(--landing-y, 210px)) rotate(16deg) scale(1.05); }
+            48% { transform: translate(calc(-50% - 8px), calc(-50% + 3px)) translateY(var(--landing-y, 210px)) rotate(13deg) scale(1.05); }
+            68% { transform: translate(calc(-50% + 5px), calc(-50% - 2px)) translateY(var(--landing-y, 210px)) rotate(15deg) scale(1.05); }
+            100% { transform: translate(-50%,-50%) translateY(var(--landing-y, 210px)) rotate(14deg) scale(1.05); }
         }
         .nico-impact-shake { animation: nicoImpactShake 480ms cubic-bezier(.2,.8,.3,1); }
         #fall-avatar { will-change: transform, opacity; }
@@ -197,6 +197,35 @@
         }
         .title-star { position:absolute; width:3px; height:3px; background:#fffdf0; opacity:.65; border-radius:50%; box-shadow:0 0 4px #fff7bf,0 0 10px rgba(253,230,138,.78),0 0 18px rgba(253,230,138,.34); animation:titleTwinkle 2.4s steps(2,end) infinite; }
         @keyframes titleTwinkle { 0%,100%{opacity:.2;transform:scale(.7)} 50%{opacity:.9;transform:scale(1.35)} }
+        /* 画面全体のopacityを下げると背面のHUDとnicoが透けるため、背景は常に不透明にする。 */
+        #title-screen.title-entering .title-core { animation:titleCoreReveal 1s ease-out both; }
+        @keyframes titleCoreReveal { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        #title-screen.title-entering .title-ruins { animation:titleRuinsReveal 1s ease-out both; }
+        @keyframes titleRuinsReveal { from { opacity:0; } to { opacity:.72; } }
+        #title-screen.title-entering .title-star {
+            animation: titleStarBloom 1s ease-out both, titleTwinkle 2.4s steps(2,end) 1s infinite;
+            animation-delay:0s,1s !important;
+        }
+        @keyframes titleStarBloom {
+            0% { opacity:0; transform:scale(.15); filter:brightness(1); }
+            60% { opacity:1; transform:scale(1.8); filter:brightness(2.4) drop-shadow(0 0 12px #fff7c2); }
+            100% { opacity:.8; transform:scale(1); filter:brightness(1.2) drop-shadow(0 0 5px #fde68a); }
+        }
+        #title-screen.title-entering .title-logo .nico { display:inline-block; animation:nicoBloom 1s ease-out both; }
+        @keyframes nicoBloom {
+            0% { opacity:0; filter:brightness(.3) blur(5px); }
+            55% { opacity:1; filter:brightness(2.2) drop-shadow(0 0 18px #fff1a8) drop-shadow(0 0 28px #fbbf24); }
+            100% { opacity:1; filter:brightness(1.1) drop-shadow(0 0 7px #fde68a); }
+        }
+        #presents-screen { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:#000; color:#fff; text-align:center; cursor:pointer; user-select:none; touch-action:manipulation; }
+        #presents-screen.hidden { display:none; }
+        #presents-screen.presents-to-black .presents-copy,
+        #presents-screen.presents-to-black .presents-prompt { opacity:0; transition:opacity 1s ease; }
+        #presents-screen.presents-reveal-title { opacity:0; transition:opacity 1s ease; }
+        .presents-copy { display:flex; flex-direction:column; align-items:center; gap:clamp(12px,3vh,24px); padding:24px; }
+        .presents-heading { font-size:clamp(28px,5vw,70px); font-weight:900; line-height:1.3; letter-spacing:.04em; }
+        .presents-credit { font-size:clamp(13px,1.7vw,21px); letter-spacing:.08em; color:#cbd5e1; }
+        .presents-prompt { position:absolute; left:0; right:0; bottom:max(8vh,36px); font-size:clamp(16px,2vw,24px); font-weight:700; letter-spacing:.08em; animation:continueGlow 1.3s ease-in-out infinite alternate; }
         .title-ruins { position:absolute; left:0; right:0; bottom:0; height:38%; opacity:.72; background:linear-gradient(135deg,transparent 0 10%,#111827 10% 13%,transparent 13% 18%,#0f172a 18% 23%,transparent 23% 30%,#111827 30% 37%,transparent 37% 44%,#0f172a 44% 51%,transparent 51% 60%,#111827 60% 66%,transparent 66% 74%,#0f172a 74% 82%,transparent 82%); clip-path:polygon(0 42%,7% 30%,13% 43%,20% 18%,27% 40%,35% 25%,43% 44%,51% 15%,59% 38%,67% 22%,75% 44%,83% 28%,91% 42%,100% 20%,100% 100%,0 100%); }
         .title-core { position:relative; z-index:2; width:min(92%,980px); display:flex; flex-direction:column; align-items:center; gap:clamp(22px,4vh,42px); padding:4vh 2vw; }
         .title-kicker { color:#a5b4fc; font-size:clamp(10px,1.3vw,15px); letter-spacing:.55em; text-shadow:0 0 12px rgba(129,140,248,.8); }
@@ -211,7 +240,39 @@
         #scene-transition.flash { background:#fff; transition:none; }
         #scene-transition.active { opacity:1; }
         #scene-transition.soft { background:#020617; transition:opacity .65s ease; }
+        #scene-transition.title-white { z-index:125; background:#fff; transition:opacity .62s ease-in-out; }
+        #scene-transition.title-dark { z-index:125; background:#020617; transition:opacity .62s ease-in-out; }
+        #scene-transition.opening-white-in { z-index:125; background:#fff; transition:opacity 2s ease-in-out; }
+        #scene-transition.opening-white-out { z-index:125; background:#fff; transition:opacity .5s ease-in-out; }
+        #opening-white-caption {
+            position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+            padding:18px; text-align:center; color:#334155; opacity:0;
+            font-size:clamp(1.55rem,6vw,4.5rem); font-weight:900; letter-spacing:.05em;
+            text-shadow:1px 2px 0 #e2e8f0,0 0 22px rgba(148,163,184,.5);
+            transition:opacity .16s ease; white-space:normal;
+        }
+        #opening-white-caption.visible { opacity:1; }
+        #fall-continue-prompt { position:absolute; left:0; right:0; bottom:clamp(80px,18vh,150px); z-index:35;
+            text-align:center; color:#fff7d6; font-size:clamp(14px,2vw,22px); font-weight:900;
+            text-shadow:0 2px 6px #020617,0 0 14px #fbbf24; animation:continueGlow 1.3s ease-in-out infinite alternate; }
+        @keyframes continueGlow { from {opacity:.55} to {opacity:1} }
+        #prologue-fall-scene.falling {
+            background:linear-gradient(180deg,#8fd9ff 0%,#5375ab 37%,#171e45 62%,#080b1b 78%,#180914 100%);
+            background-size:100% 340%;
+            animation:fallThroughSky 2.25s ease-in forwards;
+        }
+        @keyframes fallThroughSky { from { background-position:50% 0%; } to { background-position:50% 100%; } }
         #title-screen.title-leaving { animation:titleLeave .72s ease forwards; }
+        #title-settings-window { position:absolute; inset:0; z-index:135; background:rgba(2,6,23,.82); display:flex; align-items:center; justify-content:center; padding:12px; }
+        #title-settings-window.hidden { display:none; }
+        .audio-settings { display:grid; gap:12px; padding:14px; background:rgba(8,18,37,.9); border:1px solid rgba(148,163,184,.4); border-radius:8px; }
+        .audio-setting-row { display:grid; grid-template-columns:66px minmax(0,1fr); align-items:center; gap:8px; color:#e2e8f0; font-weight:700; }
+        .audio-setting-controls { display:flex; align-items:center; gap:8px; min-width:0; }
+        .audio-stepper { display:flex; align-items:center; flex:none; gap:2px; }
+        .audio-stepper button { min-width:31px; min-height:38px; color:#fde68a; border:1px solid #64748b; background:#17223a; border-radius:4px; }
+        .audio-stepper input { box-sizing:border-box; width:33px; height:38px; padding:0; text-align:center; color:#fff; background:#071323; border:1px solid #64748b; border-radius:4px; font-weight:700; }
+        .audio-setting-controls input[type="range"] { flex:1; width:100%; min-width:55px; accent-color:#fbbf24; cursor:pointer; touch-action:auto; }
+        @media (max-width:400px) { .audio-settings { padding:10px; } .audio-setting-row { grid-template-columns:42px minmax(0,1fr); gap:4px; } .audio-setting-controls { gap:5px; } }
         @keyframes titleLeave { 0%{opacity:1;transform:scale(1)} 65%{opacity:1;transform:scale(1.025)} 100%{opacity:0;transform:scale(1.06)} }
 
         /* ===== Layout refinement: full-screen game + compact mobile controls ===== */
@@ -827,6 +888,10 @@
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col p-1.5 sm:p-2 gap-1.5 max-h-screen overflow-hidden">
+    <div id="presents-screen" role="button" tabindex="0" aria-label="天使nicoちゃん Presents。タップしてタイトルへ進む">
+        <div class="presents-copy"><div class="presents-heading">天使nicoちゃん Presents</div><div class="presents-credit">Created by Xenocil.</div></div>
+        <div class="presents-prompt">Tap to next!</div>
+    </div>
 
     <!-- Main Content Area: Max-Sized Canvas with Direct Overlay HUD and Controls -->
     <div class="flex-1 flex flex-row gap-1.5 min-h-0 overflow-hidden relative">
@@ -849,10 +914,32 @@
                     <div class="title-menu">
                         <button id="title-new-game">最初から始める</button>
                         <button id="title-continue">続きから始める</button>
+                        <button id="title-settings-btn">ゲーム設定</button>
                     </div>
                 </div>
             </div>
-            <div id="scene-transition"></div>
+            <div id="title-settings-window" class="hidden" role="dialog" aria-modal="true" aria-label="ゲーム設定">
+                <div class="sfc-window w-full max-w-md max-h-[85vh] overflow-y-auto p-4 shadow-2xl">
+                    <div class="flex items-center justify-between gap-3 mb-4"><h2 class="text-amber-300 text-xl font-bold">ゲーム設定</h2><button id="title-settings-close" class="btn-sfc px-4 py-2 rounded text-slate-200">閉じる</button></div>
+                    <div class="audio-settings" aria-label="音量設定">
+                            <div class="audio-setting-row" data-volume="bgm">
+                                <label for="title-bgm-range">BGM</label>
+                                <div class="audio-setting-controls">
+                                    <div class="audio-stepper"><button type="button" data-step="-1" aria-label="BGM音量を下げる">◀︎</button><input id="title-bgm-number" type="text" inputmode="numeric" maxlength="2" value="10" aria-label="BGM音量 0～10"><button type="button" data-step="1" aria-label="BGM音量を上げる">▶︎</button></div>
+                                    <input id="title-bgm-range" type="range" min="0" max="10" step="1" value="10" aria-label="BGM音量">
+                                </div>
+                            </div>
+                            <div class="audio-setting-row" data-volume="se">
+                                <label for="title-se-range">SE</label>
+                                <div class="audio-setting-controls">
+                                    <div class="audio-stepper"><button type="button" data-step="-1" aria-label="SE音量を下げる">◀︎</button><input id="title-se-number" type="text" inputmode="numeric" maxlength="2" value="10" aria-label="SE音量 0～10"><button type="button" data-step="1" aria-label="SE音量を上げる">▶︎</button></div>
+                                    <input id="title-se-range" type="range" min="0" max="10" step="1" value="10" aria-label="SE音量">
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
+            <div id="scene-transition"><div id="opening-white-caption">えええええええ！？</div></div>
             
             <!-- Direct Overlay Top-Left Status Bar -->
             <div id="direct-status-overlay" class="absolute top-2 left-2 z-10 flex flex-col gap-1.5 select-none pointer-events-none">
@@ -947,6 +1034,7 @@
                     <div id="fall-hell-label" class="absolute z-20 left-0 right-0 bottom-8 text-center text-red-300 font-bold text-base sm:text-lg tracking-[0.3em] opacity-0">
                         地獄・最下層 B10F
                     </div>
+                    <div id="fall-continue-prompt" class="hidden">タップして続ける ▶</div>
                 </div>
 
                 <div class="flex justify-between items-center px-4 py-2 border-b border-slate-700/80">
@@ -1010,7 +1098,7 @@
             <div id="item-action-menu" class="hidden absolute z-[120] sfc-window p-1.5 flex flex-col gap-1 w-32 text-xs shadow-2xl">
                 <button id="act-use" class="btn-sfc p-1.5 text-left text-green-300 rounded hover:brightness-125"><i class="fa-solid fa-play mr-1"></i> 使う/装備</button>
                 <button id="act-pickup" class="btn-sfc p-1.5 text-left text-fuchsia-300 rounded hover:brightness-125 hidden"><i class="fa-solid fa-hand mr-1"></i> 拾う</button>
-                <button id="act-swap" class="btn-sfc p-1.5 text-left text-amber-300 rounded hover:brightness-125 hidden"><i class="fa-solid fa-right-left mr-1"></i> 入れ替え</button>
+                <button id="act-swap" class="btn-sfc p-1.5 text-left text-amber-300 rounded hover:brightness-125 hidden"><i class="fa-solid fa-right-left mr-1"></i> 交換</button>
                 <button id="act-throw" class="btn-sfc p-1.5 text-left text-amber-300 rounded hover:brightness-125"><i class="fa-solid fa-share mr-1"></i> 投げる</button>
                 <button id="act-place" class="btn-sfc p-1.5 text-left text-emerald-300 rounded hover:brightness-125"><i class="fa-solid fa-down-long mr-1"></i> 置く</button>
                 <button id="act-enchant" class="btn-sfc p-1.5 text-left text-cyan-300 rounded hover:brightness-125 hidden"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> エンチャント</button>
@@ -1040,11 +1128,24 @@
                         <button id="options-close" class="btn-sfc px-4 py-2 rounded text-slate-200 text-sm font-bold">閉じる</button>
                     </div>
                     <div class="grid grid-cols-1 gap-2">
+                        <div class="audio-settings mb-3" aria-label="音量設定">
+                            <div class="audio-setting-row" data-volume="bgm">
+                                <label for="options-bgm-range">BGM</label>
+                                <div class="audio-setting-controls">
+                                    <div class="audio-stepper"><button type="button" data-step="-1" aria-label="BGM音量を下げる">◀︎</button><input id="options-bgm-number" type="text" inputmode="numeric" maxlength="2" value="10" aria-label="BGM音量 0～10"><button type="button" data-step="1" aria-label="BGM音量を上げる">▶︎</button></div>
+                                    <input id="options-bgm-range" type="range" min="0" max="10" step="1" value="10" aria-label="BGM音量">
+                                </div>
+                            </div>
+                            <div class="audio-setting-row" data-volume="se">
+                                <label for="options-se-range">SE</label>
+                                <div class="audio-setting-controls">
+                                    <div class="audio-stepper"><button type="button" data-step="-1" aria-label="SE音量を下げる">◀︎</button><input id="options-se-number" type="text" inputmode="numeric" maxlength="2" value="10" aria-label="SE音量 0～10"><button type="button" data-step="1" aria-label="SE音量を上げる">▶︎</button></div>
+                                    <input id="options-se-range" type="range" min="0" max="10" step="1" value="10" aria-label="SE音量">
+                                </div>
+                            </div>
+                        </div>
                         <button id="btn-options-help" class="btn-sfc w-full px-4 py-3 rounded text-amber-200 text-base font-bold text-left">
                             <i class="fa-solid fa-circle-question mr-2"></i>操作マニュアル
-                        </button>
-                        <button id="sound-toggle" class="btn-sfc w-full px-4 py-3 rounded text-amber-300 text-base font-bold text-left" title="SE ON/OFF">
-                            🔊 SE:ON
                         </button>
                         <button id="btn-save" class="btn-sfc w-full px-4 py-3 rounded text-emerald-300 text-base font-bold text-left">
                             <i class="fa-solid fa-floppy-disk mr-2"></i>セーブ
@@ -1109,19 +1210,36 @@
 
 
     <script>
+        function readAudioLevel(key) {
+            try {
+                const saved=localStorage.getItem(key);
+                return saved===null ? 10 : Math.max(0,Math.min(10,Number.parseInt(saved,10)||0));
+            } catch(e) { return 10; }
+        }
+
         class RetroSoundEngine {
             constructor() {
                 this.ctx = null;
+                this.masterGain = null;
                 this.enabled = true;
+                this.level = readAudioLevel('nico_se_volume');
             }
 
             init() {
                 if (!this.ctx) {
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.masterGain = this.ctx.createGain();
+                    this.masterGain.gain.value = this.level / 10;
+                    this.masterGain.connect(this.ctx.destination);
                 }
                 if (this.ctx.state === 'suspended') {
                     try { this.ctx.resume(); } catch(e) {}
                 }
+            }
+
+            setLevel(level) {
+                this.level=level;
+                if(this.masterGain) this.masterGain.gain.value=level/10;
             }
 
             playTone(freq, type, duration, vol = 0.1) {
@@ -1135,12 +1253,35 @@
                     gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
 
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.masterGain);
                     osc.start();
                     osc.stop(this.ctx.currentTime + duration);
                 } catch(e) {}
             }
 
+            playTitleConfirm() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const now=this.ctx.currentTime;
+                    // 明るいベルの和音を短く重ね、選択が確定したことを伝える。
+                    [[1046.5,0,0.28],[1318.51,0.075,0.31],[1567.98,0.15,0.4],[2093,0.23,0.54]].forEach(([freq,delay,length],i)=>{
+                        const t=now+delay;
+                        [1,2.01].forEach((harmonic,h)=>{
+                            const oscillator=this.ctx.createOscillator();
+                            const gain=this.ctx.createGain();
+                            oscillator.type=h?'sine':'triangle';
+                            oscillator.frequency.setValueAtTime(freq*harmonic,t);
+                            gain.gain.setValueAtTime(0.001,t);
+                            gain.gain.linearRampToValueAtTime((h?0.025:0.072)*(i===3?1.15:1),t+0.014);
+                            gain.gain.exponentialRampToValueAtTime(0.0001,t+length);
+                            oscillator.connect(gain); gain.connect(this.masterGain);
+                            oscillator.start(t); oscillator.stop(t+length+0.01);
+                        });
+                    });
+                } catch(e) {}
+            }
             playStep() { this.playTone(110, 'triangle', 0.045, 0.028); }
             playDeath() {
                 this.playTone(180, 'sawtooth', 0.16, 0.10);
@@ -1161,9 +1302,14 @@
                     const o=this.ctx.createOscillator(), g=this.ctx.createGain();
                     o.type='square'; o.frequency.setValueAtTime(145,now); o.frequency.exponentialRampToValueAtTime(48,now+0.16);
                     g.gain.setValueAtTime(0.001,now); g.gain.exponentialRampToValueAtTime(0.28,now+0.012); g.gain.exponentialRampToValueAtTime(0.0001,now+0.22);
-                    o.connect(g); g.connect(this.ctx.destination); o.start(now); o.stop(now+0.24);
+                    o.connect(g); g.connect(this.masterGain); o.start(now); o.stop(now+0.24);
                     this.playTone(62,'sawtooth',0.12,0.12);
                 } catch(e) {}
+            }
+            playCritical() {
+                this.playImpactHit();
+                this.playTone(880,'triangle',0.13,0.11);
+                this.playTone(1320,'sine',0.2,0.075);
             }
             playEat() {
                 this.playTone(150,'triangle',0.08,0.08);
@@ -1212,7 +1358,7 @@
                     gain.gain.setValueAtTime(0.001, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.16, this.ctx.currentTime + 0.08);
                     gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1.25);
-                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.connect(gain); gain.connect(this.masterGain);
                     osc.start(); osc.stop(this.ctx.currentTime + 1.3);
                 } catch(e) {}
             }
@@ -1228,7 +1374,7 @@
                     gain.gain.setValueAtTime(0.001, now);
                     gain.gain.exponentialRampToValueAtTime(0.14, now + 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
-                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.connect(gain); gain.connect(this.masterGain);
                     osc.start(now); osc.stop(now + 1.05);
                 } catch(e) {}
             }
@@ -1244,7 +1390,7 @@
                     gain.gain.setValueAtTime(0.001, now);
                     gain.gain.exponentialRampToValueAtTime(0.28, now + 0.015);
                     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.connect(gain); gain.connect(this.masterGain);
                     osc.start(now);
                     osc.stop(now + 0.3);
                 } catch(e) {}
@@ -1252,6 +1398,130 @@
         }
 
         const sound = new RetroSoundEngine();
+
+        class TitleMusic {
+            constructor(src) {
+                // index.html と同じ階層の Sounds フォルダを参照する。
+                this.audio = new Audio(src);
+                this.audio.loop = true;
+                this.audio.preload = 'auto';
+                this.audio.volume = 0;
+                this.fadeTimer = null;
+                this.level = readAudioLevel('nico_bgm_volume');
+                this.playRequest = 0;
+                this.starting = false;
+                this.wantPlay = false;
+                this.silentUntilReveal = false;
+            }
+            get targetVolume() { return 0.38*this.level/10; }
+            setLevel(level) {
+                this.level=level;
+                if(level===0) this.stop(160);
+                else if(this.wantPlay) this.play();
+            }
+            fadeTo(target, duration=600) {
+                clearInterval(this.fadeTimer);
+                this.fadeTimer = null;
+                const from=this.audio.volume;
+                if (duration<=0) { this.audio.volume=target; if(target===0)this.audio.pause(); return; }
+                const start=performance.now();
+                this.fadeTimer=setInterval(()=>{
+                    const progress=Math.min(1,(performance.now()-start)/duration);
+                    this.audio.volume=from+(target-from)*progress;
+                    if(progress>=1) {
+                        clearInterval(this.fadeTimer); this.fadeTimer=null;
+                        if(target===0)this.audio.pause();
+                    }
+                },30);
+            }
+            play(silent=null) {
+                if(silent!==null) this.silentUntilReveal=silent;
+                if(this.level===0) return;
+                this.wantPlay=true;
+                if (this.starting) return;
+                if(!this.audio.paused) {
+                    if(this.silentUntilReveal) { clearInterval(this.fadeTimer); this.fadeTimer=null; this.audio.volume=0; }
+                    else this.fadeTo(this.targetVolume,500);
+                    return;
+                }
+                this.audio.volume=0;
+                this.starting=true;
+                const request=++this.playRequest;
+                try {
+                    const attempt=this.audio.play();
+                    if(attempt && typeof attempt.then==='function')
+                        attempt.then(()=>{
+                            if(request===this.playRequest) {
+                                this.starting=false;
+                                if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800);
+                            } else if(!this.wantPlay) this.audio.pause();
+                        }).catch(()=>{
+                            if(request===this.playRequest) {
+                                this.starting=false;
+                            }
+                        });
+                    else { this.starting=false; if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800); }
+                } catch(e) { this.starting=false; }
+            }
+            reveal() {
+                this.silentUntilReveal=false;
+                // 無音で進んだ冒頭２秒を巻き戻し、タイトルと同時に曲の先頭を聞かせる。
+                try { this.audio.currentTime=0; } catch(e) {}
+                this.play();
+            }
+            stop(duration=600) {
+                this.wantPlay=false;
+                this.silentUntilReveal=false;
+                this.playRequest++;
+                this.starting=false;
+                this.fadeTo(0,duration);
+            }
+        }
+        const titleMusic = new TitleMusic('Sounds/Welcome to the Hell.mp3');
+        const gameMusic = new TitleMusic('Sounds/Angel Goes to Hell.mp3');
+
+        function setAudioLevel(kind, raw) {
+            const level=Math.max(0,Math.min(10,Math.round(Number(raw)||0)));
+            if(kind==='bgm') {
+                titleMusic.setLevel(level);
+                gameMusic.setLevel(level);
+                if(level>0 && window.game?.presentsDismissed && !document.getElementById('title-screen').classList.contains('hidden') && !window.game?.titleTransitionBusy)
+                    titleMusic.play();
+            } else sound.setLevel(level);
+            try { localStorage.setItem(kind==='bgm'?'nico_bgm_volume':'nico_se_volume',String(level)); } catch(e) {}
+            for(const prefix of ['title','options']) {
+                const number=document.getElementById(`${prefix}-${kind}-number`);
+                const range=document.getElementById(`${prefix}-${kind}-range`);
+                if(number) number.value=String(level);
+                if(range) range.value=String(level);
+            }
+        }
+        function bindAudioControls() {
+            for(const kind of ['bgm','se']) {
+                for(const prefix of ['title','options']) {
+                    const number=document.getElementById(`${prefix}-${kind}-number`);
+                    const range=document.getElementById(`${prefix}-${kind}-range`);
+                    const row=number.closest('[data-volume]');
+                    range.addEventListener('input',()=>setAudioLevel(kind,range.value));
+                    number.addEventListener('change',()=>setAudioLevel(kind,number.value));
+                    number.addEventListener('blur',()=>setAudioLevel(kind,number.value));
+                    row.querySelectorAll('[data-step]').forEach(button=>
+                        button.addEventListener('click',()=>setAudioLevel(kind,(kind==='bgm'?titleMusic.level:sound.level)+Number(button.dataset.step))));
+                }
+                setAudioLevel(kind,kind==='bgm'?titleMusic.level:sound.level);
+            }
+        }
+        // 自動再生不可の環境ではタイトル画面での最初の操作を再生の起点にする。
+        const retryTitleMusic=()=>{
+            if (window.game?.presentsDismissed && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+                titleMusic.play();
+        };
+        document.addEventListener('pointerdown', retryTitleMusic, {passive:true});
+        document.addEventListener('touchstart', retryTitleMusic, {passive:true});
+        document.addEventListener('keydown', () => {
+            if (window.game?.presentsDismissed && !document.getElementById('title-screen')?.classList.contains('hidden') && !window.game?.titleTransitionBusy)
+                titleMusic.play();
+        });
 
         // iPhone/iPad等ではAudioContextがユーザー操作を受けるまで停止状態になるため、
         // 最初のタップ/タッチを「音声解禁」だけに使う。ここではSEを再生しない。
@@ -1275,7 +1545,14 @@
         const CONSUMABLE_ITEMS = [
             { id: 'herb', name: '漆黒の薬草', type: 'USABLE', effect: 'HEAL', val: 40, desc: 'HPを40回復する', weight: 34 },
             { id: 'cake', name: 'エンゼルケーキ', type: 'USABLE', effect: 'FOOD', val: 60, desc: '満腹度を60回復する', weight: 20 },
-            { id: 'tenkai_manju', name: '天界饅頭', type: 'USABLE', effect: 'FOOD', val: 30, desc: '満腹度を30回復する', weight: 28 },
+            { id: 'tenkai_manju', name: '天界饅頭', type: 'USABLE', effect: 'FOOD', val: 30, desc: '満腹度を30回復する', weight: 60 },
+            { id: 'spoiled_meat', name: '腐肉', type: 'USABLE', effect: 'SPOILED_FOOD', val: 30, desc: '満腹度+30。50%で腹痛になり10～20ターン毎ターンHP-1', weight: 60 },
+            { id: 'honey_attack', name: '猛攻の蜂蜜', type: 'USABLE', effect: 'HONEY', buff: 'attack', duration: 10, desc: '10ターン攻撃力+30%', weight: 6 },
+            { id: 'honey_defense', name: '守護の蜂蜜', type: 'USABLE', effect: 'HONEY', buff: 'defense', duration: 10, desc: '10ターン防御力+30%', weight: 6 },
+            { id: 'honey_evade', name: '疾風の蜂蜜', type: 'USABLE', effect: 'HONEY', buff: 'evade', duration: 10, desc: '10ターン回避率+30ポイント', weight: 6 },
+            { id: 'honey_crit', name: '会心の蜂蜜', type: 'USABLE', effect: 'HONEY', buff: 'crit', duration: 10, desc: '10ターンクリティカル率+30ポイント', weight: 6 },
+            { id: 'honey_double', name: '双撃の蜂蜜', type: 'USABLE', effect: 'HONEY', buff: 'double', duration: 0, desc: '5～10ターン2回攻撃', weight: 6 },
+            { id: 'honey_regen', name: '生命の蜂蜜', type: 'USABLE', effect: 'HONEY', buff: 'regen', duration: 50, desc: '50ターン自然治癒量が5倍', weight: 6 },
             { id: 'wand', name: '雷撃の杖', type: 'USABLE', effect: 'WAND', val: 50, desc: '前方横3列×5マスに50ダメージの雷を放つ', weight: 14 },
             { id: 'elixir', name: '全能の秘薬', type: 'USABLE', effect: 'HEAL_FULL', val: 100, desc: 'HPを全回復する', weight: 5 },
             { id: 'antidote', name: '毒消し丸薬', type: 'USABLE', effect: 'ANTIDOTE', val: 0, desc: '毒を治療する', weight: 10 },
@@ -1293,13 +1570,13 @@
         // 全10種類の通常敵 ＋ ボスデータベース
         const ENEMY_SPECIES = [
             { id: 'slime', name: '地獄スライム', color: '#a855f7', hp: 24, maxHp: 24, atk: 5, def: 0, exp: 8 },
-            { id: 'bat', name: 'スカルコウモリ', color: '#38bdf8', hp: 32, maxHp: 32, atk: 12, def: 2, exp: 12 },
-            { id: 'orc', name: 'オーク', color: '#92400e', hp: 44, maxHp: 44, atk: 16, def: 4, exp: 17 },
-            { id: 'zombie', name: 'ゾンビ', color: '#4d7c0f', hp: 56, maxHp: 56, atk: 20, def: 4, exp: 23 },
-            { id: 'imp', name: 'スカルナイト', color: '#e2e8f0', hp: 70, maxHp: 70, atk: 26, def: 6, exp: 30 },
-            { id: 'petit_demon', name: 'プチデーモン', color: '#ec4899', hp: 88, maxHp: 88, atk: 32, def: 8, exp: 40 },
-            { id: 'demon', name: 'ヘルデーモン', color: '#ef4444', hp: 110, maxHp: 110, atk: 38, def: 10, exp: 52 },
-            { id: 'dullahan', name: 'デュラハン', color: '#6366f1', hp: 136, maxHp: 136, atk: 46, def: 12, exp: 68 },
+            { id: 'bat', name: 'スカルコウモリ', color: '#38bdf8', hp: 32, maxHp: 32, atk: 14, def: 2, exp: 12 },
+            { id: 'orc', name: 'オーク', color: '#92400e', hp: 44, maxHp: 44, atk: 19, def: 4, exp: 17 },
+            { id: 'zombie', name: 'ゾンビ', color: '#4d7c0f', hp: 56, maxHp: 56, atk: 24, def: 4, exp: 23 },
+            { id: 'imp', name: 'スカルナイト', color: '#e2e8f0', hp: 70, maxHp: 70, atk: 31, def: 6, exp: 30 },
+            { id: 'petit_demon', name: 'プチデーモン', color: '#ec4899', hp: 88, maxHp: 88, atk: 38, def: 8, exp: 40 },
+            { id: 'demon', name: 'ヘルデーモン', color: '#ef4444', hp: 110, maxHp: 110, atk: 46, def: 10, exp: 52 },
+            { id: 'dullahan', name: 'デュラハン', color: '#6366f1', hp: 136, maxHp: 136, atk: 55, def: 12, exp: 68 },
             { id: 'abyss_knight', name: '深淵騎士', color: '#7e22ce', hp: 164, maxHp: 164, atk: 54, def: 14, exp: 86 },
             { id: 'judger', name: '聖なる審判者', color: '#facc15', hp: 196, maxHp: 196, atk: 62, def: 18, exp: 110 },
             { id: 'meatball', name: '肉だるま小僧', color: '#f97316', hp: 40, maxHp: 40, atk: 0, def: 8, exp: 70, moveInterval: 2, suicideRadius: 3, suicideDamageRate: 0.30, suicide: true },
@@ -1405,7 +1682,7 @@
                 name: `${e.name}のチャーム`,
                 type: 'CHARM', effect: 'ENCHANT', enchantName: e.name, enchantType: targetType,
                 desc: `${targetLabel}専用：${enchantDefinitionText(e)}`,
-                weight: ['神速','貫通','冷徹','吸血','束縛'].includes(e.name) ? 0.65 : 1
+                weight: ['神速','貫通','冷徹','吸血','束縛'].includes(e.name) ? 8 : 1
             };
         }
 
@@ -1472,7 +1749,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '1.13.2';
+        const GAME_VERSION = '2.00';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
 
@@ -1589,6 +1866,9 @@
             }
 
             initUI() {
+                const presents=document.getElementById('presents-screen');
+                presents.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); this.dismissPresents(); });
+                presents.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); this.dismissPresents(); });
                 // マウス/タッチで押したボタンにキーボードフォーカスを残さない。
                 // 特にロード後に「足踏み（Space）」をすると、ロードボタンが再実行されるのを防ぐ。
                 document.addEventListener('click', (e) => {
@@ -1638,14 +1918,11 @@
                     }, { passive: true });
                 }
 
-                const updateSoundToggle = () => {
-                    const button = document.getElementById('sound-toggle');
-                    if (button) button.innerHTML = sound.enabled ? '🔊 SE:ON' : '🔇 SE:OFF';
-                };
-                document.getElementById('sound-toggle').addEventListener('click', () => {
-                    sound.enabled = !sound.enabled;
-                    updateSoundToggle();
-                });
+                bindAudioControls();
+                const titleSettings=document.getElementById('title-settings-window');
+                document.getElementById('title-settings-btn').addEventListener('click',()=>titleSettings.classList.remove('hidden'));
+                document.getElementById('title-settings-close').addEventListener('click',()=>titleSettings.classList.add('hidden'));
+                titleSettings.addEventListener('click',e=>{ if(e.target===titleSettings) titleSettings.classList.add('hidden'); });
                 const shiftFacingButton = document.getElementById('shift-facing-toggle');
                 const updateShiftFacingButton = () => {
                     const on = shiftFacingButton.classList.contains('is-on');
@@ -1670,10 +1947,9 @@
                 document.getElementById('story-overlay').addEventListener('click', (e) => {
                     const fall = document.getElementById('prologue-fall-scene');
                     if (fall && !fall.classList.contains('hidden')) {
-                        // 落下中はタップでスキップ・SE再生・着地処理をしない。
-                        // 落下アニメーションとSEは自動で最後まで進み、終了後に会話へ移る。
                         e.preventDefault();
                         e.stopPropagation();
+                        if (this.prologuePhase === 'await-dialogue') this.completePrologueLanding();
                         return;
                     }
                     this.advanceStory();
@@ -1803,7 +2079,18 @@
                 });
 
                 window.addEventListener('keydown', (e) => {
+                    if (!this.presentsDismissed) {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.dismissPresents(); }
+                        return;
+                    }
                     if (this.isGameOver) return;
+                    if (this.openingSequenceBusy) {
+                        if (this.prologuePhase === 'await-dialogue' && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            this.completePrologueLanding();
+                        }
+                        return;
+                    }
 
                     if (e.key === 'PageUp' || e.key === 'PageDown') {
                         if (true) {
@@ -1994,14 +2281,65 @@
                 });
             }
 
+            dismissPresents() {
+                if (this.presentsDismissed || this.presentsTransitioning) return;
+                this.presentsTransitioning=true;
+                // 操作イベント内で無音の再生を開始し、音量はタイトルが見えてから上げる。
+                sound.init();
+                titleMusic.play(true);
+                const presents=document.getElementById('presents-screen');
+                const title=document.getElementById('title-screen');
+                clearTimeout(this.titleRevealTimer);
+                title.classList.remove('title-entering');
+                presents.classList.add('presents-to-black');
+                setTimeout(()=>{
+                    presents.classList.add('presents-reveal-title');
+                    setTimeout(()=>{
+                        presents.classList.add('hidden');
+                        this.presentsDismissed=true;
+                        this.presentsTransitioning=false;
+                        titleMusic.reveal();
+                    },1000);
+                },1000);
+            }
+
             showTitleScreen() {
                 this.saveSlotOpenedFromTitle = false;
+                clearTimeout(this.openingTimer);
+                clearTimeout(this.prologueFallTimer);
+                clearTimeout(this.prologueImpactTimer);
+                const fallAvatar=document.getElementById('fall-avatar');
+                if (this.onPrologueFallEnd && fallAvatar) fallAvatar.removeEventListener('transitionend',this.onPrologueFallEnd);
+                this.onPrologueFallEnd=null;
+                this.openingSequenceBusy = false;
+                this.prologuePhase = null;
+                document.getElementById('opening-white-caption').classList.remove('visible');
+                document.getElementById('fall-continue-prompt').classList.add('hidden');
+                document.getElementById('title-settings-window').classList.add('hidden');
                 const title = document.getElementById('title-screen');
                 const transition = document.getElementById('scene-transition');
                 const story = document.getElementById('story-overlay');
                 const gameOverlay = document.getElementById('game-overlay');
-                if (title) { title.classList.remove('hidden','title-leaving'); title.style.display='flex'; title.style.opacity='1'; }
-                if (transition) { transition.classList.remove('active','flash','soft'); transition.style.opacity='0'; }
+                clearTimeout(this.titleTransitionTimer);
+                this.titleTransitionBusy = false;
+                gameMusic.stop(500);
+                if (title) {
+                    title.classList.remove('hidden','title-leaving','title-entering');
+                    title.style.display='flex';
+                    title.style.opacity='1';
+                    void title.offsetWidth;
+                    title.classList.add('title-entering');
+                    clearTimeout(this.titleRevealTimer);
+                    this.titleRevealTimer=setTimeout(()=>title.classList.remove('title-entering'),1050);
+                }
+                if (transition) {
+                    transition.classList.remove('active','flash','soft','title-white','title-dark','opening-white-in','opening-white-out');
+                    transition.style.opacity='';
+                    transition.style.pointerEvents='none';
+                    transition.style.background='';
+                    transition.style.transition='';
+                }
+                if (this.presentsDismissed) titleMusic.play();
                 if (story) story.classList.add('hidden');
                 if (gameOverlay) gameOverlay.classList.add('hidden');
                 const titleHigh = document.getElementById('title-highscore-display');
@@ -2013,6 +2351,7 @@
                 if (!layer) { if (callback) callback(); return; }
                 layer.className = '';
                 layer.id = 'scene-transition';
+                layer.style.opacity='';
                 if (kind === 'flash') {
                     layer.classList.add('flash','active');
                     setTimeout(() => { if (callback) callback(); layer.classList.remove('active'); }, 110);
@@ -2025,28 +2364,85 @@
                 }
             }
 
+            transitionFromTitle(kind, callback) {
+                if (this.titleTransitionBusy) return;
+                this.titleTransitionBusy=true;
+                sound.playTitleConfirm();
+                titleMusic.stop(650);
+                const title=document.getElementById('title-screen');
+                const layer=document.getElementById('scene-transition');
+                // 不透明なタイトルの上を幕で覆い、背後のゲーム画面を露出させない。
+                if(layer) {
+                    layer.className=kind==='new'?'title-white':'title-dark';
+                    layer.style.opacity='';
+                    requestAnimationFrame(()=>layer.classList.add('active'));
+                }
+                clearTimeout(this.titleTransitionTimer);
+                this.titleTransitionTimer=setTimeout(()=>{
+                    this.titleTransitionTimer=null;
+                    if(title) { title.classList.add('hidden'); title.style.display='none'; }
+                    callback();
+                    // 次の画面が描かれてから白・黒の幕をゆっくり取り除く。
+                    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+                        if(layer) layer.classList.remove('active');
+                    }));
+                    this.titleTransitionBusy=false;
+                },680);
+            }
+
             startFromTitle() {
-                sound.init();
-                const title = document.getElementById('title-screen');
-                if (title) title.classList.add('title-leaving');
-                this.playSceneTransition('flash', () => {
-                    if (title) { title.classList.add('hidden'); title.style.display='none'; }
-                    this.showStoryPrologue();
-                });
+                if (this.titleTransitionBusy || this.openingSequenceBusy) return;
+                this.titleTransitionBusy = true;
+                this.openingSequenceBusy = true;
+                this.prologuePhase = 'white-in';
+                sound.playTitleConfirm();
+                titleMusic.stop(650);
+                const title=document.getElementById('title-screen');
+                const layer=document.getElementById('scene-transition');
+                const caption=document.getElementById('opening-white-caption');
+                // タイトルを白く覆ってから消す。先に消すとゲーム画面が透ける。
+                caption.classList.remove('visible');
+                layer.className='opening-white-in';
+                layer.style.opacity='';
+                layer.style.pointerEvents='auto';
+                layer.style.background='';
+                layer.style.transition='';
+                void layer.offsetWidth; // 不透明になる前のフレームを確定し、2秒のCSS遷移を確実に開始。
+                requestAnimationFrame(()=>layer.classList.add('active'));
+                clearTimeout(this.openingTimer);
+                this.openingTimer=setTimeout(()=>{
+                    title.classList.add('hidden');
+                    title.style.display='none';
+                    this.prologuePhase='white-message';
+                    caption.classList.add('visible');
+                    this.openingTimer=setTimeout(()=>{
+                        caption.classList.remove('visible');
+                        // 白い幕の奥に静止した落下画面を先に用意し、白が消えてから落下開始。
+                        this.showStoryPrologue(true);
+                        layer.className='opening-white-out active';
+                        void layer.offsetWidth;
+                        requestAnimationFrame(()=>layer.classList.remove('active'));
+                        this.openingTimer=setTimeout(()=>{
+                            layer.className='';
+                            layer.style.opacity='';
+                            layer.style.pointerEvents='none';
+                            this.titleTransitionBusy=false;
+                            this.startPrologueFall();
+                        },520);
+                    },1000);
+                },2050);
             }
 
             continueFromTitle() {
-                sound.init();
-                this.saveSlotOpenedFromTitle = true;
-                const title = document.getElementById('title-screen');
-                if (title) title.classList.add('title-leaving');
-                this.playSceneTransition('soft', () => {
-                    if (title) { title.classList.add('hidden'); title.style.display='none'; }
+                this.transitionFromTitle('load',()=>{
+                    this.saveSlotOpenedFromTitle=true;
                     this.openSaveSlots('load');
                 });
             }
 
-            showStoryPrologue() {
+            showStoryPrologue(deferFall = false) {
+                this.openingSequenceBusy = true;
+                this.prologuePhase = deferFall ? 'white-out' : 'falling';
                 // タイトルやゲームオーバーからプロローグへ入るときは暗転からゆっくり戻す。
                 const title = document.getElementById('title-screen');
                 if (title) { title.classList.add('hidden'); title.style.display='none'; }
@@ -2069,15 +2465,17 @@
                 overlay.classList.add('flex');
                 if (fall) {
                     fall.classList.remove('hidden');
-                    this.playPrologueFall();
+                    fall.classList.remove('falling');
+                    void fall.offsetWidth; // 再び最初から始めた場合も空からの落下を再生する。
+                    fall.classList.add('falling');
+                    this.playPrologueFall(deferFall);
                 } else {
                     this.updateStoryDialogue();
                 }
             }
 
-            playPrologueFall() {
-                sound.init();
-                sound.playFall();
+            playPrologueFall(deferStart = false) {
+                document.getElementById('fall-continue-prompt').classList.add('hidden');
                 const avatar = document.getElementById('fall-avatar');
                 const canvas = document.getElementById('fall-avatar-canvas');
                 const caption = document.getElementById('fall-caption');
@@ -2117,38 +2515,63 @@
                 hell.style.transition='none'; hell.style.opacity='0';
                 if (darkness) { darkness.style.transition='none'; darkness.style.opacity='0'; }
 
+                if (!deferStart) this.startPrologueFall();
+            }
+
+            startPrologueFall() {
+                this.prologuePhase = 'falling';
+                sound.init();
+                sound.playFall();
+                const avatar = document.getElementById('fall-avatar');
+                const hell = document.getElementById('fall-hell-label');
+                const scene=document.getElementById('prologue-fall-scene');
+                const sceneHeight=scene.getBoundingClientRect().height || window.innerHeight;
+                const avatarHalf=(avatar.getBoundingClientRect().height || 96)/2;
+                const landingY=Math.max(0,sceneHeight/2-avatarHalf-Math.max(12,sceneHeight*.035));
+                avatar.style.setProperty('--landing-y',`${landingY}px`);
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         avatar.style.transition='transform 1.85s cubic-bezier(.22,.02,.62,1), opacity 1.85s ease';
-                        avatar.style.transform='translate(-50%,-50%) translateY(220px) rotate(18deg) scale(1.08)';
+                        avatar.style.transform=`translate(-50%,-50%) translateY(${landingY}px) rotate(18deg) scale(1.08)`;
                         hell.style.transition='opacity 1.2s ease 0.55s';
                         hell.style.opacity='1';
-                        caption.style.transition='opacity 0.5s ease 1.0s';
-                        caption.style.opacity='1';
                     });
                 });
-                // 落下中の暗幕は使用しない。文字まで暗くなるため、常時非表示にする。
-                if (darkness) {
-                    darkness.style.transition='none';
-                    darkness.style.opacity='0';
-                    darkness.style.display='none';
-                }
-                this.prologueFallTimer = setTimeout(() => {
-                    this.prologueFallTimer = null;
+                const darkness=document.getElementById('fall-darkness');
+                if (darkness) { darkness.style.transition='none'; darkness.style.opacity='0'; darkness.style.display='none'; }
+                if (this.onPrologueFallEnd) avatar.removeEventListener('transitionend',this.onPrologueFallEnd);
+                this.onPrologueFallEnd=(e)=>{
+                    if(e.propertyName!=='transform')return;
+                    avatar.removeEventListener('transitionend',this.onPrologueFallEnd);
+                    this.onPrologueFallEnd=null;
+                    clearTimeout(this.prologueFallTimer);
+                    this.prologueFallTimer=null;
                     this.finishPrologueFall();
-                }, 1850);
+                };
+                avatar.addEventListener('transitionend',this.onPrologueFallEnd);
+                // 描画更新が間引かれる端末でも着地を完了できるようにする保険。
+                this.prologueFallTimer=setTimeout(()=>{
+                    avatar.removeEventListener('transitionend',this.onPrologueFallEnd);
+                    this.onPrologueFallEnd=null;
+                    this.prologueFallTimer=null;
+                    this.finishPrologueFall();
+                },2000);
             }
 
             finishPrologueFall() {
                 const fall = document.getElementById('prologue-fall-scene');
                 if (!fall || fall.classList.contains('hidden')) return;
-                // 落下アニメーションが終わる前にクリック/Enterされても、着地前にはシェイクさせない。
-                if (this.prologueFallTimer) return;
-                if (this.prologueImpactTimer) return;
+                if (this.prologuePhase !== 'falling' || this.prologueFallTimer || this.prologueImpactTimer) return;
+                this.prologuePhase = 'impact';
                 // 落下後はメッセージウィンドウではなく、中央のnicoちゃん自身が着地の衝撃で揺れる。
                 const avatar = document.getElementById('fall-avatar');
+                fall.classList.remove('prologue-impact');
+                void fall.offsetWidth;
+                fall.classList.add('prologue-impact');
                 if (avatar) {
                     avatar.classList.remove('nico-impact-shake');
+                    avatar.style.transition='none';
+                    avatar.style.animation='';
                     void avatar.offsetWidth;
                     avatar.classList.add('nico-impact-shake');
                 }
@@ -2156,9 +2579,20 @@
                 sound.playImpact();
                 clearTimeout(this.prologueImpactTimer);
                 this.prologueImpactTimer = setTimeout(() => {
-                    fall.classList.add('hidden');
-                    this.updateStoryDialogue();
+                    this.prologueImpactTimer=null;
+                    fall.classList.remove('prologue-impact');
+                    this.prologuePhase='await-dialogue';
+                    document.getElementById('fall-continue-prompt').classList.remove('hidden');
                 }, 500);
+            }
+
+            completePrologueLanding() {
+                if (this.prologuePhase !== 'await-dialogue') return;
+                this.prologuePhase=null;
+                this.openingSequenceBusy=false;
+                document.getElementById('fall-continue-prompt').classList.add('hidden');
+                document.getElementById('prologue-fall-scene').classList.add('hidden');
+                this.updateStoryDialogue();
             }
 
             updateStoryDialogue() {
@@ -2199,7 +2633,7 @@
                     const panel=document.getElementById('victory-score-panel'); if(panel) panel.classList.remove('hidden');
                     document.getElementById('victory-score-display').innerText=this.score;
                     document.getElementById('victory-highscore-display').innerText=this.highScore;
-                    document.getElementById('victory-hp-bonus').innerText=`残りHPボーナス +${Math.ceil(this.player.hp)*100}`;
+                    document.getElementById('victory-hp-bonus').innerText=`残りHPボーナス +${this.clearScoreBonus}`;
                 } else {
                     const panel = document.getElementById('victory-score-panel');
                     if (panel) panel.classList.add('hidden');
@@ -2236,6 +2670,9 @@
             }
 
             startHeavenPostgame() {
+                // ボス撃破時の獲得分を確定したまま天上界のオートセーブへ渡す。
+                // 既に獲得済みなら finalizeScore は再加算しない（旧セーブからの再開にも対応）。
+                this.finalizeScore(true);
                 this.currentFloor = -1;
                 this.heavenFloor = 1;
                 this.isGameOver = false;
@@ -2287,6 +2724,9 @@
                 this.enemyTurnPending = false;
                 this.enemyTurnTimer = 0;
                 this.player.poisonTurns = 0;
+                this.player.bellyacheTurns = 0;
+                this.player.bellyacheSkipNext = false;
+                this.player.honeyBuffs = {};
                 this.player.rootedTurns = 0;
                 this.player.paralyzedTurns = 0;
                 this.player.helmetReady = false;
@@ -2308,6 +2748,7 @@
                 // プロローグ直後の状態を一度オートセーブ。
                 this.saveAutoGame();
                 this.updateUI();
+                gameMusic.play();
             }
 
             getFloorName() {
@@ -2771,19 +3212,40 @@
             getRandomHeavenEnemy() {
                 const pool=[];
                 const depth=Math.max(1,this.heavenFloor);
-                const newCount=Math.min(10, 3 + Math.floor((depth-1)/2));
-                for(let i=0;i<newCount;i++){ const s=HEAVEN_ENEMY_SPECIES[i]; pool.push({species:s,weight:Math.max(20,120-i*8)}); }
-                // 天上界では地獄の敵も最初から全種類を出さず、1Fのスライムから順番に解禁する。
-                // 1F=スライム、2F=スライム+コウモリ……10Fで10種すべて。
-                const hellUnlockCount=Math.min(10, depth);
+                // 1F～5Fに地獄の通常敵を２種ずつ解禁。6F～15Fは天上界の専用敵を１種ずつ追加。
+                const heavenUnlockCount=Math.min(10,Math.max(0,depth-5));
+                for(let i=0;i<heavenUnlockCount;i++){
+                    pool.push({species:HEAVEN_ENEMY_SPECIES[i],weight:Math.max(20,120-i*8)});
+                }
+                const hellUnlockCount=Math.min(10,Math.ceil(Math.min(depth,5)*2));
                 for(let i=0;i<hellUnlockCount;i++){
                     const base=ENEMY_SPECIES[i];
                     const scaled={...base, hp:base.hp*HEAVEN_HELL_MULTIPLIER, maxHp:base.maxHp*HEAVEN_HELL_MULTIPLIER, atk:base.atk*HEAVEN_HELL_MULTIPLIER, def:base.def*HEAVEN_HELL_MULTIPLIER, exp:Math.floor(base.exp*2.5)};
                     pool.push({species:scaled,weight:Math.max(8,70-i*4)});
                 }
+                // 特殊敵は各１％。固有行動・肉だるまの自爆率は維持し、能力値と経験値を３倍にする。
+                const specialRoll=Math.random();
+                let species;
+                if(specialRoll<0.01) species=JET_BABAA_SPEC;
+                else if(specialRoll<0.02) species=ENEMY_SPECIES.find(e=>e.id==='yasuo');
+                else if(specialRoll<0.03) species=ENEMY_SPECIES.find(e=>e.id==='meatball');
                 const total=pool.reduce((a,b)=>a+b.weight,0); let r=Math.random()*total;
-                for(const e of pool){ if(r<e.weight) return e.species; r-=e.weight; }
-                return pool[0].species;
+                if(!species) {
+                    for(const e of pool){ if(r<e.weight){ species=e.species; break; } r-=e.weight; }
+                }
+                species ||= pool[0].species;
+                if(species.id==='jet_babaa' || species.id==='yasuo' || species.id==='meatball'){
+                    species={...species,
+                        hp:species.hp*HEAVEN_HELL_MULTIPLIER,
+                        maxHp:species.maxHp*HEAVEN_HELL_MULTIPLIER,
+                        atk:species.atk*HEAVEN_HELL_MULTIPLIER,
+                        def:species.def*HEAVEN_HELL_MULTIPLIER,
+                        exp:species.exp*HEAVEN_HELL_MULTIPLIER};
+                }
+                // 20Fを＋５％として、以降は１階上がるたびに５％ずつ複利で強化。
+                if(depth<20) return species;
+                const multiplier=Math.pow(1.05,depth-19);
+                return {...species, hp:Math.round(species.hp*multiplier), maxHp:Math.round(species.maxHp*multiplier), atk:Math.round(species.atk*multiplier), def:Math.round(species.def*multiplier)};
             }
 
             spawnHeavenEntities() {
@@ -2802,7 +3264,8 @@
                     const room=this.rooms[Math.floor(Math.random()*this.rooms.length)];
                     const ix=Math.floor(room.x+Math.random()*room.w), iy=Math.floor(room.y+Math.random()*room.h);
                     if(this.map[iy]?.[ix]!==TILE.FLOOR || this.items.some(it=>it.x===ix&&it.y===iy)) continue;
-                    const dbItem=Math.random()<0.35?getRandomByWeight(WEAPON_ITEMS):Math.random()<0.55?getRandomByWeight(ARMOR_ITEMS):getRandomByWeight(CONSUMABLE_ITEMS);
+                    const categoryRoll=Math.random();
+                    const dbItem=getRandomByWeight(categoryRoll<0.30?WEAPON_ITEMS:categoryRoll<0.55?ARMOR_ITEMS:categoryRoll<0.85?CONSUMABLE_ITEMS:CHARM_ITEMS);
                     // item.id は描画・合成・装備判定の基準IDなので、地上アイテムと同じく原本IDを保持する。
                     // 以前は heaven_... の一意IDで上書きしていたため、天上界でアイコンが汎用絵になる問題があった。
                     this.items.push({...dbItem,x:ix,y:iy,uid:`heaven_${this.heavenFloor}_${i}_${Date.now()}_${Math.random().toString(36).slice(2)}`});
@@ -2897,8 +3360,14 @@
                             bossCandidates.push({ x, y, dist: Math.abs(x-this.player.x) + Math.abs(y-this.player.y) });
                         }
                     }
-                    bossCandidates.sort((a,b) => b.dist - a.dist);
-                    const bossPos = bossCandidates[0] || { x: room.x, y: room.y };
+                    // 端から２マス空け、開始位置からも距離を取りつつ候補を均等に抽選する。
+                    // 最遠マスをソートで先頭に選ぶと、同距離の左上角にほぼ固定される。
+                    const validBossPositions=bossCandidates.filter(p=>
+                        p.x>=room.x+2 && p.x<room.x+room.w-2 &&
+                        p.y>=room.y+2 && p.y<room.y+room.h-2 && p.dist>=12);
+                    const bossPos = validBossPositions.length
+                        ? validBossPositions[Math.floor(Math.random()*validBossPositions.length)]
+                        : bossCandidates[Math.floor(Math.random()*bossCandidates.length)] || { x: room.x, y: room.y };
                     const bx = bossPos.x, by = bossPos.y;
 
                     // ボス「全能神しるぺん」：F1Fでは必ず生成され、プレイヤーと重ならない。
@@ -2909,25 +3378,29 @@
                         hp: 440, maxHp: 440, atk: 70, def: 20, exp: 1000
                     };
 
-                    // 取り巻き「聖なる審判者」4体（ボスの上下左右を護衛）
+                    // 取り巻き「聖騎士」２体。隣接４方向を混ぜ、配置できる場所を選ぶ。
                     const guardOffsets = [
                         { x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }
                     ];
-
-                    const judgerTemplate = ENEMY_SPECIES.find(e => e.id === 'judger');
-                    guardOffsets.forEach(offset => {
+                    for(let i=guardOffsets.length-1;i>0;i--){
+                        const j=Math.floor(Math.random()*(i+1));
+                        [guardOffsets[i],guardOffsets[j]]=[guardOffsets[j],guardOffsets[i]];
+                    }
+                    const knightTemplate=HEAVEN_ENEMY_SPECIES.find(e=>e.id==='holy_knight');
+                    for(const offset of guardOffsets){
+                        if(this.enemies.length>=2) break;
                         const gx = bx + offset.x;
                         const gy = by + offset.y;
                         if (this.isWalkable(gx, gy) && !(gx === this.player.x && gy === this.player.y) && !this.isOccupied(gx, gy)) {
                             this.enemies.push({
-                                ...judgerTemplate,
+                                ...knightTemplate,
                                 x: gx, y: gy,
                                 renderX: gx * TILE_SIZE, renderY: gy * TILE_SIZE
                             });
                         }
-                    });
+                    }
 
-                    this.log('⚠ 天界の頂点！全能神しるぺんと聖なる審判者たちが立ちはだかる！', 'text-amber-400 font-bold');
+                    this.log('⚠ 天界の頂点！全能神しるぺんと聖騎士２体が立ちはだかる！', 'text-amber-400 font-bold');
                     return;
                 }
 
@@ -3172,7 +3645,7 @@
                 ctx.save();ctx.imageSmoothingEnabled=false;
                 if(armorSprite && layer===(shieldBack?'back':'front')){
                     const {image,cell}=armorSprite;
-                    const sx=centerX+(side?(dx>0?9:-4):back?8:8);
+                    const sx=centerX+(side?(dx>0?9:-4):back?-8:8);
                     const sy=centerY+(side?(dx<0?11:8):back?2:6);
                     ctx.save();ctx.translate(Math.round(sx),Math.round(sy));
                     // 横向きは厚みが見える角度に圧縮する。上・正面は元の絵柄を維持。
@@ -3551,6 +4024,23 @@
                         ctx.beginPath();
                         ctx.arc(px, py, radius * 0.7, 0, Math.PI * 2);
                         ctx.stroke();
+                    } else if (e.type === 'criticalBurst') {
+                        // 会心専用：白い衝撃光の後、二重の輪と八方向の光片が広がる。
+                        const p=Math.min(1,progress);
+                        ctx.translate(px,py);
+                        ctx.globalAlpha=1-p;
+                        ctx.strokeStyle=e.color;
+                        ctx.lineWidth=3*(1-p)+1;
+                        for(let ring=0;ring<2;ring++){
+                            ctx.beginPath();ctx.arc(0,0,5+p*(16+ring*12),0,Math.PI*2);ctx.stroke();
+                        }
+                        ctx.fillStyle=p<.18?'#ffffff':e.color;
+                        for(let i=0;i<8;i++){
+                            const a=i*Math.PI/4,dist=9+p*33;
+                            ctx.save();ctx.translate(Math.cos(a)*dist,Math.sin(a)*dist);ctx.rotate(a);
+                            ctx.fillRect(-5,-2,10,4);ctx.restore();
+                        }
+                        if(p<.22){ctx.globalAlpha=(.22-p)*2.7;ctx.fillStyle='#ffffff';ctx.fillRect(-18,-18,36,36);}
                     } else if (e.type === 'damage') {
                         // 最初の約1.2～1.4秒だけ上昇アニメーション。その後さらに約1秒、
                         // 動きを止めたまま数字を画面に残す。
@@ -4008,11 +4498,15 @@
                 if (!this.isGameOver && this.storyStep !== 99) this.processTurn();
             }
 
+            hasHoneyBuff(kind) {
+                return (this.player.honeyBuffs?.[kind]?.turns || 0) > 0;
+            }
+
             getPlayerAtk() {
                 const weaponBonus = this.player.weapon ? this.player.weapon.val : 0;
                 const baseAtk = this.player.baseAtk + weaponBonus;
                 const atkMul = getEnchantStat(this.player.weapon, 'atkMul');
-                return Math.max(1, Math.round(baseAtk * (1 + atkMul)));
+                return Math.max(1, Math.round(baseAtk * (1 + atkMul) * (this.hasHoneyBuff('attack') ? 1.3 : 1)));
             }
 
             getPlayerDef() {
@@ -4020,14 +4514,14 @@
                 const armorBonus = this.player.armor ? this.player.armor.val : 0;
                 const baseDef = this.player.baseDef + armorBonus;
                 const defMul = getEnchantStat(this.player.armor, 'defMul');
-                return Math.max(0, Math.round(baseDef * (1 + defMul)));
+                return Math.max(0, Math.round(baseDef * (1 + defMul) * (this.hasHoneyBuff('defense') ? 1.3 : 1)));
             }
 
             getPlayerAttackCount() {
                 let count = this.player.weapon?.id === 'nico_belos_whip' ? 2 : 1;
                 count = Math.max(count, getEnchantStat(this.player.weapon, 'multiAttack'));
                 if (this.player.weapon?.id === 'nico_belos_whip' && getEnchantStat(this.player.weapon, 'multiAttack') > 0) count += 1;
-                return count;
+                return this.hasHoneyBuff('double') ? Math.max(2, count) : count;
             }
 
             getPlayerAttackRange() {
@@ -4039,7 +4533,7 @@
             }
 
             getPlayerEvadeChance() {
-                return this.player.armor?.id === 'mirage_shield' ? 0.50 : getEnchantStat(this.player.armor, 'evade');
+                return Math.min(0.95, (this.player.armor?.id === 'mirage_shield' ? 0.50 : getEnchantStat(this.player.armor, 'evade')) + (this.hasHoneyBuff('evade') ? 0.30 : 0));
             }
 
             getTrapActivationChance() {
@@ -4070,6 +4564,11 @@
                     strong
                 });
                 this.screenShake = Math.max(this.screenShake, strong ? 4 : 2.5);
+            }
+
+            addCriticalEffect(x,y,againstPlayer=false) {
+                this.addEffect({type:'criticalBurst',x,y,color:againstPlayer?'#fb7185':'#fde68a',duration:580});
+                this.screenShake=Math.max(this.screenShake,againstPlayer?12:10);
             }
 
             addSlashEffect(x, y, dir, color = '#fef08a', strong = false) {
@@ -4165,6 +4664,17 @@
                 next();
             }
 
+            dropRandomEnemyItem(enemy) {
+                if (Math.random() >= 0.01) return;
+                const pool = [...WEAPON_ITEMS, ...ARMOR_ITEMS, ...CONSUMABLE_ITEMS, ...CHARM_ITEMS];
+                const picked = pool[Math.floor(Math.random() * pool.length)];
+                const pos = this.findItemPlacement(enemy.x, enemy.y);
+                if (!picked || !pos) return;
+                const item = picked.type === 'WEAPON' || picked.type === 'ARMOR' ? {...rollEnchant(picked), ...pos} : {...picked, ...pos};
+                this.items.push(item);
+                this.log(`🎁 ${enemy.name}は【${item.name}】を落とした！`, 'text-amber-300 font-bold');
+            }
+
             dropYasuoGoldEgg(enemy) {
                 if (!enemy || enemy.id !== 'yasuo') return;
                 // 番犬やすお撃破時は必ず倒れたマスに金の卵を置く。
@@ -4194,9 +4704,12 @@
                         if (onComplete) onComplete();
                         return;
                     }
-                    const crit = Math.random() < (0.05 + getEnchantStat(this.player.weapon, 'crit'));
+                    const crit = Math.random() < (0.05 + getEnchantStat(this.player.weapon, 'crit') + (this.hasHoneyBuff('crit') ? 0.30 : 0));
                     const critMultiplier = crit ? (1.5 * (1 + getEnchantStat(this.player.weapon, 'critDamage'))) : 1;
-                    const rawDmg = enemy.id === 'yasuo' ? (Math.random() < 0.5 ? 0 : 1) : Math.max(1, Math.round((this.getPlayerAtk() - enemy.def + Math.floor(Math.random() * 3)) * critMultiplier));
+                    // やすおは普段0/1抽選、会心時だけ防御力を無視して通常の会心ダメージを与える。
+                    const rawDmg = enemy.id === 'yasuo' && !crit
+                        ? (Math.random() < 0.5 ? 0 : 1)
+                        : Math.max(1, Math.round((this.getPlayerAtk() - (enemy.id === 'yasuo' ? 0 : enemy.def) + Math.floor(Math.random() * 3)) * critMultiplier));
                     const execute = getEnchantStat(this.player.weapon, 'execute') > 0 && Math.random() < getEnchantStat(this.player.weapon, 'execute');
                     const dmg = execute ? enemy.hp : rawDmg;
                     enemy.hp -= dmg;
@@ -4232,14 +4745,16 @@
                     enemy.hitTimer = 360;
                     enemy.hitDir = dir;
                     this.addHitEffect(hitX, hitY, '#ffffff', dmg, crit);
+                    if(crit) this.addCriticalEffect(hitX,hitY);
                     this.addDamageNumber(hitX, hitY, dmg, '#fef08a', crit);
-                    sound.playImpactHit();
-                    this.log(`nicoの攻撃！ ${enemy.name} に ${dmg} ダメージ！`, 'text-green-300');
+                    if(crit) sound.playCritical(); else sound.playImpactHit();
+                    this.log(`${crit?'✨ 会心の一撃！':'nicoの攻撃！'} ${enemy.name} に ${dmg} ダメージ！`, 'text-green-300');
                     if (enemy.hp <= 0) {
                         this.addDeathEffect(hitX, hitY, enemy.color || '#ffffff');
                         this.log(`💥 ${enemy.name} を倒した！ (+${enemy.exp} EXP)`, 'text-yellow-300 font-bold');
                         this.enemies = this.enemies.filter(e => e !== enemy);
                         this.dropYasuoGoldEgg(enemy);
+                        this.dropRandomEnemyItem(enemy);
                         this.gainExp(enemy.exp);
                     }
                     if (onComplete) onComplete();
@@ -4264,7 +4779,7 @@
                         if (onComplete) onComplete();
                         return;
                     }
-                    const crit = Math.random() < (0.05 + getEnchantStat(this.player.weapon, 'crit'));
+                    const crit = Math.random() < (0.05 + getEnchantStat(this.player.weapon, 'crit') + (this.hasHoneyBuff('crit') ? 0.30 : 0));
                     const critMultiplier = crit ? (1.5 * (1 + getEnchantStat(this.player.weapon, 'critDamage'))) : 1;
                     const rawDmg = Math.max(1, Math.round((this.getPlayerAtk() - this.boss.def + Math.floor(Math.random() * 5)) * critMultiplier));
                     const execute = getEnchantStat(this.player.weapon, 'execute') > 0 && Math.random() < getEnchantStat(this.player.weapon, 'execute');
@@ -4296,8 +4811,9 @@
                     this.boss.hitTimer = 400;
                     this.boss.hitDir = dir;
                     this.addHitEffect(hitX, hitY, '#67e8f9', dmg, crit);
+                    if(crit) this.addCriticalEffect(hitX,hitY);
                     this.addDamageNumber(hitX, hitY, dmg, '#67e8f9', crit);
-                    sound.playImpactHit();
+                    if(crit) sound.playCritical(); else sound.playImpactHit();
                     this.log(`⚔ nicoの聖なる必殺撃！ 全能神しるぺん に ${dmg} ダメージ！`, 'text-amber-300');
                     if (this.boss.hp <= 0) {
                         this.addDeathEffect(hitX, hitY, '#facc15');
@@ -4462,8 +4978,9 @@
                         dmg = Math.max(1, Math.round(dmg * (1 - getEnchantStat(this.player.weapon, 'damageReduce') - getEnchantStat(this.player.armor, 'damageReduce'))));
                         this.player.hp -= dmg;
                         this.addHitEffect(px, py, isBoss ? '#facc15' : '#ef4444', dmg, enemyCritical);
+                        if(enemyCritical) this.addCriticalEffect(px,py,true);
                         this.addDamageNumber(px, py, dmg, isBoss ? '#fbbf24' : '#f87171', enemyCritical);
-                        sound.playImpactHit();
+                        if(enemyCritical) sound.playCritical(); else sound.playImpactHit();
                         if (yasuoPowerStrike) {
                             this.log(`💥 番犬やすおの強襲！ ${dmg} ダメージ！ すぐに逃げた！`, 'text-red-400 font-bold');
                         } else {
@@ -4481,6 +4998,7 @@
                                 this.addDeathEffect(ex, ey, enemy.color || '#fb7185');
                                 this.enemies = this.enemies.filter(e => e !== enemy);
                                 this.dropYasuoGoldEgg(enemy);
+                                this.dropRandomEnemyItem(enemy);
                                 this.gainExp(enemy.exp);
                             }
                         }
@@ -4503,6 +5021,19 @@
                     this.player.hp -= 1;
                     this.log(`☠ 毒が身体を蝕む！ 1ダメージ！（残り${this.player.poisonTurns}ターン）`, 'text-purple-300 font-bold');
                     if (this.player.hp <= 0) { this.gameOver('毒に侵され倒れた...'); return; }
+                }
+                if (this.player.bellyacheTurns > 0) {
+                    if (this.player.bellyacheSkipNext) this.player.bellyacheSkipNext = false;
+                    else {
+                        this.player.bellyacheTurns--;
+                        this.player.hp--;
+                        this.log(`腹痛でHPが1減った！（残り${this.player.bellyacheTurns}ターン）`, 'text-orange-300');
+                        if (this.player.hp <= 0) { this.gameOver('腹痛で倒れた...'); return; }
+                    }
+                }
+                for (const [kind, buff] of Object.entries(this.player.honeyBuffs || {})) {
+                    if (buff.skipNext) buff.skipNext = false;
+                    else if (buff.turns > 0 && --buff.turns === 0) this.log(`【${kind}】の蜂蜜の効果が切れた。`, 'text-slate-300');
                 }
                 if (this.player.rootedTurns > 0) this.player.rootedTurns--;
                 const hungerReduction = this.player.armor?.id === 'hungerless_shield' ? 0 : 0.125 * (1 - getEnchantStat(this.player.armor, 'hungerMul'));
@@ -4527,7 +5058,7 @@
                         return;
                     }
                 } else if (this.player.hp < this.getPlayerMaxHp() && this.turn % 9 === 0) {
-                    this.player.hp = Math.min(this.getPlayerMaxHp(), this.player.hp + 1);
+                    this.player.hp = Math.min(this.getPlayerMaxHp(), this.player.hp + (this.hasHoneyBuff('regen') ? 5 : 1));
                 }
 
                 this.updateFieldOfView();
@@ -4590,36 +5121,55 @@
                 return false;
             }
 
+            // 行き止まりでは一時的にプレイヤーへ近づいてでも別の部屋へ抜ける。
+            findFleeEscapeStep(enemy, target = null) {
+                const key=(x,y)=>`${x},${y}`;
+                const start=key(enemy.x,enemy.y);
+                const currentRoom=this.rooms.find(r=>enemy.x>=r.x&&enemy.x<r.x+r.w&&enemy.y>=r.y&&enemy.y<r.y+r.h);
+                const queue=[{x:enemy.x,y:enemy.y,first:null,dist:0}];
+                const seen=new Set([start]);
+                let best=null;
+                for(let head=0;head<queue.length;head++) {
+                    const p=queue[head];
+                    const outside=currentRoom && !(p.x>=currentRoom.x&&p.x<currentRoom.x+currentRoom.w&&p.y>=currentRoom.y&&p.y<currentRoom.y+currentRoom.h);
+                    const otherRoom=this.rooms.some(r=>r!==currentRoom&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h);
+                    const safe=Math.abs(p.x-this.player.x)+Math.abs(p.y-this.player.y);
+                    if(p.first && target && p.x===target.x && p.y===target.y) return {first:p.first,target};
+                    if(p.first && !target && (otherRoom || (!currentRoom && safe>3) || (outside && !best))) {
+                        const score=(otherRoom?10000:0)-p.dist*10+safe;
+                        if(!best || score>best.score) best={score,first:p.first,target:{x:p.x,y:p.y}};
+                    }
+                    for(const d of [DIRECTION.N,DIRECTION.E,DIRECTION.S,DIRECTION.W]) {
+                        const x=p.x+d.x,y=p.y+d.y,k=key(x,y);
+                        if(seen.has(k)||!this.isWalkable(x,y)||this.isOccupied(x,y)||(x===this.player.x&&y===this.player.y))continue;
+                        seen.add(k);queue.push({x,y,first:p.first||{x,y},dist:p.dist+1});
+                    }
+                }
+                return best;
+            }
+
             moveFleeingEnemy(enemy, steps = 1) {
-                for (let step = 0; step < steps; step++) {
-                    const options = [];
-                    const dirs = this.isCorridorTile(enemy.x, enemy.y)
-                        ? [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}]
-                        : [{x:-1,y:-1},{x:0,y:-1},{x:1,y:-1},{x:-1,y:0},{x:1,y:0},{x:-1,y:1},{x:0,y:1},{x:1,y:1}];
-                    for (const d of dirs) {
-                        const dx=d.x, dy=d.y;
-                        const nx = enemy.x + dx, ny = enemy.y + dy;
-                        if (!this.isWalkable(nx, ny) || this.isOccupied(nx, ny)) continue;
-                        const before = Math.abs(enemy.x-this.player.x)+Math.abs(enemy.y-this.player.y);
-                        const after = Math.abs(nx-this.player.x)+Math.abs(ny-this.player.y);
-                        if (after > before) options.push({x:nx,y:ny,dist:after});
-                    }
-                    if (!options.length) {
-                        // これ以上離れられない場合は、近くの通路へ逃げる。
-                        const corridorOptions = [];
-                        const cdirs=[{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-                        for(const d of cdirs){
-                            const nx=enemy.x+d.x, ny=enemy.y+d.y;
-                            if(this.isWalkable(nx,ny)&&!this.isOccupied(nx,ny)&&this.isCorridorTile(nx,ny)) corridorOptions.push({x:nx,y:ny});
+                for (let step=0;step<steps;step++) {
+                    const dist=(x,y)=>Math.abs(x-this.player.x)+Math.abs(y-this.player.y);
+                    const old=dist(enemy.x,enemy.y);
+                    const dirs=this.isCorridorTile(enemy.x,enemy.y)
+                        ? [DIRECTION.N,DIRECTION.E,DIRECTION.S,DIRECTION.W]
+                        : [DIRECTION.NW,DIRECTION.N,DIRECTION.NE,DIRECTION.W,DIRECTION.E,DIRECTION.SW,DIRECTION.S,DIRECTION.SE];
+                    const options=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
+                        .filter(p=>this.isWalkable(p.x,p.y)&&!this.isOccupied(p.x,p.y)&&dist(p.x,p.y)>old)
+                        .sort((a,b)=>dist(b.x,b.y)-dist(a.x,a.y));
+                    if(!options.length || enemy.escapeTarget) {
+                        const escape=this.findFleeEscapeStep(enemy, enemy.escapeTarget) || this.findFleeEscapeStep(enemy);
+                        if(escape && (!options.length || enemy.escapeTarget)) {
+                            enemy.escapeTarget=escape.target;
+                            enemy.x=escape.first.x;enemy.y=escape.first.y;
+                            if(enemy.x===enemy.escapeTarget.x&&enemy.y===enemy.escapeTarget.y)enemy.escapeTarget=null;
+                            continue;
                         }
-                        if(corridorOptions.length){ const pos=corridorOptions[Math.floor(Math.random()*corridorOptions.length)]; enemy.x=pos.x; enemy.y=pos.y; continue; }
-                        return;
+                        enemy.escapeTarget=null;
                     }
-                    options.sort((a,b)=>b.dist-a.dist);
-                    const bestDist = options[0].dist;
-                    const best = options.filter(o=>o.dist===bestDist);
-                    const pos = best[Math.floor(Math.random()*best.length)];
-                    enemy.x=pos.x; enemy.y=pos.y;
+                    if(!options.length) return;
+                    enemy.x=options[0].x;enemy.y=options[0].y;
                 }
             }
 
@@ -4634,7 +5184,6 @@
                 const dyToPlayer = Math.abs(this.boss.y - this.player.y);
                 const dist = dxToPlayer + dyToPlayer;
                 if (Math.max(dxToPlayer, dyToPlayer) === 1) {
-                    sound.playImpactHit();
                     const attackDir = { x: Math.sign(this.player.x - this.boss.x), y: Math.sign(this.player.y - this.boss.y) };
                     this.boss.attackTimer = 480;
                     this.boss.attackDir = attackDir;
@@ -4660,7 +5209,9 @@
                     dmg = Math.max(1, Math.round(dmg * (1 - getEnchantStat(this.player.weapon, 'damageReduce') - getEnchantStat(this.player.armor, 'damageReduce'))));
                     this.player.hp -= dmg;
                     this.addHitEffect(this.player.x * TILE_SIZE + TILE_SIZE / 2, this.player.y * TILE_SIZE + TILE_SIZE / 2, '#facc15', dmg, bossCritical);
+                    if(bossCritical) this.addCriticalEffect(this.player.x*TILE_SIZE+TILE_SIZE/2,this.player.y*TILE_SIZE+TILE_SIZE/2,true);
                     this.addDamageNumber(this.player.x * TILE_SIZE + TILE_SIZE / 2, this.player.y * TILE_SIZE + TILE_SIZE / 2, dmg, '#fbbf24', bossCritical);
+                    if(bossCritical) sound.playCritical(); else sound.playImpactHit();
                     this.log(`⚡ 全能神しるぺん の神罰の雷！ ${dmg} ダメージ！${bossCritical ? ' CRITICAL!' : ''}`, 'text-amber-400 font-bold');
 
                     if (this.player.hp <= 0) {
@@ -4835,6 +5386,7 @@
             openGroundItemMenu(itemElement) {
                 const item = this.getGroundItemAtPlayer();
                 if (!item) return;
+                const ground = item;
                 this.selectedInvIndex='ground';
                 this.swapGroundMode = false;
                 const menu=document.getElementById('item-action-menu');
@@ -4842,7 +5394,7 @@
                 const cr=container.getBoundingClientRect(), ir=itemElement.getBoundingClientRect();
                 const canEquip = item.type==='WEAPON' || item.type==='ARMOR' || item.effect==='HELMET' || item.effect==='AMULET';
                 const equippedSame = item.type==='WEAPON' ? this.player.weapon : item.type==='ARMOR' ? this.player.armor : item.effect==='HELMET' ? this.player.inventory.find(i=>i.effect==='HELMET'&&i.equipped===true) : item.effect==='AMULET' ? this.player.inventory.find(i=>i.effect==='AMULET'&&i.equipped===true) : null;
-                document.getElementById('act-use').classList.toggle('hidden', false);
+                document.getElementById('act-use').classList.toggle('hidden', item.type === 'CHARM' || item.id === 'penginium');
                 document.getElementById('act-use').innerHTML = item.type==='WEAPON'||item.type==='ARMOR'||canEquip ? '<i class="fa-solid fa-play mr-1"></i> 使う/装備' : '<i class="fa-solid fa-play mr-1"></i> 使う';
                 document.getElementById('act-pickup').classList.remove('hidden');
                 const hasSwapCandidate = canEquip && this.player.inventory.some(i => i && i !== ground && (
@@ -4854,8 +5406,8 @@
                 document.getElementById('act-swap').classList.toggle('hidden', !hasSwapCandidate);
                 document.getElementById('act-throw').classList.remove('hidden');
                 document.getElementById('act-place').classList.add('hidden');
-                document.getElementById('act-enchant').classList.add('hidden');
-                document.getElementById('act-enhance').classList.add('hidden');
+                document.getElementById('act-enchant').classList.toggle('hidden', item.type !== 'CHARM');
+                document.getElementById('act-enhance').classList.toggle('hidden', item.id !== 'penginium');
                 document.getElementById('act-synthesize').classList.toggle('hidden', !(item.type==='WEAPON'||item.type==='ARMOR'));
                 let left=ir.left-cr.left-168, top=ir.top-cr.top+2;
                 if(left<6) left=ir.right-cr.left+8; if(left+168>cr.width) left=cr.width-174; if(top+230>cr.height) top=cr.height-235; if(top<6) top=6;
@@ -4896,6 +5448,7 @@
                 document.getElementById('enchant-target-menu').classList.add('hidden');
                 document.getElementById('synthesis-target-menu').classList.add('hidden');
                 this.openInventory();
+                this.swapGroundMode = true;
                 const list = document.getElementById('inventory-list');
                 if (list) {
                     const note = document.createElement('div');
@@ -5087,7 +5640,7 @@
             }
 
             openEnchantTargetMenu(charmIndex) {
-                const charm = this.player.inventory[charmIndex];
+                const charm = charmIndex === 'ground' ? this.getGroundItemAtPlayer() : this.player.inventory[charmIndex];
                 if (!charm || charm.type !== 'CHARM') return;
                 const targetMenu = document.getElementById('enchant-target-menu');
                 const content = document.getElementById('enchant-target-content');
@@ -5137,7 +5690,7 @@
             }
 
             applyCharm(charmIndex, targetItem, slot) {
-                const charm = this.player.inventory[charmIndex];
+                const charm = charmIndex === 'ground' ? this.getGroundItemAtPlayer() : this.player.inventory[charmIndex];
                 if (!charm || charm.type !== 'CHARM' || !targetItem) return;
                 const def = getEnchantDefinitionByName(charm.enchantName, targetItem.type);
                 if (!def) return;
@@ -5148,7 +5701,8 @@
                 targetItem.prefix = targetItem.enchant.prefix || null;
                 targetItem.suffix = targetItem.enchant.suffix || null;
                 refreshEnchantedItemName(targetItem);
-                this.player.inventory.splice(charmIndex, 1);
+                if (charmIndex === 'ground') this.items.splice(this.items.indexOf(charm), 1);
+                else this.player.inventory.splice(charmIndex, 1);
                 document.getElementById('enchant-target-menu').classList.add('hidden');
                 this.showActionMessage(`エンチャントして${targetItem.name}になりました`, '#67e8f9');
                 this.log(`✨ エンチャントして【${targetItem.name}】になりました。${slot === 'prefix' ? 'P' : 'S'}を上書き。`, 'text-cyan-300 font-bold');
@@ -5498,6 +6052,9 @@
                     this.player.paralyzedTurns = Number(this.player.paralyzedTurns || 0);
                     this.player.slowCurseTurns = Number(this.player.slowCurseTurns || 0);
                     this.player.slowCurseSkipNext = !!this.player.slowCurseSkipNext;
+                    this.player.bellyacheTurns = Math.max(0, Number(this.player.bellyacheTurns || 0));
+                    this.player.bellyacheSkipNext = !!this.player.bellyacheSkipNext;
+                    this.player.honeyBuffs = this.player.honeyBuffs || {};
                     if (this.player.helmetReady && !this.player.inventory.some(i => i.effect === 'HELMET' && i.equipped === true)) {
                         const helmet = this.player.inventory.find(i => i.effect === 'HELMET');
                         if (helmet) helmet.equipped = true;
@@ -5535,6 +6092,8 @@
                     this.closeInventory();
                     this.updateUI();
                     this.log('📂 セーブデータをロードした。', 'text-sky-300 font-bold');
+                    titleMusic.stop(450);
+                    gameMusic.play();
                     return true;
                 } catch (err) {
                     this.log('ロードに失敗した。', 'text-red-300 font-bold');
@@ -5669,6 +6228,24 @@
                         this.actionTimer=Math.max(this.actionTimer,700);
                         this.log(target ? `✣【交差の杖】で${target.name || '対象'}と位置を入れ替えた！` : wallStop ? '✣【交差の杖】が壁に当たり、その手前へ移動した！' : '✣【交差の杖】は何も捉えなかった。','text-violet-300 font-bold');
                         this.showActionMessage(target ? '交差の杖で位置を交換した！' : wallStop ? '壁の手前へ移動した！' : '交差の杖は空を切った…', '#c4b5fd');
+                    } else if (item.effect === 'SPOILED_FOOD') {
+                        this.player.fullness = Math.min(this.player.maxFullness, this.player.fullness + 30);
+                        sound.playEat();
+                        this.log('【腐肉】を食べて満腹度が30回復した。', 'text-amber-300');
+                        if (Math.random() < 0.5) {
+                            const turns = 10 + Math.floor(Math.random() * 11);
+                            this.player.bellyacheTurns = turns;
+                            this.player.bellyacheSkipNext = true;
+                            this.showActionMessage(`腹痛！ ${turns}ターンHP-1`, '#fb923c');
+                            this.log(`腹痛になった！ ${turns}ターンの間、毎ターンHPが1減る。`, 'text-orange-300 font-bold');
+                        } else this.showActionMessage('腐肉を食べた！ 満腹度+30', '#fbbf24');
+                    } else if (item.effect === 'HONEY') {
+                        const turns = item.buff === 'double' ? 5 + Math.floor(Math.random() * 6) : item.duration;
+                        this.player.honeyBuffs ||= {};
+                        this.player.honeyBuffs[item.buff] = {turns, skipNext:true};
+                        sound.playEat();
+                        this.log(`【${item.name}】を食べた！ ${item.desc}`, 'text-yellow-300 font-bold');
+                        this.showActionMessage(`${item.name}：${turns}ターン`, '#fde68a');
                     } else if (item.effect === 'FOOD') {
                         this.player.fullness = Math.min(this.player.maxFullness, this.player.fullness + item.val);
                         sound.playEat();
@@ -5726,6 +6303,8 @@
                                 } else {
                                     this.log(`💥 ${target.name} を滅ぼした！ (+${target.exp} EXP)`, 'text-yellow-300 font-bold');
                                     this.enemies = this.enemies.filter(e => e !== target);
+                                    this.dropYasuoGoldEgg(target);
+                                    this.dropRandomEnemyItem(target);
                                     this.gainExp(target.exp);
                                 }
                             }
@@ -5898,6 +6477,8 @@
                         } else {
                             this.log(`💥 ${target.name} を倒した！ (+${target.exp} EXP)`, 'text-yellow-300 font-bold');
                             this.enemies = this.enemies.filter(e => e !== target);
+                            this.dropYasuoGoldEgg(target);
+                            this.dropRandomEnemyItem(target);
                             this.gainExp(target.exp);
                         }
                     }
@@ -6134,6 +6715,7 @@
                 this.enemyTurnTimer = 0;
                 this.actionTimer = 2600;
                 this.deathSequenceActive = true;
+                gameMusic.stop(950);
                 this.specialMovement = { kind:'death', timer:0, duration:2600 };
                 sound.playDeath();
                 const overlay=document.getElementById('game-overlay');
@@ -7335,6 +7917,17 @@
                         poly([[-6,-5],[6,-5],[7,-1],[5,6],[1,8],[-5,7],[-7,3],[-7,-1]],'#a78bfa');
                         r(-4,-3,8,5,'#ede9fe');r(-2,-5,3,2,'#ffffff');r(4,-1,2,5,'#7c3aed');r(-6,6,10,2,'#312e81');
                         break;
+                    case 'SPOILED_FOOD':
+                        poly([[-10,4],[-7,-5],[-2,-8],[5,-6],[10,1],[7,8],[-5,9]],'#422713');
+                        poly([[-8,2],[-5,-5],[1,-7],[7,-2],[7,5],[0,7],[-6,6]],'#885039');
+                        r(-5,-4,3,2,'#b58b61');r(1,1,4,2,'#b58b61');r(5,-5,2,2,'#78a552');
+                        break;
+                    case 'HONEY': {
+                        const color={attack:'#ef4444',defense:'#60a5fa',evade:'#4ade80',crit:'#fbbf24',double:'#c084fc',regen:'#fb7185'}[item.buff]||'#fbbf24';
+                        r(-6,-10,12,3,'#e2e8f0');r(-5,-13,10,3,'#92400e');r(-7,-7,14,16,'#475569');
+                        r(-5,-5,10,12,color);r(-4,-4,2,7,'#fff7ed');r(3,-2,2,4,'#fef3c7');r(-5,7,10,2,'#78350f');
+                        break;
+                    }
                     case 'FOOD':
                         if(item.id==='tenkai_manju'){
                             // 天界饅頭：ふっくらした白い蒸し饅頭。
