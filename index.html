@@ -1493,8 +1493,16 @@
                 this.bufferPromise=null;
                 this.bufferSource=null;
                 this.bufferGain=null;
+                this.audio.addEventListener?.('error',()=>this.reportPlaybackError(`音声ファイルの読み込みエラー ${this.audio.error?.code || ''}`));
             }
             get targetVolume() { return 0.38*this.level/10; }
+            reportPlaybackError(reason) {
+                if(this!==gameMusic) return;
+                this.lastPlaybackError=reason;
+                if(this.failureNotified || !this.wantPlay || !window.game?.log || window.game.storyStep<3) return;
+                this.failureNotified=true;
+                window.game.log(`🎵 ゲームBGMを再生できない：${this.src}（${reason}）`, 'text-amber-300 font-bold');
+            }
             setOutputVolume(value) {
                 this.outputVolume=value;
                 if(this.audio._bgmGain){
@@ -1510,24 +1518,6 @@
                     if(this.wantPlay && this.audio._activeMusic===this) this.play();
                     return buffer;
                 }).catch(error=>{console.warn('BGMをデコードできません:',this.src,error);return null;});
-            }
-            primeOnGesture() {
-                // iOSでは曲を切り替えた後に初めて play() すると拒否される場合がある。
-                // ゲーム曲専用の要素をPresentsの操作中に一度だけ起動しておく。
-                if(this.primed || this.level===0) return;
-                this.primed=true;
-                this.audio.muted=!this.audio._bgmGain;
-                this.setOutputVolume(0);
-                try {
-                    const attempt=this.audio.play();
-                    if(attempt?.then) attempt.then(()=>{
-                        if(!this.wantPlay) {
-                            this.audio.pause();
-                            try {this.audio.currentTime=0;} catch(e) {}
-                        }
-                    }).catch(error=>{this.primed=false;console.warn('ゲーム曲の準備に失敗:',this.src,error);});
-                    else {this.audio.pause();try {this.audio.currentTime=0;} catch(e) {}}
-                } catch(error) {this.primed=false;console.warn('ゲーム曲の準備に失敗:',this.src,error);}
             }
             stopBuffer() {
                 if(!this.bufferSource) return;
@@ -1549,6 +1539,7 @@
                 source.connect(this.audio._bgmGain || this.bufferGain);
                 try {source.start();} catch(error){console.warn('BGMバッファ再生に失敗:',this.src,error);return false;}
                 this.bufferSource=source;
+                this.lastPlaybackError=null;
                 this.audio.pause();
                 this.starting=false;
                 this.setOutputVolume(0);
@@ -1620,6 +1611,7 @@
                         attempt.then(()=>{
                             if(request===this.playRequest) {
                                 this.starting=false;
+                                this.lastPlaybackError=null;
                                 if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800);
                             } else if(!this.wantPlay && this.audio._activeMusic===this) this.audio.pause();
                         }).catch(error=>{
@@ -1627,11 +1619,11 @@
                                 this.starting=false;
                                 console.warn('BGMの再生が拒否されました:',this.src,error);
                                 // 初回のplay拒否時も、読み込み済みならWeb Audioへ切り替える。
-                                if(this.decodedBuffer && this.wantPlay) this.startBuffer();
+                                if(!(this.decodedBuffer && this.wantPlay && this.startBuffer())) this.reportPlaybackError(error?.name || '再生が拒否されました');
                             }
                         });
                     else { this.starting=false; if(!this.silentUntilReveal) this.fadeTo(this.targetVolume,800); }
-                } catch(e) { this.starting=false; }
+                } catch(e) { this.starting=false; this.reportPlaybackError(e?.name || '再生エラー'); }
             }
             reveal() {
                 this.silentUntilReveal=false;
@@ -1836,7 +1828,7 @@
             { id: 'bat', name: '釘付きバット', type: 'WEAPON', effect: 'ATK', val: 4, baseVal: 4, desc: '攻撃力が4上昇する', weight: 25 },
             { id: 'sword', name: '堕天使の剣', type: 'WEAPON', effect: 'ATK', val: 10, baseVal: 10, desc: '攻撃力が10上昇する', weight: 10 },
             { id: 'nico_belos_whip', name: 'ニコベロスの鞭', type: 'WEAPON', effect: 'ATK', val: 2, baseVal: 2, desc: '攻撃力が2上昇し、1ターンに2回攻撃できる', weight: 6 },
-            { id: 'sylpain', name: '神槍シルペイン', type: 'WEAPON', effect: 'ATK', val: 7, baseVal: 7, desc: '攻撃力が7上昇し、向いている方向2マスまで攻撃できる', weight: 5 },
+            { id: 'sylpain', name: '神槍シルペイン', type: 'WEAPON', effect: 'ATK', val: 7, baseVal: 7, desc: '攻撃力が7上昇し、前方2マスの敵を貫通攻撃する', weight: 5 },
             { id: 'nico_stick', name: 'nicoスティック', type: 'WEAPON', effect: 'ATK', val: 3, baseVal: 3, desc: '攻撃力が3上昇し、攻撃時に与えたダメージの20%を回復する', weight: 5.5 }
         ];
 
@@ -1894,7 +1886,7 @@
             if (e.capacity) effects.push(`所持数上限 +${e.capacity}`);
             if (e.multiAttack) effects.push(`1ターンに${e.multiAttack}回攻撃`);
             if (e.name === '神速') effects.push('攻撃力50%');
-            if (e.range) effects.push(`攻撃射程 +${e.range}マス`);
+            if (e.range) effects.push(`前方${e.range}マスの敵を貫通攻撃（シルペインはさらに+1マス）`);
             if (e.trapChance) effects.push(`罠発動率 ${Math.round(e.trapChance * 100)}%`);
             if (e.reflect) effects.push(`受けたダメージの${Math.round(e.reflect * 100)}%を反射`);
             return effects.join(' / ');
@@ -1974,7 +1966,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '2.11';
+        const GAME_VERSION = '2.12';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
 
@@ -2180,6 +2172,15 @@
                     }
                     this.advanceStory();
                 });
+                // 最終セリフの操作イベント中にゲーム曲を起動する。iOSではclick後の
+                // 遅延処理やミュート再生の解禁だけでは次の曲が無音になる場合がある。
+                const startGameMusicOnGesture=()=>{
+                    if(this.storyStep!==2 || this.prologuePhase || this.openingSequenceBusy) return;
+                    sound.init();
+                    gameMusic.play();
+                };
+                document.getElementById('story-overlay').addEventListener('pointerdown',startGameMusicOnGesture,{passive:true});
+                document.getElementById('story-overlay').addEventListener('touchstart',startGameMusicOnGesture,{passive:true});
                 document.getElementById('btn-inventory').addEventListener('click', () => this.toggleInventory());
                 document.getElementById('btn-wait-turn').addEventListener('click', () => this.turnWait());
                 document.getElementById('inv-close-btn').addEventListener('click', () => this.closeInventory());
@@ -2513,10 +2514,10 @@
                 // 操作イベント内で無音の再生を開始し、音量はタイトルが見えてから上げる。
                 sound.init();
                 initMusicOutput(titleMusic.audio);
-                initMusicOutput(gameMusic.audio);
+                // ゲーム曲のメディア要素はWeb Audioへ接続しない。iOSで音声が
+                // CORS保護されると再生中でも無音になるため、デコード失敗時は直接鳴らす。
                 titleMusic.preloadBuffer();
                 gameMusic.preloadBuffer();
-                gameMusic.primeOnGesture();
                 titleMusic.play(true);
                 const presents=document.getElementById('presents-screen');
                 const title=document.getElementById('title-screen');
@@ -2980,6 +2981,11 @@
                 this.saveAutoGame();
                 this.updateUI();
                 gameMusic.play();
+                // 端末で再生に失敗した場合は、モバイルでも見られるログへ原因を出す。
+                setTimeout(()=>{
+                    if(gameMusic.wantPlay && !gameMusic.bufferSource && gameMusic.audio.paused && !document.hidden)
+                        gameMusic.reportPlaybackError(gameMusic.lastPlaybackError || `読み込み待ち（エラー ${gameMusic.audio.error?.code || '不明'}）`);
+                },4000);
             }
 
             getFloorName() {
@@ -4709,20 +4715,11 @@
                 }
                 this.actionTimer = 120;
                 if (this.consumeSlowCurseAction()) return;
-                const range = this.getPlayerAttackRange();
-                let target = null;
-                let targetIsBoss = false;
-                for (let i = 1; i <= range; i++) {
-                    const tx = this.player.x + this.facing.x * i;
-                    const ty = this.player.y + this.facing.y * i;
-                    if (tx < 0 || tx >= GRID_WIDTH || ty < 0 || ty >= GRID_HEIGHT || !this.isWalkable(tx, ty)) break;
-                    const enemy = this.enemies.find(e => e.x === tx && e.y === ty);
-                    if (enemy) { target = enemy; break; }
-                    if (this.boss && this.boss.x === tx && this.boss.y === ty) { target = this.boss; targetIsBoss = true; break; }
-                }
+                const targets=this.getAttackTargetsInFacingDirection();
+                const first=targets[0];
                 const count = this.getPlayerAttackCount();
-                if (target) {
-                    this.startPlayerAttackSequence(target, targetIsBoss, count);
+                if (first) {
+                    this.startPlayerAttackSequence(first.target, first.isBoss, count);
                     return;
                 } else {
                     sound.playAttack();
@@ -4763,6 +4760,18 @@
                 range = Math.max(range, getEnchantStat(this.player.weapon, 'range'));
                 if (this.player.weapon?.id === 'sylpain' && getEnchantStat(this.player.weapon, 'range') > 0) range += 1;
                 return range;
+            }
+
+            getAttackTargetsInFacingDirection() {
+                const targets=[];
+                for(let i=1;i<=this.getPlayerAttackRange();i++) {
+                    const x=this.player.x+this.facing.x*i, y=this.player.y+this.facing.y*i;
+                    if(!this.isWalkable(x,y)) break;
+                    const enemy=this.enemies.find(e=>e.x===x && e.y===y);
+                    if(enemy) targets.push({target:enemy,isBoss:false});
+                    else if(this.boss?.x===x && this.boss?.y===y) targets.push({target:this.boss,isBoss:true});
+                }
+                return targets;
             }
 
             getPlayerEvadeChance() {
@@ -4875,24 +4884,28 @@
 
             startPlayerAttackSequence(target, targetIsBoss, count) {
                 if (!target || count <= 0 || this.combatSequenceBusy) return;
+                const targets=this.getPlayerAttackRange()>1
+                    ? this.getAttackTargetsInFacingDirection()
+                    : [{target,isBoss:targetIsBoss}];
+                if(!targets.some(entry=>entry.target===target)) targets.unshift({target,isBoss:targetIsBoss});
                 this.combatSequenceBusy = true;
-                this.actionTimer = Math.max(this.actionTimer, count > 1 ? 650 : 420);
+                this.actionTimer = Math.max(this.actionTimer, count*targets.length>1 ? 650 : 420);
                 let strike = 0;
+                let targetIndex = 0;
+                const finish=()=>{
+                    this.combatSequenceBusy=false;
+                    if (!this.isGameOver && this.storyStep !== 99) setTimeout(() => this.processTurn(), 100);
+                };
                 const next = () => {
-                    if (this.isGameOver || (targetIsBoss ? !this.boss : !this.enemies.includes(target))) {
-                        this.combatSequenceBusy = false;
+                    if(this.isGameOver || this.storyStep===99){this.combatSequenceBusy=false;return;}
+                    while(targetIndex>=targets.length){targetIndex=0;strike++;if(strike>=count){finish();return;}}
+                    const entry=targets[targetIndex++];
+                    if(entry.isBoss ? this.boss!==entry.target : !this.enemies.includes(entry.target)) {
+                        setTimeout(next,20);
                         return;
                     }
-                    strike++;
-                    const done = () => {
-                        if (strike < count && !this.isGameOver && (targetIsBoss ? this.boss : this.enemies.includes(target))) {
-                            setTimeout(next, 20);
-                        } else {
-                            this.combatSequenceBusy = false;
-                            if (!this.isGameOver && this.storyStep !== 99) setTimeout(() => this.processTurn(), 100);
-                        }
-                    };
-                    if (targetIsBoss) this.attackBoss(done); else this.attackEnemy(target, done);
+                    const done=()=>setTimeout(next,20);
+                    if(entry.isBoss) this.attackBoss(done); else this.attackEnemy(entry.target,done);
                 };
                 next();
             }
