@@ -1814,8 +1814,8 @@
             { id:'sanctum_guardian', name:'神域の守護者', color:'#f8fafc', hp:720, maxHp:720, atk:112, def:38, exp:520 }
         ];
 
-        // 地獄で戦った通常10種の天上界強化版。各個体はHP/ATK/DEFを約3倍にして再登場。
-        const HEAVEN_HELL_MULTIPLIER = 3;
+        // 地獄で戦った敵が天上界に再登場するときの HP/ATK/DEF 倍率。
+        const HEAVEN_HELL_MULTIPLIER = 2;
 
         // 特殊敵：B7F～B1Fのみ出現。通常敵プールとは分離して出現率を管理する。
         const JET_BABAA_SPEC = {
@@ -2004,7 +2004,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '2.23';
+        const GAME_VERSION = '2.24';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
 
@@ -3502,7 +3502,7 @@
                     const scaled={...base, hp:base.hp*HEAVEN_HELL_MULTIPLIER, maxHp:base.maxHp*HEAVEN_HELL_MULTIPLIER, atk:base.atk*HEAVEN_HELL_MULTIPLIER, def:base.def*HEAVEN_HELL_MULTIPLIER, exp:Math.floor(base.exp*2.5)};
                     pool.push({species:scaled,weight:Math.max(8,70-i*4)});
                 }
-                // 特殊敵は各１％。固有行動・肉だるまの自爆率は維持し、能力値と経験値を３倍にする。
+                // 特殊敵は各１％。固有行動・肉だるまの自爆率と経験値は維持し、戦闘能力だけ２倍にする。
                 const specialRoll=Math.random();
                 let species;
                 if(specialRoll<0.01) species=JET_BABAA_SPEC;
@@ -3519,7 +3519,7 @@
                         maxHp:species.maxHp*HEAVEN_HELL_MULTIPLIER,
                         atk:species.atk*HEAVEN_HELL_MULTIPLIER,
                         def:species.def*HEAVEN_HELL_MULTIPLIER,
-                        exp:species.exp*HEAVEN_HELL_MULTIPLIER};
+                        exp:species.exp*3};
                 }
                 // 20Fを＋５％として、以降は１階上がるたびに５％ずつ複利で強化。
                 if(depth<20) return species;
