@@ -2158,7 +2158,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '3.76_Beta';
+        const GAME_VERSION = '3.79_Beta';
         const YUZU_SPRITE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADzklEQVR4nK2XX2hbVRzHP3fU4GrQOrrSTBBFbYUJW61vQ4R2Srf4IiIdtA/2UoQ7YWxjD5mKoFAdpbRFWIN7SHww0DDmw2AWRlf0QeiL1mCFZjorpV1G1nWRpVWL7PhwvSfn3Htyk3T+IHDyO7/7/X5/v/s7fy48gInNy0JsXhYPgmE1TFqaDiW0Wo41hFl38N1ZWxI/fjhlfK6emB3Z3VlbqOD/Z3zdKtXSVytzPTF+a6pXgAr4zacDxuwaff+wgyYc6ukPLW16LrvzJhTrF3+1Wt96Noz8hbanQwEXi8uhIvwcgcChnn5hAvDI3xl4syr5hcwlKQKC1TBhBwJGkpO875yUvvRc1vLK/tmpMxph9MCTclzOrRhFqOZhqyKaPGLPEetoJ3VtuvJULwLAK71KqhJ75lXoQuYSi8VlHUtJ1EtO7wEhXCF/ZOGxfgDs3mOo2ZuyBoh2t1L+fp2t0j0AvrxyVVYh9dUbEg/Asiq8u1RVheu3KFy/5Tq2NzTVW6V7EtxEXtO2N/Dw1YrL9zuSnNTiY09FsI8cB9zyD8ZfA6Dtlf2UcytVSYvX3KzbXt7PeGJCVsGP7/VZk2wIB6kqNTMFkT1GgnJuhejrL+H0DZNMf6Aqxukb5qPBAeNzakJQWSG7/I6R5GSA/PToKTmOdrfi9A0HCEw+zSJ7ZBUCqwAqSzDW0R54/+CWvvjtzwBa5n/9uMDDB7v0avzTDPd9ANsbxDraXREOcj9o8veAbMIQ+/OHX9j94nN8/fEXABw92KX5TVb4fRtwsT0RoPRAujOrVaLl0aCQRPpzUr3nJMnRD9/W5lXy8k/6/gAENiFQesAjB4zk4O4F9mACezBhnA+b8zD9h5nWAwDnM2YAz1IzU9hHjlclSs1MUb76m3HufCbBuwPntDNBbsXpuax1M18QzbGYBXAzX6go3fsQANHDzwDCXabV7L71XxyQqbibY10Sd19nzPI4jcem/1BKXUkGYkrfnQn4Wg6NBXx23JFj0ykre0CsX9Se3tfpViKMPBI9SyR6VvrXcrcDsSZTuareB7yeGH/vETnXcmhMI3ni+QV3sPtVV8DCuus/sFer0OlPNuU49D7gF+LP3p9hNQGeCNXsuBP+CvzkAONDo5Rnb2DHHWN5t5a62VrqNiawlruNHXcoz95gfGhUw60pANwTcLG4zImJYGM1YicmxlgsLlPrLinNr3Kop1+szufF6nxeiNK0/K3O54X4+47+882vzueFCU/9H/guCLvRri11hYqvNW/CD73D1/oGaMSqJVbXR8ROhdTzkfIv8nkHhF0QvCEAAAAASUVORK5CYII=';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
@@ -3647,7 +3647,10 @@
                 if(Math.abs(nx-x)!==1||Math.abs(ny-y)!==1)return true;
                 if(this.isCorridorTile(x,y)||this.isCorridorTile(nx,ny))return false;
                 if(this.isRoomTile(x,y)!==this.isRoomTile(nx,ny))return false;
-                return this.isWalkable(nx,y)&&this.isWalkable(x,ny);
+                // 壁は斜めに抜けられないが、障害物の角は歩行・攻撃を遮らない。
+                // 目的地そのものが障害物なら、従来どおり移動/攻撃側で拒否する。
+                const sideOpen=(sx,sy)=>this.isWalkable(sx,sy)||this.map[sy]?.[sx]===TILE.OBSTACLE;
+                return sideOpen(nx,y)&&sideOpen(x,ny);
             }
 
             normalizeLoadedItemIds() {
@@ -4215,6 +4218,19 @@
                     }
                 });
 
+                // NPCも敵と同じ時間ベースの補間で、マス間を滑らかに移動する。
+                for(const npc of [this.childSilpen,this.yuzuNPC]){
+                    if(!npc)continue;
+                    const x=npc.x*TILE_SIZE,y=npc.y*TILE_SIZE;
+                    if(!Number.isFinite(npc.renderX)||!Number.isFinite(npc.renderY)){
+                        npc.renderX=x;npc.renderY=y;continue;
+                    }
+                    npc.renderX+=(x-npc.renderX)*lerpSpeed;
+                    npc.renderY+=(y-npc.renderY)*lerpSpeed;
+                    if(Math.abs(x-npc.renderX)<.1)npc.renderX=x;
+                    if(Math.abs(y-npc.renderY)<.1)npc.renderY=y;
+                }
+
                 if (this.boss) {
                     const bTargetX = this.boss.x * TILE_SIZE;
                     const bTargetY = this.boss.y * TILE_SIZE;
@@ -4638,7 +4654,7 @@
                 }
                 for(const [npc,strength] of [[this.childSilpen,.25],[this.yuzuNPC,.30]]){
                     if(!npc || !this.explored?.[npc.y]?.[npc.x])continue;
-                    const x=npc.x*TILE_SIZE+16+offsetX,y=npc.y*TILE_SIZE+16+offsetY,rad=43;
+                    const x=(npc.renderX??npc.x*TILE_SIZE)+16+offsetX,y=(npc.renderY??npc.y*TILE_SIZE)+16+offsetY,rad=43;
                     const reveal=lc.createRadialGradient(x,y,1,x,y,rad);
                     reveal.addColorStop(0,`rgba(0,0,0,${strength})`);reveal.addColorStop(1,'rgba(0,0,0,0)');
                     lc.fillStyle=reveal;lc.fillRect(x-rad,y-rad,rad*2,rad*2);
@@ -4675,7 +4691,7 @@
                 // Small light pools keep both pixel sprites sharp while their surroundings bloom.
                 for(const [npc,rgb,alpha] of [[this.childSilpen,'245,248,255',.14],[this.yuzuNPC,'255,163,208',.19]]){
                     if(!npc || !this.explored?.[npc.y]?.[npc.x])continue;
-                    const x=npc.x*TILE_SIZE+16+offsetX,y=npc.y*TILE_SIZE+16+offsetY,rad=43;
+                    const x=(npc.renderX??npc.x*TILE_SIZE)+16+offsetX,y=(npc.renderY??npc.y*TILE_SIZE)+16+offsetY,rad=43;
                     const glow=ctx.createRadialGradient(x,y,2,x,y,rad);
                     glow.addColorStop(0,`rgba(${rgb},${alpha*pulse})`);
                     glow.addColorStop(.42,`rgba(${rgb},${alpha*.30*pulse})`);
@@ -5170,13 +5186,15 @@
                     return;
                 }
 
-                if(this.yuzuNPC && targetX===this.yuzuNPC.x && targetY===this.yuzuNPC.y){
-                    this.log('嫁神ゆず様が微笑んでいる。Eで話しかけられる。','text-pink-200');return;
-                }
-                if(this.childSilpen && targetX===this.childSilpen.x && targetY===this.childSilpen.y){
-                    this.log('子しるぺんがこちらを見ている。E で話しかけられるぺん。','text-pink-200');return;
-                }
                 if (this.isWalkable(targetX, targetY)) {
+                    // 味方NPCが行く手にいる場合は元のマスへ譲ってもらう。
+                    // 論理座標だけを入れ替え、両者の描画座標は補間して滑らかにすれ違う。
+                    const npc=[this.childSilpen,this.yuzuNPC].find(n=>n?.x===targetX&&n.y===targetY);
+                    if(npc){
+                        npc.x=this.player.x;
+                        npc.y=this.player.y;
+                        this.log(npc===this.childSilpen?'子しるぺんと場所を入れ替わったぺん。':'嫁神ゆず様と場所を入れ替わった。','text-pink-200');
+                    }
                     this.player.x = targetX;
                     this.player.y = targetY;
                     if (this.map[targetY][targetX] !== TILE.STAIRS) sound.playStep();
@@ -6009,6 +6027,7 @@
                 }
 
                 this.wanderChildSilpen();
+                this.wanderYuzu();
                 this.updateFieldOfView();
 
 
@@ -6592,7 +6611,20 @@
                     if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<4)continue;
                     candidates.push({x,y});
                 }
-                if(candidates.length)this.yuzuNPC=candidates[Math.floor(Math.random()*candidates.length)];
+                if(candidates.length){
+                    const pos=candidates[Math.floor(Math.random()*candidates.length)];
+                    this.yuzuNPC={...pos,renderX:pos.x*TILE_SIZE,renderY:pos.y*TILE_SIZE};
+                }
+            }
+
+            wanderYuzu() {
+                const n=this.yuzuNPC;
+                if(!n || Math.random()>=.65 || this.canTalkToYuzu())return;
+                const candidates=[[0,1],[0,-1],[1,0],[-1,0]].map(([dx,dy])=>({x:n.x+dx,y:n.y+dy}))
+                    .filter(v=>this.map[v.y]?.[v.x]===TILE.FLOOR && !this.isOccupied(v.x,v.y)
+                        && !(this.player.x===v.x&&this.player.y===v.y)
+                        && !this.traps.some(t=>t.x===v.x&&t.y===v.y));
+                if(candidates.length)Object.assign(n,candidates[Math.floor(Math.random()*candidates.length)]);
             }
 
             canTalkToYuzu() {
@@ -6649,7 +6681,10 @@
                     if(Math.abs(x-this.player.x)+Math.abs(y-this.player.y)<4)continue;
                     candidates.push({x,y});
                 }
-                if(candidates.length)this.childSilpen=candidates[Math.floor(Math.random()*candidates.length)];
+                if(candidates.length){
+                    const pos=candidates[Math.floor(Math.random()*candidates.length)];
+                    this.childSilpen={...pos,renderX:pos.x*TILE_SIZE,renderY:pos.y*TILE_SIZE};
+                }
             }
 
             wanderChildSilpen() {
@@ -6657,7 +6692,8 @@
                 if(!n || Math.random()>=.65 || this.canTalkToChildSilpen())return;
                 const candidates=[[0,1],[0,-1],[1,0],[-1,0]].map(([dx,dy])=>({x:n.x+dx,y:n.y+dy}))
                     .filter(v=>this.map[v.y]?.[v.x]===TILE.FLOOR && !this.enemies.some(e=>e.x===v.x&&e.y===v.y)
-                        && !(this.boss?.x===v.x&&this.boss?.y===v.y) && !(this.player.x===v.x&&this.player.y===v.y));
+                        && !(this.boss?.x===v.x&&this.boss?.y===v.y) && !(this.player.x===v.x&&this.player.y===v.y)
+                        && !(this.yuzuNPC?.x===v.x&&this.yuzuNPC?.y===v.y));
                 if(candidates.length)Object.assign(n,candidates[Math.floor(Math.random()*candidates.length)]);
             }
 
@@ -7042,7 +7078,7 @@
                 const weaponInventoryIndex=this.player.weapon?this.player.inventory.indexOf(this.player.weapon):-1;
                 const armorInventoryIndex=this.player.armor?this.player.inventory.indexOf(this.player.armor):-1;
                 const playerData={...this.player, weapon:null, armor:null};
-                return {version:17,yuzuNPC:this.yuzuNPC,yuzuChatCount:this.yuzuChatCount||0,storageV330:true,childSilpen:this.childSilpen,storageItems:this.storageItems,childSilpenIntroduced:this.childSilpenIntroduced,childSilpenChatCount:this.childSilpenChatCount||0,libraryExpansionV320:true,regionRosterV303:true,balanceV301:true,bossMigrationV3:true,bossRoomFor:this.bossRoomFor||0,currentFloor:this.currentFloor,heavenFloor:this.heavenFloor||0,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep,spawnGraceTurns:this.spawnGraceTurns};
+                return {version:18,yuzuNPC:this.yuzuNPC,yuzuChatCount:this.yuzuChatCount||0,storageV330:true,childSilpen:this.childSilpen,storageItems:this.storageItems,childSilpenIntroduced:this.childSilpenIntroduced,childSilpenChatCount:this.childSilpenChatCount||0,libraryExpansionV320:true,regionRosterV303:true,balanceV301:true,bossMigrationV3:true,bossRoomFor:this.bossRoomFor||0,currentFloor:this.currentFloor,heavenFloor:this.heavenFloor||0,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep,spawnGraceTurns:this.spawnGraceTurns};
             }
 
             openSaveSlots(mode) {
@@ -7096,7 +7132,7 @@
                         : -1;
                     const playerData = { ...this.player, weapon: null, armor: null };
                     const data = {
-                        version: 16, yuzuNPC:this.yuzuNPC, storageV330:true, childSilpen:this.childSilpen, storageItems:this.storageItems, childSilpenIntroduced:this.childSilpenIntroduced, childSilpenChatCount:this.childSilpenChatCount||0, libraryExpansionV320:true, regionRosterV303:true, balanceV301:true, bossMigrationV3:true, bossRoomFor:this.bossRoomFor||0,
+                        version: 18, yuzuNPC:this.yuzuNPC, yuzuChatCount:this.yuzuChatCount||0, storageV330:true, childSilpen:this.childSilpen, storageItems:this.storageItems, childSilpenIntroduced:this.childSilpenIntroduced, childSilpenChatCount:this.childSilpenChatCount||0, libraryExpansionV320:true, regionRosterV303:true, balanceV301:true, bossMigrationV3:true, bossRoomFor:this.bossRoomFor||0,
                         currentFloor: this.currentFloor, heavenFloor: this.heavenFloor || 0, score: this.score, medalScore: this.medalScore, clearScoreBonus: this.clearScoreBonus, turn: this.turn,
                         isGameOver: this.isGameOver, facing: this.facing,
                         player: playerData, weaponInventoryIndex, armorInventoryIndex,
@@ -7288,6 +7324,7 @@
                     this.player.renderY = this.player.y * TILE_SIZE;
                     this.enemies.forEach(e => { e.renderX = e.x * TILE_SIZE; e.renderY = e.y * TILE_SIZE; });
                     if (this.boss) { this.boss.renderX = this.boss.x * TILE_SIZE; this.boss.renderY = this.boss.y * TILE_SIZE; }
+                    for(const npc of [this.childSilpen,this.yuzuNPC])if(npc){npc.renderX=npc.x*TILE_SIZE;npc.renderY=npc.y*TILE_SIZE;}
                     document.getElementById('story-overlay').classList.add('hidden');
                     document.getElementById('game-overlay').classList.add('hidden');
                     this.closeInventory();
@@ -8263,7 +8300,7 @@
 
                 this.npcPromptScreen=null;this.yuzuPromptScreen=null;
                 if(this.childSilpen && this.explored[this.childSilpen.y]?.[this.childSilpen.x]){
-                    const npc=this.childSilpen,x=npc.x*TILE_SIZE,y=npc.y*TILE_SIZE;
+                    const npc=this.childSilpen,x=npc.renderX??npc.x*TILE_SIZE,y=npc.renderY??npc.y*TILE_SIZE;
                     this.drawChildSilpenSprite(this.ctx,x,y);
                     if(this.canTalkToChildSilpen()){
                         this.npcPromptScreen={x:x+16+offsetX,y:y-10+offsetY};
@@ -8275,7 +8312,7 @@
                 }
 
                 if(this.yuzuNPC && this.explored[this.yuzuNPC.y]?.[this.yuzuNPC.x]){
-                    const npc=this.yuzuNPC,x=npc.x*TILE_SIZE,y=npc.y*TILE_SIZE;
+                    const npc=this.yuzuNPC,x=npc.renderX??npc.x*TILE_SIZE,y=npc.renderY??npc.y*TILE_SIZE;
                     this.drawYuzuSprite(this.ctx,x,y);
                     if(this.canTalkToYuzu()){
                         this.yuzuPromptScreen={x:x+16+offsetX,y:y-10+offsetY};
