@@ -156,6 +156,43 @@
         #fall-streaks { overflow:hidden; }
 
         #victory-score-panel { font-size: 1.05rem; }
+        #ending-curtain {
+            position:absolute;inset:0;z-index:45;pointer-events:none;
+            display:grid;place-items:center;background:#070916;color:#fff8e7;
+            opacity:0;transition:opacity 850ms ease-in-out;
+        }
+        #ending-curtain.hidden {display:none!important;}
+        #ending-intertitle {
+            max-width:90%;text-align:center;font-weight:800;
+            font-size:clamp(1.3rem,4vw,2.7rem);letter-spacing:.12em;
+            text-shadow:0 0 15px #fff1c4,0 0 35px #f9a8d4;
+            opacity:0;transform:translateY(15px);
+            transition:opacity 650ms ease,transform 650ms ease;
+        }
+        #ending-intertitle.visible {opacity:1;transform:translateY(0);}
+        .final-victory-scene #story-dialogue-box {
+            position:relative;z-index:2;animation:endingDialogueIn 1.1s ease both;
+        }
+        @keyframes endingDialogueIn {from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .victory-scene.final-victory-scene {
+            background:radial-gradient(ellipse at 50% 43%,#edbde2 0%,#906fa9 21%,#382c63 47%,#0b112d 80%,#060914 100%) !important;
+            animation:finalSky 5s ease-in-out infinite alternate;
+        }
+        .final-victory-scene::before {
+            content:'✦ ✧ ✦ ✦ ✧ ✦';position:absolute;inset:0;display:grid;place-items:center;
+            pointer-events:none;font-size:clamp(2rem,9vw,8rem);letter-spacing:1vw;
+            color:#fff2cc;opacity:.23;animation:finalStars 4s ease-in-out infinite alternate;
+        }
+        .final-victory-scene::after {
+            content:'';position:absolute;inset:0;pointer-events:none;
+            background:repeating-conic-gradient(from 0deg at 50% 48%,transparent 0deg 14deg,rgba(255,230,248,.11) 16deg 18deg,transparent 21deg 39deg);
+            mix-blend-mode:screen;animation:finalRays 18s linear infinite;
+        }
+        .final-victory-scene #story-speaker {color:#fff0c0;text-shadow:0 0 10px #ffecc7,0 0 24px #f9a8d4;}
+        .final-victory-scene #story-text {text-shadow:0 0 10px rgba(253,230,255,.45);}
+        @keyframes finalSky {from{filter:brightness(.82) saturate(.9)}to{filter:brightness(1.23) saturate(1.25)}}
+        @keyframes finalStars {from{opacity:.1;transform:scale(.8) rotate(-8deg)}to{opacity:.38;transform:scale(1.15) rotate(9deg)}}
+        @keyframes finalRays {to{transform:rotate(360deg)}}
         .victory-scene { background: radial-gradient(circle at 50% 35%, #312e81 0%, #080b1f 48%, #000 100%) !important; }
         .victory-glow { animation: victoryGlow 1.4s ease-in-out infinite alternate; }
         @keyframes victoryGlow { from { opacity:.55; transform:scale(.98); } to { opacity:1; transform:scale(1.03); } }
@@ -1175,6 +1212,7 @@
 
             <!-- Novel-game style Story Dialogue Overlay -->
             <div id="story-overlay" class="absolute inset-0 bg-black flex flex-col z-30 text-slate-100">
+                <div id="ending-curtain" aria-hidden="true" class="hidden"><div id="ending-intertitle"></div></div>
                 <!-- Prologue falling cutscene -->
                 <div id="prologue-fall-scene" class="hidden absolute inset-0 z-40 overflow-hidden bg-black">
                     <div id="fall-streaks" class="absolute inset-0 pointer-events-none"></div>
@@ -1195,8 +1233,8 @@
                 </div>
 
                 <div class="flex justify-between items-center px-4 py-2 border-b border-slate-700/80">
-                    <span class="text-xs text-slate-400 tracking-widest">PROLOGUE</span>
-                    <span class="text-xs text-slate-500">CLICK / ENTER</span>
+                    <span id="story-chapter-label" class="text-xs text-slate-400 tracking-widest">PROLOGUE</span>
+                    <span id="story-input-label" class="text-xs text-slate-500">CLICK / ENTER</span>
                 </div>
                 <div id="story-dialogue-box" class="sfc-window p-3 sm:p-4">
                     <div class="flex items-center gap-3">
@@ -1348,11 +1386,11 @@
                     <p class="text-xs text-amber-100 mb-3">デバッグ移動中は通常のセーブを更新しません。</p>
                     <label class="flex gap-3 items-center mb-3"><input type="checkbox" id="debug-invincible" class="w-5 h-5">HPが減らない無敵モード</label>
                     <label for="debug-floor" class="text-sm">天上界の階数</label>
-                    <div class="flex gap-2 mb-3"><input id="debug-floor" type="number" min="1" max="61" value="41" class="min-w-0 flex-1 bg-slate-900 border border-slate-500 p-2 text-white"><button id="debug-jump" class="btn-sfc px-4">移動</button></div>
+                    <div class="flex gap-2 mb-3"><input id="debug-floor" type="number" min="1" max="100" value="41" class="min-w-0 flex-1 bg-slate-900 border border-slate-500 p-2 text-white"><button id="debug-jump" class="btn-sfc px-4">移動</button></div>
                     <label for="debug-hell-floor" class="text-sm">地獄の階数（B1F～B10F）</label>
                     <div class="flex gap-2 mb-3"><input id="debug-hell-floor" type="number" min="1" max="10" value="1" class="min-w-0 flex-1 bg-slate-900 border border-slate-500 p-2 text-white"><button id="debug-hell-jump" class="btn-sfc px-4">地獄へ移動</button></div>
                     <button id="debug-silpen" class="btn-sfc w-full p-2 mb-3">全能神の城・しるぺんに挑戦</button>
-                    <div class="flex gap-2 mb-3"><button id="debug-boss-20" class="btn-sfc flex-1 p-2">20F ボス部屋</button><button id="debug-boss-40" class="btn-sfc flex-1 p-2">40F ボス部屋</button><button id="debug-boss-60" class="btn-sfc flex-1 p-2">60F ボス部屋</button></div>
+                    <div class="flex gap-2 mb-3"><button id="debug-boss-20" class="btn-sfc flex-1 p-2">20F ボス部屋</button><button id="debug-boss-40" class="btn-sfc flex-1 p-2">40F ボス部屋</button><button id="debug-boss-60" class="btn-sfc flex-1 p-2">60F ボス部屋</button><button id="debug-boss-80" class="btn-sfc flex-1 p-2">80F ボス部屋</button><button id="debug-boss-100" class="btn-sfc flex-1 p-2">100F ボス部屋</button></div>
                     <button id="debug-training" class="btn-sfc w-full p-2">試験用のHP・攻撃力にする</button>
                 </div>
             </div>
@@ -1549,6 +1587,24 @@
             }
             playTrap() { this.playTone(72,'sawtooth',0.18,0.13); setTimeout(()=>this.playTone(180,'square',0.10,0.08),55); }
             playVictory() { [523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>this.playTone(f,'square',0.18,0.10),i*120)); }
+            playFinalEnding(){
+                this.init();
+                if(!this.enabled||!this.ctx)return;
+                const now=this.ctx.currentTime;
+                // 闇が解けて光へ向かう和音。音声時刻で予約する。
+                const notes=[[261.63,0,1.0],[392,.38,.9],[523.25,.85,1.15],
+                    [659.25,1.35,1.2],[783.99,1.9,1.4],[1046.5,2.55,1.6],[1318.51,3.15,1.5]];
+                for(const [hz,delay,duration] of notes){
+                    try{
+                        const osc=this.ctx.createOscillator(),gain=this.ctx.createGain(),t=now+delay;
+                        osc.type='sine';osc.frequency.setValueAtTime(hz,t);
+                        gain.gain.setValueAtTime(.0001,t);
+                        gain.gain.exponentialRampToValueAtTime(.09,t+.15);
+                        gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+                        osc.connect(gain);gain.connect(this.masterGain);osc.start(t);osc.stop(t+duration+.02);
+                    }catch(e){}
+                }
+            }
             playItem() {
                 this.playTone(523.25, 'sine', 0.08, 0.1);
                 setTimeout(() => this.playTone(659.25, 'sine', 0.12, 0.1), 60);
@@ -1577,7 +1633,7 @@
                 }else if(floor===20){
                     this.playTone(urgent?740:540,'sine',.35,.075);
                     this.playTone(urgent?1000:780,'triangle',.27,.045);
-                }else if(floor===60){
+                }else if(floor===60||floor===80){
                     this.playTone(urgent?900:520,'sine',.4,.085);
                     this.playTone(urgent?1350:780,'triangle',.33,.06);
                 }else{
@@ -1595,7 +1651,7 @@
                     this.playTone(980,'triangle',.23,.14);
                     this.playTone(1480,'sine',.31,.09);
                     this.playTone(160,'sawtooth',.25,.10);
-                }else if(floor===60){
+                }else if(floor===60||floor===80){
                     this.playTone(150,'sawtooth',.38,.15);
                     this.playTone(780,'triangle',.31,.12);
                     this.playTone(1240,'sine',.4,.11);
@@ -2068,6 +2124,20 @@
             {id:'comet_beast',name:'彗星の星獣',color:'#92bafa',hp:900,maxHp:900,atk:174,def:38,exp:1410},
             {id:'void_librarian',name:'虚空の司書',color:'#e1a8f5',hp:1020,maxHp:1020,atk:183,def:42,exp:1620}
         ];
+        const DUSK_ENEMY_SPECIES = [
+            {id:'dusk_moth',name:'宵色の蛾',color:'#bda4ed',hp:900,maxHp:900,atk:172,def:32,exp:1600},
+            {id:'twilight_guard',name:'薄暮の衛兵',color:'#a795e6',hp:1050,maxHp:1050,atk:182,def:37,exp:1850},
+            {id:'moon_weaver',name:'月糸の織り手',color:'#cab6ee',hp:990,maxHp:990,atk:190,def:35,exp:2100},
+            {id:'eclipse_knight',name:'蝕の騎士',color:'#9a7aca',hp:1180,maxHp:1180,atk:198,def:42,exp:2400},
+            {id:'night_seraph',name:'夜明け待ちの熾天使',color:'#e7c0e8',hp:1350,maxHp:1350,atk:206,def:44,exp:2800}
+        ];
+        const DAWN_ENEMY_SPECIES = [
+            {id:'dawn_sparrow',name:'暁の小鳥',color:'#fbc4c6',hp:1050,maxHp:1050,atk:190,def:35,exp:2350},
+            {id:'aurora_scribe',name:'極光の書記',color:'#ead0ad',hp:1220,maxHp:1220,atk:200,def:40,exp:2600},
+            {id:'rose_guard',name:'薔薇金の衛兵',color:'#fac4c0',hp:1320,maxHp:1320,atk:210,def:43,exp:2900},
+            {id:'prism_harp',name:'虹弦の奏者',color:'#ffd6e0',hp:1190,maxHp:1190,atk:220,def:40,exp:3200},
+            {id:'sun_seraph',name:'日輪の熾天使',color:'#ffe2b0',hp:1500,maxHp:1500,atk:230,def:49,exp:3700}
+        ];
 
         // 地獄で戦った敵が天上界に再登場するときの HP/ATK/DEF 倍率。
         const HEAVEN_HELL_MULTIPLIER = 2;
@@ -2259,7 +2329,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '3.83_Beta';
+        const GAME_VERSION = '3.85_Beta';
         const YUZU_SPRITE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADzklEQVR4nK2XX2hbVRzHP3fU4GrQOrrSTBBFbYUJW61vQ4R2Srf4IiIdtA/2UoQ7YWxjD5mKoFAdpbRFWIN7SHww0DDmw2AWRlf0QeiL1mCFZjorpV1G1nWRpVWL7PhwvSfn3Htyk3T+IHDyO7/7/X5/v/s7fy48gInNy0JsXhYPgmE1TFqaDiW0Wo41hFl38N1ZWxI/fjhlfK6emB3Z3VlbqOD/Z3zdKtXSVytzPTF+a6pXgAr4zacDxuwaff+wgyYc6ukPLW16LrvzJhTrF3+1Wt96Noz8hbanQwEXi8uhIvwcgcChnn5hAvDI3xl4syr5hcwlKQKC1TBhBwJGkpO875yUvvRc1vLK/tmpMxph9MCTclzOrRhFqOZhqyKaPGLPEetoJ3VtuvJULwLAK71KqhJ75lXoQuYSi8VlHUtJ1EtO7wEhXCF/ZOGxfgDs3mOo2ZuyBoh2t1L+fp2t0j0AvrxyVVYh9dUbEg/Asiq8u1RVheu3KFy/5Tq2NzTVW6V7EtxEXtO2N/Dw1YrL9zuSnNTiY09FsI8cB9zyD8ZfA6Dtlf2UcytVSYvX3KzbXt7PeGJCVsGP7/VZk2wIB6kqNTMFkT1GgnJuhejrL+H0DZNMf6Aqxukb5qPBAeNzakJQWSG7/I6R5GSA/PToKTmOdrfi9A0HCEw+zSJ7ZBUCqwAqSzDW0R54/+CWvvjtzwBa5n/9uMDDB7v0avzTDPd9ANsbxDraXREOcj9o8veAbMIQ+/OHX9j94nN8/fEXABw92KX5TVb4fRtwsT0RoPRAujOrVaLl0aCQRPpzUr3nJMnRD9/W5lXy8k/6/gAENiFQesAjB4zk4O4F9mACezBhnA+b8zD9h5nWAwDnM2YAz1IzU9hHjlclSs1MUb76m3HufCbBuwPntDNBbsXpuax1M18QzbGYBXAzX6go3fsQANHDzwDCXabV7L71XxyQqbibY10Sd19nzPI4jcem/1BKXUkGYkrfnQn4Wg6NBXx23JFj0ykre0CsX9Se3tfpViKMPBI9SyR6VvrXcrcDsSZTuareB7yeGH/vETnXcmhMI3ni+QV3sPtVV8DCuus/sFer0OlPNuU49D7gF+LP3p9hNQGeCNXsuBP+CvzkAONDo5Rnb2DHHWN5t5a62VrqNiawlruNHXcoz95gfGhUw60pANwTcLG4zImJYGM1YicmxlgsLlPrLinNr3Kop1+szufF6nxeiNK0/K3O54X4+47+882vzueFCU/9H/guCLvRri11hYqvNW/CD73D1/oGaMSqJVbXR8ROhdTzkfIv8nkHhF0QvCEAAAAASUVORK5CYII=';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
@@ -2287,6 +2357,9 @@
                 this.currentFloor = 10;
                 this.heavenFloor = 0;
                 this.bossRoomFor = 0;
+                this.hellCycle = 0;
+                this.finalEnding = false;
+                this.endingTransitionBusy=false;this.endingSequenceToken=0;
                 this.debugUnlocked = false;
                 this.debugRunActive = false;
                 this.debugInvincible = false;
@@ -2482,6 +2555,7 @@
                     this.debugRunActive=true;
                     this.log(this.debugInvincible?'✦ 管理者：無敵モード ON':'✦ 管理者：無敵モード OFF','text-amber-200');
                 });
+                for(const n of [80,100])document.getElementById(`debug-boss-${n}`).addEventListener('click',()=>this.debugJump(n,true));
                 document.getElementById('debug-jump').addEventListener('click',()=>this.debugJump(Number(document.getElementById('debug-floor').value)));
                 document.getElementById('debug-hell-jump').addEventListener('click',()=>this.debugJumpHell(Number(document.getElementById('debug-hell-floor').value)));
                 document.getElementById('debug-silpen').addEventListener('click',()=>this.debugJumpHell(0));
@@ -2954,6 +3028,7 @@
                     transition.style.transition='';
                 }
                 if (this.presentsDismissed) titleMusic.play();
+                this.cancelFinalEnding();
                 if (story) story.classList.add('hidden');
                 if (gameOverlay) gameOverlay.classList.add('hidden');
                 const titleHigh = document.getElementById('title-highscore-display');
@@ -3229,6 +3304,20 @@
                     speaker.innerText = 'nicoちゃん';
                     text.innerText = '「地獄の底から這い上がって、あの全能神しるぺんをぶん殴って復讐してやるんだから…！」';
                     this.drawNicoSprite(sCtx, 40, 40, DIRECTION.S, 2.2);
+                } else if(this.storyStep>=199 && this.storyStep<=204){
+                    const scenes=[
+                        ['闇落ちした全能神しるぺん','「近づくな、nico……。わたしの闇が、お前まで飲み込んでしまうぺん……！」'],
+                        ['nicoちゃん','「もう一人で抱え込まないで！ 今度はアタシが手を伸ばす番よ！」'],
+                        ['子しるぺん','「お父様、帰ろうぺん。nicoもぼくも、ずっと待ってたぺん！」'],
+                        ['嫁神ゆず様','「まったく、不器用な親子ね。……お帰りなさい、しるぺん。」'],
+                        ['全能神しるぺん','「ありがとう、nico。追放したことを、ずっと謝りたかったぺん。」'],
+                        ['nicoちゃん','「許すのはまだ早いわよ。みんなで、もう一度地獄の底から歩いて帰りましょ！」']
+                    ];
+                    const sc=scenes[this.storyStep-199];speaker.innerText=sc[0];text.innerText=sc[1];
+                    if(sc[0].includes('しるぺん'))this.drawPenguinSprite(sCtx,40,40,2.2);
+                    else this.drawNicoSprite(sCtx,40,40,DIRECTION.S,2.2);
+                    const panel=document.getElementById('victory-score-panel');panel.classList.toggle('hidden',this.storyStep!==204);
+                    if(this.storyStep===204){document.getElementById('victory-score-display').innerText=this.score;document.getElementById('victory-highscore-display').innerText=this.highScore;document.getElementById('victory-hp-bonus').innerText='想いをつないで、強化周回へ';}
                 } else if (this.storyStep >= 99 && this.storyStep <= 103) {
                     const scenes = [
                         ['nicoちゃん','「……終わった……。あれだけ憎かった相手を、とうとうこの手で倒したんだ……」'],
@@ -3257,7 +3346,10 @@
 
             advanceStory() {
                 sound.init();
-                if (this.storyStep >= 104) {
+                if(this.endingTransitionBusy)return;
+                if(this.storyStep>=204){this.finishFinalEnding();return;}
+                if(this.storyStep>=199){this.transitionFinalDialogue();return;}
+                if (this.storyStep >= 104 && this.storyStep < 199) {
                     document.getElementById('story-overlay').classList.add('hidden');
                     document.getElementById('story-overlay').classList.remove('victory-scene');
                     this.startHeavenPostgame();
@@ -3282,6 +3374,121 @@
                 overlay.classList.add('flex','victory-scene');
                 sound.playVictory();
                 this.updateStoryDialogue();
+            }
+
+            showFinalEnding(){
+                this.finalEnding=true;
+                this.gainExp(16000);
+                this.finalizeScore(true);
+                this.updateScore();
+                this.storyStep=199;
+                document.getElementById('story-chapter-label').textContent='THE FINAL CHAPTER';
+                document.getElementById('story-input-label').textContent='TAP / ENTER';
+                this.floorTransitionBusy=true;
+                this.enemyTurnPending=false;
+                this.actionTimer=999999;
+                const overlay=document.getElementById('story-overlay');
+                overlay.classList.remove('hidden');overlay.classList.add('flex','victory-scene','final-victory-scene');
+                sound.playFinalEnding();
+                this.endingSequenceToken++;
+                const token=this.endingSequenceToken;
+                this.endingTransitionBusy=true;
+                const curtain=document.getElementById('ending-curtain');
+                const caption=document.getElementById('ending-intertitle');
+                curtain.classList.remove('hidden');caption.classList.remove('visible');
+                curtain.style.transition='none';curtain.style.background='#060612';curtain.style.opacity='1';
+                caption.textContent='闇が、ほどけていく。';
+                this.updateStoryDialogue();
+                setTimeout(()=>{if(token!==this.endingSequenceToken)return;caption.classList.add('visible');},650);
+                setTimeout(()=>{if(token!==this.endingSequenceToken)return;caption.classList.remove('visible');},2350);
+                setTimeout(()=>{if(token!==this.endingSequenceToken)return;curtain.style.transition='opacity 1300ms ease-in-out';curtain.style.opacity='0';},2850);
+                setTimeout(()=>{if(token!==this.endingSequenceToken)return;curtain.classList.add('hidden');this.endingTransitionBusy=false;},4350);
+                // 周回開始後に保存する。演出の途中をセーブすると再開不能になる。
+            }
+
+            cancelFinalEnding(){
+                this.endingSequenceToken=(this.endingSequenceToken||0)+1;
+                this.endingTransitionBusy=false;
+                document.getElementById('story-chapter-label').textContent='PROLOGUE';
+                document.getElementById('story-input-label').textContent='CLICK / ENTER';
+                const curtain=document.getElementById('ending-curtain');
+                if(curtain){curtain.classList.add('hidden');curtain.style.opacity='0';curtain.style.transition='';}
+                document.getElementById('ending-intertitle')?.classList.remove('visible');
+            }
+
+            transitionFinalDialogue(){
+                const token=++this.endingSequenceToken;
+                this.endingTransitionBusy=true;
+                const curtain=document.getElementById('ending-curtain');
+                const caption=document.getElementById('ending-intertitle');
+                const next=this.storyStep+1;
+                curtain.classList.remove('hidden');caption.classList.remove('visible');
+                curtain.style.transition='none';curtain.style.opacity='0';
+                curtain.style.background=next===202?'#fff7e7':next>=203?'#f5d7e8':'#141027';
+                caption.textContent=next===203?'「お帰りなさい」':'';
+                requestAnimationFrame(()=>requestAnimationFrame(()=>{
+                    if(token!==this.endingSequenceToken)return;
+                    curtain.style.transition='opacity 600ms ease-in-out';curtain.style.opacity='1';
+                }));
+                setTimeout(()=>{
+                    if(token!==this.endingSequenceToken)return;
+                    this.storyStep=next;this.updateStoryDialogue();
+                    const box=document.getElementById('story-dialogue-box');
+                    box.style.animation='none';void box.offsetWidth;box.style.animation='';
+                    if(next===203)caption.classList.add('visible');
+                },750);
+                setTimeout(()=>{
+                    if(token!==this.endingSequenceToken)return;
+                    caption.classList.remove('visible');
+                    curtain.style.transition='opacity 1050ms ease-in-out';curtain.style.opacity='0';
+                },next===203?1950:1100);
+                setTimeout(()=>{
+                    if(token!==this.endingSequenceToken)return;
+                    curtain.classList.add('hidden');this.endingTransitionBusy=false;
+                },next===203?3150:2300);
+            }
+
+            finishFinalEnding(){
+                const token=++this.endingSequenceToken;
+                this.endingTransitionBusy=true;
+                const curtain=document.getElementById('ending-curtain');
+                const caption=document.getElementById('ending-intertitle');
+                curtain.classList.remove('hidden');caption.classList.remove('visible');
+                curtain.style.transition='none';curtain.style.opacity='0';curtain.style.background='#fffaf5';
+                caption.textContent='みんなで、もう一度。';
+                requestAnimationFrame(()=>requestAnimationFrame(()=>{
+                    if(token!==this.endingSequenceToken)return;
+                    curtain.style.transition='opacity 1400ms ease-in-out';curtain.style.opacity='1';
+                }));
+                setTimeout(()=>{
+                    if(token!==this.endingSequenceToken)return;
+                    curtain.style.background='#090b18';caption.classList.add('visible');
+                },1700);
+                setTimeout(()=>{if(token===this.endingSequenceToken)caption.classList.remove('visible');},3500);
+                setTimeout(()=>{
+                    if(token!==this.endingSequenceToken)return;
+                    const overlay=document.getElementById('story-overlay');
+                    overlay.classList.add('hidden');overlay.classList.remove('victory-scene','final-victory-scene');
+                    this.startHellCycle();
+                    curtain.style.transition='opacity 1500ms ease-in-out';curtain.style.opacity='0';
+                    const layer=document.getElementById('scene-transition');
+                    if(layer){layer.className='active';layer.id='scene-transition';layer.style.transition='none';layer.style.background='#090b18';layer.style.opacity='1';
+                        requestAnimationFrame(()=>requestAnimationFrame(()=>{layer.style.transition='opacity 1600ms ease-in-out';layer.style.opacity='0';}));
+                        setTimeout(()=>{if(token!==this.endingSequenceToken)return;layer.classList.remove('active');layer.style.transition='';layer.style.opacity='';layer.style.background='';},1850);
+                    }
+                    setTimeout(()=>{if(token===this.endingSequenceToken)this.cancelFinalEnding();},1850);
+                },4200);
+            }
+
+            startHellCycle(){
+                this.hellCycle=Math.max(1,this.hellCycle+1);
+                this.currentFloor=10;this.heavenFloor=0;this.bossRoomFor=0;
+                this.floorTransitionBusy=false;this.enemyTurnPending=false;this.enemyTurnTimer=0;
+                this.actionTimer=0;this.isGameOver=false;this.spawnGraceTurns=8;
+                this.boss=null;this.enemies=[];this.items=[];this.traps=[];
+                this.player.hp=this.player.maxHp;this.player.fullness=this.player.maxFullness;
+                this.generateFloor();this.updateScore();this.saveAutoGame();this.updateUI();
+                this.log('🌈 仲間とともにB10Fから再出発！ 地獄の敵はHP・攻撃力・防御力が３倍。スコアは継続する。','text-amber-200 font-bold');
             }
 
             startHeavenPostgame() {
@@ -3309,6 +3516,7 @@
                 this.debugRunActive=false;
                 this.debugInvincible=false;
                 this.bossRoomFor=0;
+                this.cancelFinalEnding();this.hellCycle=0;this.finalEnding=false;
                 this.currentFloor = 10;
                 this.heavenFloor = 0;
                 this.score = 0;
@@ -3379,7 +3587,9 @@
             getFloorName() {
                 if (this.currentFloor > 0) return `B${this.currentFloor}F`;
                 if (this.currentFloor === 0) return '全能神の城';
-                if (this.bossRoomFor) return `${this.bossRoomFor}F ${this.bossRoomFor===20?'花霞の聖苑':this.bossRoomFor===40?'星環の書庫':'宵星の回廊'}・ボス部屋`;
+                if (this.bossRoomFor) return `${this.bossRoomFor}F ${this.bossRoomFor===20?'花霞の聖苑':this.bossRoomFor===40?'星環の書庫':this.bossRoomFor===60?'宵星の回廊':this.bossRoomFor===80?'暁光の回廊':'終焉と再生の玉座'}・ボス部屋`;
+                if (this.heavenFloor >= 100) return `終焉と再生の玉座 ${this.heavenFloor}F`;
+                if (this.heavenFloor >= 81) return `暁光の回廊 ${this.heavenFloor}F`;
                 if (this.heavenFloor >= 61) return `宵星の回廊 ${this.heavenFloor}F`;
                 if (this.heavenFloor >= 41) return `星環の書庫 ${this.heavenFloor}F`;
                 if (this.heavenFloor >= 21) return `花霞の聖苑 ${this.heavenFloor}F`;
@@ -3409,7 +3619,7 @@
             }
 
             debugJump(floor,bossRoom=false) {
-                if(!this.debugUnlocked || !Number.isInteger(floor) || floor<1 || floor>61 || (bossRoom && ![20,40,60].includes(floor))) return;
+                if(!this.debugUnlocked || !Number.isInteger(floor) || floor<1 || floor>100 || (bossRoom && ![20,40,60,80,100].includes(floor))) return;
                 this.debugRunActive=true;
                 this.floorTransitionBusy=false;
                 this.combatSequenceBusy=false;
@@ -3439,12 +3649,14 @@
                 const spec=floor===20
                     ? {id:'garden_boss',name:'花冠の審問官',hp:980,atk:145,def:31,exp:3000,color:'#f8dca3'}
                     : floor===40 ? {id:'library_boss',name:'星環の司書長',hp:1650,atk:182,def:39,exp:5800,color:'#d4bfff'}
-                    : {id:'dusk_boss',name:'宵星の監視者',hp:2300,atk:207,def:47,exp:8400,color:'#d7a7f5'};
+                    : floor===60 ? {id:'dusk_boss',name:'宵星の監視者',hp:2300,atk:207,def:47,exp:8400,color:'#d7a7f5'}
+                    : floor===80 ? {id:'dawn_boss',name:'暁の翼姫',hp:2850,atk:224,def:51,exp:11200,color:'#f9d59b'}
+                    : {id:'dark_silpen',name:'闇落ちした全能神しるぺん',hp:3800,atk:246,def:58,exp:16000,color:'#e45576'};
                 const bx=room.x+room.w-9, by=room.y+Math.floor(room.h/2);
-                this.boss={...spec,maxHp:spec.hp,x:bx,y:by,renderX:bx*TILE_SIZE,renderY:by*TILE_SIZE};
+                this.boss={...this.scaleHeavenEnemy({...spec,maxHp:spec.hp}),x:bx,y:by,renderX:bx*TILE_SIZE,renderY:by*TILE_SIZE};
                 for(const [x,y] of [[room.x+7,room.y+3],[room.x+7,room.y+room.h-4],[room.x+room.w-5,room.y+3],[room.x+room.w-5,room.y+room.h-4]]){
                     this.map[y][x]=TILE.OBSTACLE;
-                    this.obstacles.push({x,y,kind:floor===20?'garden_lantern':'star_lamp'});
+                    this.obstacles.push({x,y,kind:floor===20?'garden_lantern':floor>=100?'final_crystal':floor>=80?'dawn_lantern':floor>=60?'dusk_orb':'star_lamp'});
                 }
                 this.updateFieldOfView();
                 this.log(`⚔ ${this.getFloorName()}。${spec.name}を倒すと階段が現れる。`,'text-amber-300 font-bold');
@@ -3462,8 +3674,9 @@
                 const bx=defeated.x,by=defeated.y;
                 this.map[by][bx]=TILE.STAIRS;
                 this.stairsPosition={x:bx,y:by};
-                this.clearScoreBonus=(this.clearScoreBonus||0)+(this.bossRoomFor===20?10000:this.bossRoomFor===40?20000:30000);
+                this.clearScoreBonus=(this.clearScoreBonus||0)+this.bossRoomFor*500;
                 this.gainExp(defeated.exp||0);
+                if(this.bossRoomFor===100){this.showFinalEnding();return;}
                 this.log(`🌟 ${defeated.name}に勝利！ 階段が現れた。`,'text-amber-300 font-bold');
                 this.showActionMessage(`${defeated.name}に勝利！`,'#fde68a');
                 this.updateUI();
@@ -3536,10 +3749,9 @@
                     candidates.sort((a,b)=>b.score-a.score);
                     // 天上界は専用の雲・花・水景を配置。地獄の地形を使い回さない。
                     const totalRoomArea=this.rooms.reduce((sum,r)=>sum+r.w*r.h,0);
-                    this.placeHeavenObstacles(Math.min(46,Math.max(14,Math.floor(totalRoomArea/22))));
                     const stair=candidates[0]||{x:lastRoom.x+Math.floor(lastRoom.w/2),y:lastRoom.y+Math.floor(lastRoom.h/2)};
-                    if(this.heavenFloor<=60){ this.map[stair.y][stair.x]=TILE.STAIRS; this.stairsPosition={x:stair.x,y:stair.y}; }
-                    else this.stairsPosition=null; // 61Fは次の地域の予告階。次回更新まで階段なし。
+                    this.map[stair.y][stair.x]=TILE.STAIRS; this.stairsPosition={x:stair.x,y:stair.y};
+                    this.placeHeavenObstacles(Math.min(46,Math.max(14,Math.floor(totalRoomArea/22))));
                     this.spawnHeavenEntities();
                     this.trySpawnChildSilpen();this.trySpawnYuzu();
                     this.updateFieldOfView();
@@ -3805,7 +4017,10 @@
 
             placeHeavenObstacles(count) {
                 if(!this.rooms.length) return;
-                const kinds=this.heavenFloor>=41?['star_astrolabe','star_books','star_lamp','star_column']
+                const kinds=this.heavenFloor>=100?['final_crystal','dawn_lantern','dusk_orb','final_pillar']
+                    :this.heavenFloor>=81?['dawn_lantern','dawn_flower','dawn_pillar','dawn_mirror']
+                    :this.heavenFloor>=61?['dusk_orb','dusk_flame','dusk_pillar','dusk_shard']
+                    :this.heavenFloor>=41?['star_astrolabe','star_books','star_lamp','star_column']
                     :this.heavenFloor>=21?['garden_flowerbed','garden_vine','garden_lantern','garden_mushroom']
                     :['heaven_flower_white','heaven_flower_pink','heaven_flower_blue','heaven_cloud','heaven_water'];
                 let placed=0, attempts=0;
@@ -3838,7 +4053,7 @@
                         valid.add(key);
                         if (!this.obstacles.some(o => o.x === x && o.y === y)) {
                             const kind = this.currentFloor<0
-                                ? (this.heavenFloor>=41?'star_column':this.heavenFloor>=21?'garden_vine':'heaven_cloud')
+                                ? (this.heavenFloor>=100?'final_crystal':this.heavenFloor>=81?'dawn_pillar':this.heavenFloor>=61?'dusk_pillar':this.heavenFloor>=41?'star_column':this.heavenFloor>=21?'garden_vine':'heaven_cloud')
                                 : this.currentFloor >= 8
                                 ? ['bush','stone','stump'][(x + y) % 3]
                                 : this.currentFloor >= 5
@@ -3995,10 +4210,18 @@
                 }else if(depth<=60){
                     const unlocked=Math.min(5,1+Math.floor((depth-41)/4));
                     pool=LIBRARY_ENEMY_SPECIES.slice(0,unlocked);
+                }else if(depth<=80){
+                    pool=DUSK_ENEMY_SPECIES.slice(0,Math.min(5,1+Math.floor((depth-61)/4)));
                 }else{
-                    return null;
+                    pool=DAWN_ENEMY_SPECIES.slice(0,Math.min(5,1+Math.floor((depth-81)/4)));
                 }
-                return {...pool[Math.floor(Math.random()*pool.length)]};
+                const enemy={...pool[Math.floor(Math.random()*pool.length)]};
+                return this.scaleHeavenEnemy(enemy);
+            }
+
+            scaleHeavenEnemy(enemy){
+                if(!enemy || !this.hellCycle)return enemy;
+                return {...enemy,hp:enemy.hp*2,maxHp:enemy.maxHp*2,atk:enemy.atk*2,def:enemy.def*2};
             }
 
             spawnHeavenEntities() {
@@ -4027,7 +4250,7 @@
                     placed++;
                 }
                 this.placeHeavenMedalsAndTraps();
-                this.log(`☁ ${this.getFloorName()}。${this.heavenFloor<=60?'上へ続く階段がある。':'この先は次回の更新で開放される。'}`, 'text-cyan-200 font-bold');
+                this.log(`☁ ${this.getFloorName()}。${'上へ続く階段がある。'}`, 'text-cyan-200 font-bold');
             }
 
             placeHeavenMedalsAndTraps() {
@@ -4069,19 +4292,20 @@
                 const specialRoll = Math.random();
                 const meatball = ENEMY_SPECIES.find(e => e.id === 'meatball');
                 const yasuo = ENEMY_SPECIES.find(e => e.id === 'yasuo');
-                if (meatball && specialRoll < 0.01) return meatball;
-                if (yasuo && specialRoll < 0.02) return yasuo;
+                const scaled=species=>this.hellCycle?{...species,hp:species.hp*3,maxHp:species.maxHp*3,atk:species.atk*3,def:species.def*3,exp:species.exp*3}:species;
+                if (meatball && specialRoll < 0.01) return scaled(meatball);
+                if (yasuo && specialRoll < 0.02) return scaled(yasuo);
                 // ジェットばばぁはB7F～B1F限定で2%。
-                if (this.currentFloor >= 1 && this.currentFloor <= 7 && specialRoll < 0.04) return JET_BABAA_SPEC;
+                if (this.currentFloor >= 1 && this.currentFloor <= 7 && specialRoll < 0.04) return scaled(JET_BABAA_SPEC);
                 const totalWeight = floorPool.reduce((sum, item) => sum + item.weight, 0);
                 let rand = Math.random() * totalWeight;
                 for (const entry of floorPool) {
                     if (rand < entry.weight) {
-                        return entry.species;
+                        return scaled(entry.species);
                     }
                     rand -= entry.weight;
                 }
-                return floorPool[0].species;
+                return scaled(floorPool[0].species);
             }
 
             checkNaturalSpawn() {
@@ -4157,7 +4381,7 @@
                         name: '全能神しるぺん',
                         x: bx, y: by,
                         renderX: bx * TILE_SIZE, renderY: by * TILE_SIZE,
-                        hp: 440, maxHp: 440, atk: 70, def: 20, exp: 1000
+                        hp: 440*(this.hellCycle?3:1), maxHp: 440*(this.hellCycle?3:1), atk: 70*(this.hellCycle?3:1), def: 20*(this.hellCycle?3:1), exp: 1000*(this.hellCycle?3:1)
                     };
 
                     // 取り巻き「聖騎士」２体。隣接４方向を混ぜ、配置できる場所を選ぶ。
@@ -4176,6 +4400,7 @@
                         if (this.isWalkable(gx, gy) && !(gx === this.player.x && gy === this.player.y) && !this.isOccupied(gx, gy)) {
                             this.enemies.push({
                                 ...knightTemplate,
+                                ...(this.hellCycle?{hp:knightTemplate.hp*3,maxHp:knightTemplate.hp*3,atk:knightTemplate.atk*3,def:knightTemplate.def*3,exp:knightTemplate.exp*3}:{}),
                                 x: gx, y: gy,
                                 renderX: gx * TILE_SIZE, renderY: gy * TILE_SIZE
                             });
@@ -4746,7 +4971,7 @@
                     hole.addColorStop(1,'rgba(0,0,0,0)');
                     lc.fillStyle=hole; lc.fillRect(tx-radius,ty-radius,radius*2,radius*2);
                 }
-                const luminousKinds={heaven_water:'#79e4ef',garden_lantern:'#ffd791',garden_mushroom:'#a7bafb',star_lamp:'#80caff',star_astrolabe:'#b6dafa',star_column:'#ffe2a1'};
+                const luminousKinds={heaven_water:'#79e4ef',garden_lantern:'#ffd791',garden_mushroom:'#a7bafb',star_lamp:'#80caff',star_astrolabe:'#b6dafa',star_column:'#ffe2a1',dusk_orb:'#b998fd',dusk_flame:'#d6a6ff',dusk_shard:'#c9aaff',dawn_lantern:'#ffe4a9',dawn_flower:'#ffd4e8',dawn_mirror:'#fff0cd',final_crystal:'#ffadc9'};
                 for(const o of this.obstacles){
                     if(!luminousKinds[o.kind]||!this.explored?.[o.y]?.[o.x])continue;
                     const x=o.x*TILE_SIZE+16+offsetX,y=o.y*TILE_SIZE+15+offsetY,r=TILE_SIZE*1.5;
@@ -4937,6 +5162,16 @@
                                 const a=j*Math.PI/4,dist=18+p*40;
                                 ctx.fillRect(px+Math.cos(a)*dist-2,py+Math.sin(a)*dist-2,4,4);
                             }
+                        }else if(e.floor===100){
+                            ctx.strokeStyle=p<.3?'#fff4da':'#fa799a';ctx.fillStyle='#fff8e8';
+                            ctx.shadowColor='#fa527e';ctx.shadowBlur=27;ctx.lineWidth=4*(1-p)+1;
+                            for(let j=0;j<3;j++){
+                                ctx.beginPath();ctx.arc(px,py,8+p*(22+j*20),0,Math.PI*2);ctx.stroke();
+                            }
+                            for(let j=0;j<12;j++){
+                                const a=j*Math.PI/6+p*2,r=10+p*67;
+                                ctx.fillRect(px+Math.cos(a)*r-2,py+Math.sin(a)*r-2,4,4);
+                            }
                         }else if(e.floor===20){
                             ctx.strokeStyle=p<.25?'#fff7ed':'#fb7185';ctx.lineWidth=3;
                             ctx.shadowColor='#f472b6';ctx.shadowBlur=15;
@@ -4948,7 +5183,7 @@
                                 ctx.beginPath();ctx.ellipse(0,0,4,8,0,0,Math.PI*2);ctx.fill();ctx.restore();
                             }
                             ctx.beginPath();ctx.arc(px,py,6+p*55,0,Math.PI*2);ctx.stroke();
-                        }else if(e.floor===60){
+                        }else if(e.floor===60||e.floor===80){
                             ctx.strokeStyle='#f0abfc';ctx.fillStyle='#fff4d6';ctx.shadowColor='#d946ef';ctx.shadowBlur=19;
                             ctx.lineWidth=5*(1-p)+1;
                             for(const d of [-1,1]){
@@ -5335,7 +5570,7 @@
                         sound.playStairs();
 
                         const oldFloor = this.currentFloor;
-                        const enteringBoss = oldFloor<0 && [20,40,60].includes(-oldFloor) && !this.bossRoomFor;
+                        const enteringBoss = oldFloor<0 && [20,40,60,80,100].includes(-oldFloor) && !this.bossRoomFor;
                         const nextFloor = enteringBoss ? oldFloor : oldFloor > 0 ? Math.max(0, oldFloor - 1) : oldFloor - 1;
                         const nextName = enteringBoss ? `${-oldFloor}Fのボス部屋` : nextFloor > 0 ? `B${nextFloor}F` : nextFloor === 0 ? '全能神の城' : `${Math.abs(nextFloor)}F`;
                         this.log(`★ 梯子を上り ${nextName} へ足を踏み入れた。`, 'text-cyan-300 font-bold');
@@ -5938,15 +6173,15 @@
                         const bossPhase=this.currentFloor===0?0:this.bossRoomFor;
                         if(b.telegraph && this.turn>=b.telegraph.resolveAt){
                             const target=b.telegraph;
-                            const hit=bossPhase===20||bossPhase===0
+                            const hit=bossPhase===20||bossPhase===0||bossPhase===100
                                 ? Math.max(Math.abs(this.player.x-target.x),Math.abs(this.player.y-target.y))<=1
-                                : bossPhase===60 ? Math.abs(this.player.x-target.x)===Math.abs(this.player.y-target.y) && Math.abs(this.player.x-target.x)<=2
+                                : bossPhase===60||bossPhase===80 ? Math.abs(this.player.x-target.x)===Math.abs(this.player.y-target.y) && Math.abs(this.player.x-target.x)<=2
                                 : this.player.x===target.x || this.player.y===target.y;
                             b.telegraph=null;
                             this.addBossBlast(target,bossPhase);
                             this.log(hit?'⚡ 予告された範囲に攻撃が着弾！':'✨ 予告された範囲から退避した！',hit?'text-rose-300 font-bold':'text-cyan-300 font-bold');
                             if(hit){
-                                const damage=bossPhase===0?32:bossPhase===20?38:bossPhase===40?55:68;
+                                const damage=bossPhase===0?32:bossPhase===20?38:bossPhase===40?55:bossPhase===60?68:bossPhase===80?82:100;
                                 this.player.hp-=this.debugInvincible?0:damage;
                                 const hx=this.player.x*TILE_SIZE+16,hy=this.player.y*TILE_SIZE+16;
                                 this.addHitEffect(hx,hy,bossPhase===0?'#facc15':bossPhase===20?'#f9a8d4':bossPhase===40?'#a5b4fc':'#f0abfc',damage,false);
@@ -5960,7 +6195,7 @@
                         }else if(!b.telegraph && this.turn%5===0){
                             b.telegraph={x:this.player.x,y:this.player.y,resolveAt:this.turn+2};
                             sound.playBossWarning(bossPhase);
-                            this.log(bossPhase===0?'しるぺんの神罰が足元に刻まれた！ ２ターン後に周囲へ落雷。':bossPhase===20?'花びらが足元に集まる！ ２ターン後にこの周囲を攻撃。':bossPhase===40?'星図が光る！ ２ターン後に縦横の列を攻撃。':'宵星が輝く！ ２ターン後に斜めの光路を攻撃。','text-amber-200 font-bold');
+                            this.log(bossPhase===0?'しるぺんの神罰が足元に刻まれた！ ２ターン後に周囲へ落雷。':bossPhase===20?'花びらが足元に集まる！ ２ターン後にこの周囲を攻撃。':bossPhase===40?'星図が光る！ ２ターン後に縦横の列を攻撃。':bossPhase===60?'宵星が輝く！ ２ターン後に斜めの光路を攻撃。':bossPhase===80?'暁光が走る！ ２ターン後に斜めの光路を攻撃。':'闇の神罰が集まる！ ２ターン後に周囲へ降り注ぐ。','text-amber-200 font-bold');
                             this.showActionMessage('２ターン後に範囲攻撃！','#fde68a');
                         }
                     }
@@ -7176,8 +7411,8 @@
                 if(current<0){
                     const boss=Number(data.bossRoomFor)||0;
                     const level=boss||depth;
-                    const region=boss?(boss===20?'花霞の聖苑':boss===40?'星環の書庫':'宵星の回廊')
-                        :level>=61?'宵星の回廊':level>=41?'星環の書庫':level>=21?'花霞の聖苑':'天上界';
+                    const region=boss?(boss===20?'花霞の聖苑':boss===40?'星環の書庫':boss===60?'宵星の回廊':boss===80?'暁光の回廊':'終焉と再生の玉座')
+                        :level>=100?'終焉と再生の玉座':level>=81?'暁光の回廊':level>=61?'宵星の回廊':level>=41?'星環の書庫':level>=21?'花霞の聖苑':'天上界';
                     return `${region} ${level}F${boss?'・ボス部屋':''}`;
                 }
                 return '階層不明';
@@ -7190,7 +7425,7 @@
                 const wiItem=(wi>=0&&p.inventory?.[wi])||null; const aiItem=(ai>=0&&p.inventory?.[ai])||null;
                 const w=(wiItem?.name||p.weapon?.name||'なし') + (wiItem?.enhance>0 ? `+${wiItem.enhance}` : '');
                 const a=(aiItem?.name||p.armor?.name||'なし') + (aiItem?.enhance>0 ? `+${aiItem.enhance}` : '');
-                return `${this.getSavedFloorName(data)} / Lv.${p.level} / ATK ${this.getSavedAtk(data)} / DEF ${this.getSavedDef(data)} / Score ${Number(data.score||0)} / 武器 ${w} / 防具 ${a}`;
+                return `${data.hellCycle?`強化周回${data.hellCycle} / `:""}${this.getSavedFloorName(data)} / Lv.${p.level} / ATK ${this.getSavedAtk(data)} / DEF ${this.getSavedDef(data)} / Score ${Number(data.score||0)} / 武器 ${w} / 防具 ${a}`;
             }
             getSavedAtk(data) { const p=data.player||{}; return Number(p.baseAtk||10)+(p.weapon?.val||0); }
             getSavedDef(data) { const p=data.player||{}; return Number(p.baseDef||2)+(p.armor?.val||0); }
@@ -7199,7 +7434,7 @@
                 const weaponInventoryIndex=this.player.weapon?this.player.inventory.indexOf(this.player.weapon):-1;
                 const armorInventoryIndex=this.player.armor?this.player.inventory.indexOf(this.player.armor):-1;
                 const playerData={...this.player, weapon:null, armor:null};
-                return {version:18,yuzuNPC:this.yuzuNPC,yuzuChatCount:this.yuzuChatCount||0,storageV330:true,childSilpen:this.childSilpen,storageItems:this.storageItems,childSilpenIntroduced:this.childSilpenIntroduced,childSilpenChatCount:this.childSilpenChatCount||0,libraryExpansionV320:true,regionRosterV303:true,balanceV301:true,bossMigrationV3:true,bossRoomFor:this.bossRoomFor||0,currentFloor:this.currentFloor,heavenFloor:this.heavenFloor||0,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep,spawnGraceTurns:this.spawnGraceTurns};
+                return {version:18,yuzuNPC:this.yuzuNPC,yuzuChatCount:this.yuzuChatCount||0,storageV330:true,childSilpen:this.childSilpen,storageItems:this.storageItems,childSilpenIntroduced:this.childSilpenIntroduced,childSilpenChatCount:this.childSilpenChatCount||0,libraryExpansionV320:true,regionRosterV303:true,balanceV301:true,bossMigrationV3:true,bossRoomFor:this.bossRoomFor||0,hellCycle:this.hellCycle||0,finalEnding:this.finalEnding||false,currentFloor:this.currentFloor,heavenFloor:this.heavenFloor||0,score:this.score,medalScore:this.medalScore,clearScoreBonus:this.clearScoreBonus,turn:this.turn,isGameOver:this.isGameOver,facing:this.facing,player:playerData,weaponInventoryIndex,armorInventoryIndex,map:this.map,explored:this.explored,rooms:this.rooms,enemies:this.enemies,items:this.items,torches:this.torches,obstacles:this.obstacles,traps:this.traps,trapsVisible:this.trapsVisible,boss:this.boss,logs:this.logs,storyStep:this.storyStep,spawnGraceTurns:this.spawnGraceTurns};
             }
 
             closeSaveConfirm() {
@@ -7320,13 +7555,13 @@
                         : -1;
                     const playerData = { ...this.player, weapon: null, armor: null };
                     const data = {
-                        version: 18, yuzuNPC:this.yuzuNPC, yuzuChatCount:this.yuzuChatCount||0, storageV330:true, childSilpen:this.childSilpen, storageItems:this.storageItems, childSilpenIntroduced:this.childSilpenIntroduced, childSilpenChatCount:this.childSilpenChatCount||0, libraryExpansionV320:true, regionRosterV303:true, balanceV301:true, bossMigrationV3:true, bossRoomFor:this.bossRoomFor||0,
+                        version: 18, yuzuNPC:this.yuzuNPC, yuzuChatCount:this.yuzuChatCount||0, storageV330:true, childSilpen:this.childSilpen, storageItems:this.storageItems, childSilpenIntroduced:this.childSilpenIntroduced, childSilpenChatCount:this.childSilpenChatCount||0, libraryExpansionV320:true, regionRosterV303:true, balanceV301:true, bossMigrationV3:true, bossRoomFor:this.bossRoomFor||0,hellCycle:this.hellCycle||0,finalEnding:this.finalEnding||false,
                         currentFloor: this.currentFloor, heavenFloor: this.heavenFloor || 0, score: this.score, medalScore: this.medalScore, clearScoreBonus: this.clearScoreBonus, turn: this.turn,
                         isGameOver: this.isGameOver, facing: this.facing,
                         player: playerData, weaponInventoryIndex, armorInventoryIndex,
                         map: this.map, explored: this.explored,
                         rooms: this.rooms, enemies: this.enemies, items: this.items,
-                        torches: this.torches, traps: this.traps, trapsVisible: this.trapsVisible, boss: this.boss, logs: this.logs, storyStep: this.storyStep, spawnGraceTurns: this.spawnGraceTurns
+                        torches: this.torches, obstacles:this.obstacles, traps: this.traps, trapsVisible: this.trapsVisible, boss: this.boss, logs: this.logs, storyStep: this.storyStep, spawnGraceTurns: this.spawnGraceTurns
                     };
                     localStorage.setItem(this.getSaveSlotKey(slot), JSON.stringify(data));
                     if (!silent) this.log(`💾 SAVE ${slot} に現在の冒険をセーブした。`, 'text-emerald-300 font-bold');
@@ -7352,7 +7587,9 @@
                     this.childSilpen=data.childSilpen && Number.isInteger(data.childSilpen.x) && Number.isInteger(data.childSilpen.y)?data.childSilpen:null;
                     this.yuzuNPC=data.yuzuNPC && Number.isInteger(data.yuzuNPC.x) && Number.isInteger(data.yuzuNPC.y)?data.yuzuNPC:null;
                     this.yuzuChatCount=Math.max(0,Number(data.yuzuChatCount)||0);
+                    this.cancelFinalEnding();
                     this.bossRoomFor=Number(data.bossRoomFor||0);
+                    this.hellCycle=Number(data.hellCycle||0);this.finalEnding=!!data.finalEnding;
                     this.currentFloor = Number(data.currentFloor);
                     this.heavenFloor = Number(data.heavenFloor || (this.currentFloor < 0 ? Math.abs(this.currentFloor) : 0));
                     this.medalScore = Number(data.medalScore || 0);
@@ -8421,7 +8658,7 @@
                             ctx.fillStyle=i%2?'#facc15':'#a5f3fc';
                             ctx.fillRect(Math.cos(a)*18-2,Math.sin(a)*18-2,4,4);
                         }
-                    }else if(floor===20){
+                    }else if(floor===20||floor===100){
                         for(let y=target.y-1;y<=target.y+1;y++)for(let x=target.x-1;x<=target.x+1;x++)drawTile(x,y);
                         ctx.translate(target.x*TILE_SIZE+16,target.y*TILE_SIZE+16);
                         ctx.strokeStyle='#fbcfe8';ctx.lineWidth=2;ctx.shadowColor='#fb7185';ctx.shadowBlur=12;
@@ -8431,7 +8668,7 @@
                             ctx.fillStyle=i%2?'#f9a8d4':'#fef3c7';
                             ctx.fillRect(Math.cos(a)*(10+8*pulse)-2,Math.sin(a)*(10+8*pulse)-2,4,4);
                         }
-                    }else if(floor===60){
+                    }else if(floor===60||floor===80){
                         for(let d=-2;d<=2;d++){drawTile(target.x+d,target.y+d);drawTile(target.x+d,target.y-d);}
                         ctx.translate(target.x*TILE_SIZE+16,target.y*TILE_SIZE+16);
                         ctx.strokeStyle='#f0abfc';ctx.shadowColor='#e879f9';ctx.shadowBlur=16;ctx.lineWidth=2;
@@ -8628,6 +8865,8 @@
 
             getStageTheme() {
                 // 階層ごとに「色違いの石床」にならないよう、材質そのものを変更する。
+                if(this.currentFloor<0 && (this.bossRoomFor===100 || (!this.bossRoomFor && this.heavenFloor>=100))) return {type:'final_throne',wallBase:'#0d0e27',wallMain:'#533b72',wallDark:'#2b2553',wallDeep:'#080a20',wallAccent:'#ffd4e7',floorA:'#292443',floorB:'#343052',floorEdge:'#17152f',floorDetail:'#ffc6dd'};
+                if(this.currentFloor<0 && (this.bossRoomFor===80 || (!this.bossRoomFor && this.heavenFloor>=81))) return {type:'dawn_hall',wallBase:'#30213a',wallMain:'#ad779a',wallDark:'#755473',wallDeep:'#241b34',wallAccent:'#ffe6bf',floorA:'#50384d',floorB:'#63465b',floorEdge:'#372838',floorDetail:'#ffd49a'};
                 if(this.currentFloor<0 && (this.bossRoomFor===60 || (!this.bossRoomFor && this.heavenFloor>=61))) return {
                     type:'dusk_arcade',wallBase:'#1a1228',wallMain:'#704a78',wallDark:'#43315e',wallDeep:'#120e26',wallAccent:'#ebbbd6',
                     floorA:'#302847',floorB:'#3b3153',floorEdge:'#1e1a35',floorDetail:'#e0a9d0'
@@ -8773,6 +9012,15 @@
                     p(7,18,5,9,'#9c99b5');p(18,16,5,10,'#b9a9c8');p(12,21,4,6,'#998daa');
                     p(3,13,13,7,'#566bbc');p(4,11,10,3,'#b5c7f2');p(15,11,12,8,'#6259a5');p(16,9,10,4,'#b7a9ed');
                     p(22,10,3,2,phase===0?'#faf5ff':'#b7a9ed');p(8,13,3,2,'#d5e5ff');p(23,19+phase,2,3,'#a5dcfb');
+                }else if(o.kind.startsWith('dusk_')||o.kind.startsWith('dawn_')||o.kind.startsWith('final_')){
+                    const dawn=o.kind.startsWith('dawn_'),final=o.kind.startsWith('final_');
+                    const metal=dawn?'#c98c9c':final?'#a574a6':'#706399';
+                    const light=dawn?'#ffe6b1':final?'#ffc2de':'#c5adff';
+                    p(9,25,14,3,metal);p(13,20,6,6,metal);p(7,10+phase,18,11,metal);
+                    p(9,12+phase,14,7,dawn?'#b46b97':final?'#624876':'#4c417d');
+                    p(12,14+phase,8,5,light);p(14,15+phase,3,2,'#fff9e9');
+                    p(8,6+phase,16,3,light);p(14,3+phase,4,3,'#fff3e2');
+                    p(4,17+phase,3,3,light);p(25,9-phase,3,3,light);
                 }else if(o.kind==='star_astrolabe'){
                     p(9,24,14,3,'#9c774e');p(14,18,4,7,'#866348');p(8,7,16,3,'#d1a75c');
                     p(7,9,3,12,'#ad8754');p(22,8,3,13,'#8e6a46');p(10,21,12,2,'#d3ad69');
@@ -8813,6 +9061,15 @@
                     p(18,14,4,2,'#d6c6fe');p(9,19,2,3,'#f2e6e8');p(20,18,2,6,'#d4c9e6');
                     p(6,25,3,1,'#718c7d');p(15,26,5,1,'#7c927c');p(23,19+phase,1,2,'#fff9ed');
                     p(26,19,2,2,'#eaf9fe');
+                }else if(o.kind.startsWith('dusk_')||o.kind.startsWith('dawn_')||o.kind.startsWith('final_')){
+                    const dawn=o.kind.startsWith('dawn_'),final=o.kind.startsWith('final_');
+                    const metal=dawn?'#c98c9c':final?'#a574a6':'#706399';
+                    const light=dawn?'#ffe6b1':final?'#ffc2de':'#c5adff';
+                    p(9,25,14,3,metal);p(13,20,6,6,metal);p(7,10+phase,18,11,metal);
+                    p(9,12+phase,14,7,dawn?'#b46b97':final?'#624876':'#4c417d');
+                    p(12,14+phase,8,5,light);p(14,15+phase,3,2,'#fff9e9');
+                    p(8,6+phase,16,3,light);p(14,3+phase,4,3,'#fff3e2');
+                    p(4,17+phase,3,3,light);p(25,9-phase,3,3,light);
                 }else if(o.kind==='star_astrolabe'){
                     p(11,9,2,4,'#f1dcad');p(20,9,2,4,'#f1dcad');p(9,16,2,4,'#eacb91');
                     p(14,10,4,1,'#fff0c9');p(14,17,4,1,'#57aacd');p(15,14,2,2,'#def7ff');
@@ -8834,7 +9091,7 @@
                 // 地形オブジェクトはアイテムと一目で区別できるよう、32px内で「影→本体→材質→ハイライト」の順に描く。
                 ctx.save();
                 const k=o.kind, t=this.getStageTheme();
-                if(k.startsWith('garden_')||k.startsWith('star_')||k.startsWith('heaven_flower_')||k==='heaven_cloud'||k==='heaven_water'){
+                if(k.startsWith('garden_')||k.startsWith('star_')||k.startsWith('dusk_')||k.startsWith('dawn_')||k.startsWith('final_')||k.startsWith('heaven_flower_')||k==='heaven_cloud'||k==='heaven_water'){
                     this.drawAnimatedHeavenObstacle(ctx,o,px,py);
                     ctx.restore();return;
                 }
@@ -8915,6 +9172,28 @@
 
             drawConceptTerrainTile(ctx, px, py, gx, gy, wall) {
                 const stage=this.getStageTheme();
+                if(['dawn_hall','final_throne'].includes(stage.type)){
+                    const throne=stage.type==='final_throne',hash=((gx*73856093)^(gy*19349663))>>>0;
+                    const base=throne?'#1c1937':'#473046',light=throne?'#ae87d0':'#dfabb8';
+                    if(wall){
+                        this.pixelRect(ctx,px,py,32,32,throne?'#0a0d27':'#2a2138');
+                        this.pixelRect(ctx,px+2,py+2,28,25,base);
+                        this.pixelRect(ctx,px+2,py+2,28,3,light);
+                        this.pixelRect(ctx,px+4,py+8,4,17,throne?'#594a81':'#a27593');
+                        this.pixelRect(ctx,px+24,py+8,4,17,throne?'#594a81':'#a27593');
+                        this.pixelRect(ctx,px+11,py+10,10,13,throne?'#302747':'#694158');
+                        this.pixelRect(ctx,px+15,py+13,2,3,throne?'#ffc3df':'#ffecbc');
+                        this.pixelRect(ctx,px,py+27,32,4,throne?'#090b21':'#281d35');
+                    }else{
+                        this.pixelRect(ctx,px,py,32,32,hash%3?stage.floorA:stage.floorB);
+                        this.pixelRect(ctx,px,py,32,2,throne?'#664a81':'#ae7e9c');
+                        this.pixelRect(ctx,px,py+30,32,2,stage.floorEdge);
+                        this.pixelRect(ctx,px+5+(hash%5),py+10,7,1,throne?'#805a91':'#e2adbd');
+                        this.pixelRect(ctx,px+19,py+22,5,1,stage.floorDetail);
+                        if(hash%5===0)this.pixelRect(ctx,px+15,py+14,2,2,throne?'#f8a6ce':'#ffe2b1');
+                    }
+                    return;
+                }
                 if(stage.type==='flower_garden' || stage.type==='star_library' || stage.type==='dusk_arcade'){
                     // 地域専用の32x32描画。敵が床に埋もれないよう壁と床の明度を離す。
                     const star=stage.type==='star_library',dusk=stage.type==='dusk_arcade';
@@ -9556,7 +9835,28 @@
                 ctx.restore();
             }
 
+            drawLateEnemySprite(ctx,e,x,y){
+                const p=(a,b,w,h,c)=>this.pixelRect(ctx,x+a,y+b,w,h,c);
+                const t=(this.spriteFrameTick+(e.spritePhase||0))%3;
+                const final=e.id==='dark_silpen',dawn=e.id.startsWith('dawn_')||e.id==='dawn_boss';
+                const dark=final?'#271728':dawn?'#653c5c':'#32264c';
+                const mid=final?'#515166':dawn?'#ad779c':'#6b5997';
+                const bright=final?'#f65973':dawn?'#ffe4b0':'#cfb9fc';
+                ctx.save();ctx.imageSmoothingEnabled=false;
+                p(7,27,18,2,'rgba(10,8,25,.28)');
+                p(5,17+t,6,9,mid);p(21,17+(2-t),6,9,mid);
+                p(8,10,16,17,dark);p(10,12,12,13,mid);p(12,19,8,6,bright);
+                p(10,5,12,10,dark);p(12,7,8,7,mid);
+                p(11,11,3,2,final?'#ff233f':bright);p(18,11,3,2,final?'#ff233f':bright);
+                p(15,13,3,2,final?'#d8a267':'#fff5d5');
+                p(8,4+t,3,3,bright);p(23,7-t,3,3,bright);
+                if(final){p(8,2,16,2,'#c870a0');p(12,1,8,1,'#fff0d0');p(5,22,5,4,'#98384d');p(22,22,5,4,'#98384d');}
+                else {p(12,3,8,2,bright);p(9,25,5,3,dark);p(19,25,5,3,dark);}
+                ctx.restore();
+            }
+
             drawEnemySprite(ctx, enemy, px, py) {
+                if(DUSK_ENEMY_SPECIES.some(e=>e.id===enemy.id)||DAWN_ENEMY_SPECIES.some(e=>e.id===enemy.id)||['dawn_boss','dark_silpen'].includes(enemy.id)){this.drawLateEnemySprite(ctx,enemy,px,py);return;}
                 if(LIBRARY_ENEMY_SPECIES.some(e=>e.id===enemy.id)||enemy.id==='dusk_boss'){
                     this.drawLibraryEnemySprite(ctx,enemy,px,py);return;
                 }
