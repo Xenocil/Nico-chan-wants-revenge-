@@ -1012,7 +1012,7 @@
         /* 縦画面ではホームインジケータを避け、スコアと三回タップするVerを中央付近に置く。 */
         @media (orientation:portrait) {
             #title-screen .title-highscore-panel {top:42%;bottom:auto;width:min(76%,390px);}
-            #title-screen .title-version {top:51%;bottom:auto;min-height:44px;min-width:150px;display:flex;align-items:center;justify-content:center;margin-top:0;padding:8px 16px;border:1px solid rgba(252,214,240,.5);border-radius:999px;background:rgba(9,16,38,.72);font-size:13px;line-height:1.2;touch-action:manipulation;}
+            #title-screen .title-version {top:51%;bottom:auto;min-height:44px;min-width:150px;display:flex;align-items:center;justify-content:center;margin-top:0;padding:8px 16px;border:0;background:none;box-shadow:none;font-size:13px;line-height:1.2;touch-action:manipulation;}
         }
         @media (orientation:portrait) and (max-height:700px) {
             #title-screen .title-logo {top:24%;}
@@ -2259,7 +2259,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '3.82_Beta';
+        const GAME_VERSION = '3.83_Beta';
         const YUZU_SPRITE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADzklEQVR4nK2XX2hbVRzHP3fU4GrQOrrSTBBFbYUJW61vQ4R2Srf4IiIdtA/2UoQ7YWxjD5mKoFAdpbRFWIN7SHww0DDmw2AWRlf0QeiL1mCFZjorpV1G1nWRpVWL7PhwvSfn3Htyk3T+IHDyO7/7/X5/v/s7fy48gInNy0JsXhYPgmE1TFqaDiW0Wo41hFl38N1ZWxI/fjhlfK6emB3Z3VlbqOD/Z3zdKtXSVytzPTF+a6pXgAr4zacDxuwaff+wgyYc6ukPLW16LrvzJhTrF3+1Wt96Noz8hbanQwEXi8uhIvwcgcChnn5hAvDI3xl4syr5hcwlKQKC1TBhBwJGkpO875yUvvRc1vLK/tmpMxph9MCTclzOrRhFqOZhqyKaPGLPEetoJ3VtuvJULwLAK71KqhJ75lXoQuYSi8VlHUtJ1EtO7wEhXCF/ZOGxfgDs3mOo2ZuyBoh2t1L+fp2t0j0AvrxyVVYh9dUbEg/Asiq8u1RVheu3KFy/5Tq2NzTVW6V7EtxEXtO2N/Dw1YrL9zuSnNTiY09FsI8cB9zyD8ZfA6Dtlf2UcytVSYvX3KzbXt7PeGJCVsGP7/VZk2wIB6kqNTMFkT1GgnJuhejrL+H0DZNMf6Aqxukb5qPBAeNzakJQWSG7/I6R5GSA/PToKTmOdrfi9A0HCEw+zSJ7ZBUCqwAqSzDW0R54/+CWvvjtzwBa5n/9uMDDB7v0avzTDPd9ANsbxDraXREOcj9o8veAbMIQ+/OHX9j94nN8/fEXABw92KX5TVb4fRtwsT0RoPRAujOrVaLl0aCQRPpzUr3nJMnRD9/W5lXy8k/6/gAENiFQesAjB4zk4O4F9mACezBhnA+b8zD9h5nWAwDnM2YAz1IzU9hHjlclSs1MUb76m3HufCbBuwPntDNBbsXpuax1M18QzbGYBXAzX6go3fsQANHDzwDCXabV7L71XxyQqbibY10Sd19nzPI4jcem/1BKXUkGYkrfnQn4Wg6NBXx23JFj0ykre0CsX9Se3tfpViKMPBI9SyR6VvrXcrcDsSZTuareB7yeGH/vETnXcmhMI3ni+QV3sPtVV8DCuus/sFer0OlPNuU49D7gF+LP3p9hNQGeCNXsuBP+CvzkAONDo5Rnb2DHHWN5t5a62VrqNiawlruNHXcoz95gfGhUw60pANwTcLG4zImJYGM1YicmxlgsLlPrLinNr3Kop1+szufF6nxeiNK0/K3O54X4+47+882vzueFCU/9H/guCLvRri11hYqvNW/CD73D1/oGaMSqJVbXR8ROhdTzkfIv8nkHhF0QvCEAAAAASUVORK5CYII=';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
