@@ -2349,7 +2349,7 @@
             return itemList[0];
         }
 
-        const GAME_VERSION = '4.04_Beta';
+        const GAME_VERSION = '4.05_Beta';
         const YUZU_SPRITE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADzklEQVR4nK2XX2hbVRzHP3fU4GrQOrrSTBBFbYUJW61vQ4R2Srf4IiIdtA/2UoQ7YWxjD5mKoFAdpbRFWIN7SHww0DDmw2AWRlf0QeiL1mCFZjorpV1G1nWRpVWL7PhwvSfn3Htyk3T+IHDyO7/7/X5/v/s7fy48gInNy0JsXhYPgmE1TFqaDiW0Wo41hFl38N1ZWxI/fjhlfK6emB3Z3VlbqOD/Z3zdKtXSVytzPTF+a6pXgAr4zacDxuwaff+wgyYc6ukPLW16LrvzJhTrF3+1Wt96Noz8hbanQwEXi8uhIvwcgcChnn5hAvDI3xl4syr5hcwlKQKC1TBhBwJGkpO875yUvvRc1vLK/tmpMxph9MCTclzOrRhFqOZhqyKaPGLPEetoJ3VtuvJULwLAK71KqhJ75lXoQuYSi8VlHUtJ1EtO7wEhXCF/ZOGxfgDs3mOo2ZuyBoh2t1L+fp2t0j0AvrxyVVYh9dUbEg/Asiq8u1RVheu3KFy/5Tq2NzTVW6V7EtxEXtO2N/Dw1YrL9zuSnNTiY09FsI8cB9zyD8ZfA6Dtlf2UcytVSYvX3KzbXt7PeGJCVsGP7/VZk2wIB6kqNTMFkT1GgnJuhejrL+H0DZNMf6Aqxukb5qPBAeNzakJQWSG7/I6R5GSA/PToKTmOdrfi9A0HCEw+zSJ7ZBUCqwAqSzDW0R54/+CWvvjtzwBa5n/9uMDDB7v0avzTDPd9ANsbxDraXREOcj9o8veAbMIQ+/OHX9j94nN8/fEXABw92KX5TVb4fRtwsT0RoPRAujOrVaLl0aCQRPpzUr3nJMnRD9/W5lXy8k/6/gAENiFQesAjB4zk4O4F9mACezBhnA+b8zD9h5nWAwDnM2YAz1IzU9hHjlclSs1MUb76m3HufCbBuwPntDNBbsXpuax1M18QzbGYBXAzX6go3fsQANHDzwDCXabV7L71XxyQqbibY10Sd19nzPI4jcem/1BKXUkGYkrfnQn4Wg6NBXx23JFj0ykre0CsX9Se3tfpViKMPBI9SyR6VvrXcrcDsSZTuareB7yeGH/vETnXcmhMI3ni+QV3sPtVV8DCuus/sFer0OlPNuU49D7gF+LP3p9hNQGeCNXsuBP+CvzkAONDo5Rnb2DHHWN5t5a62VrqNiawlruNHXcoz95gfGhUw60pANwTcLG4zImJYGM1YicmxlgsLlPrLinNr3Kop1+szufF6nxeiNK0/K3O54X4+47+882vzueFCU/9H/guCLvRri11hYqvNW/CD73D1/oGaMSqJVbXR8ROhdTzkfIv8nkHhF0QvCEAAAAASUVORK5CYII=';
         // One source of truth for the title; no stale hard-coded HTML version.
         document.getElementById('title-version').textContent = `Ver. ${GAME_VERSION}`;
@@ -11025,16 +11025,21 @@
             drawEnemySprite(ctx, enemy, px, py) {
                 const spriteOffset=enemy.spritePhase??(enemy.spritePhase=Math.floor(Math.random()*3));
                 if(enemy.id==='silpen' && this.drawMajorSprite(ctx,'silpen',px,py,enemy.bossTiles===2?64:32,this.animFrame))return;
-                const useHeavenStillArt=['garden_boss','library_boss','dusk_boss','dawn_boss','dark_silpen'].includes(enemy.id);
-                const art=useHeavenStillArt?this.getHeavenArt(enemy.id,0):null;
+                // Every heaven species has its own detailed 64px art (boss art is 128px).
+                // Keep the base illustration stable; animate the whole character and accents instead
+                // of jumping among independently painted poses with mismatched silhouettes.
+                const art=this.getHeavenArt(enemy.id,0);
                 if(art?.complete&&art.naturalWidth){
+                    const boss=enemy.bossTiles===2||['garden_boss','library_boss','dusk_boss','dawn_boss','dark_silpen'].includes(enemy.id);
+                    const size=boss?64:32,phase=performance.now()/440+spriteOffset*2.1;
+                    const bob=Math.sin(phase)*(boss?1.15:.65),breath=Math.sin(phase*.7)*.008;
                     ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-                    const size=enemy.bossTiles===2||['garden_boss','library_boss','dusk_boss','dawn_boss','dark_silpen'].includes(enemy.id)?64:32;
-                    ctx.translate(Math.round(px)+size/2,Math.round(py)+size/2);
-                    const breath=Math.sin(performance.now()/420+spriteOffset);
-                    ctx.scale((enemy.facingX<0?-1:1)*(1+breath*.013),1-breath*.01);
-                    ctx.drawImage(art,-size/2,-size/2,size,size);
-                    ctx.restore();this.drawEnemyMotionDetails(ctx,enemy,px,py,size);return;
+                    ctx.translate(Math.round(px)+size/2,Math.round(py)+size/2+bob);
+                    ctx.scale(enemy.facingX<0?-1:1,1+breath);
+                    // Use the complete source rectangle. The image is centered within its tile,
+                    // so neither side is discarded by a cropped sprite-frame rectangle.
+                    ctx.drawImage(art,0,0,art.naturalWidth,art.naturalHeight,-size/2,-size/2,size,size);
+                    ctx.restore();this.drawEnemyMotionDetails(ctx,enemy,px,py+bob,size);return;
                 }
                 if(DUSK_ENEMY_SPECIES.some(e=>e.id===enemy.id)||DAWN_ENEMY_SPECIES.some(e=>e.id===enemy.id)||['dawn_boss','dark_silpen'].includes(enemy.id)){this.drawLateEnemySprite(ctx,enemy,px,py);this.drawEnemyMotionDetails(ctx,enemy,px,py,32);return;}
                 if(LIBRARY_ENEMY_SPECIES.some(e=>e.id===enemy.id)||enemy.id==='dusk_boss'){
