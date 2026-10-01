@@ -1766,6 +1766,7 @@
             read(key){try{return JSON.parse(localStorage.getItem(this.prefix+key));}catch(e){return null;}}
             write(key,value){try{localStorage.setItem(this.prefix+key,JSON.stringify(value));}catch(e){}}
             isModalOpen(){return ['ranking-window','ranking-name-window'].some(id=>!document.getElementById(id).classList.contains('hidden'));}
+            isPlayBlocked(){return this.deleting||this.deleted||this.isModalOpen();}
             setProfile(data,uid){
                 this.profile={uid,name:data.name,high_score:Math.max(Number(data.high_score)||0,this.profile?.uid===uid?this.profile.high_score:0)};
                 this.write('profile',this.profile);this.renderIdentity();
@@ -1774,7 +1775,7 @@
                 const label=document.getElementById('ranking-identity');
                 label.textContent=this.profile?`${this.profile.name} さんの最高記録：${Number(this.profile.high_score).toLocaleString('ja-JP')}`:'みんなの最高記録を見てみよう♡';
                 if(this.pending&&this.profile&&this.pending.uid===this.profile.uid&&this.pending.score>this.profile.high_score)label.textContent+='（未送信の記録あり）';
-                document.querySelectorAll('.ranking-current-name').forEach(node=>node.textContent=this.profile?.name||(this.deleted?'未登録（必要なら名前を登録）':'未登録（冒険開始時に登録）'));
+                document.querySelectorAll('.ranking-current-name').forEach(node=>node.textContent=this.profile?.name||(this.deleted?'未登録（再登録して冒険を再開）':'未登録（冒険開始時に登録）'));
                 document.querySelectorAll('[data-ranking-rename]').forEach(button=>{button.disabled=this.deleting||(!this.profile&&!this.deleted);button.textContent=this.profile?'名前を変更':'名前を登録';});
                 document.querySelectorAll('[data-ranking-delete]').forEach(button=>button.disabled=this.deleting||!this.profile);
             }
@@ -1808,7 +1809,7 @@
             }
             requestDelete(){
                 if(this.busy||this.deleting||this.isModalOpen()||!this.profile)return;
-                this.game.showGameConfirm(`「${this.profile.name}」のランキング登録を削除する？\n名前と最高スコアをサーバーから削除するよ。取り消せないよ。\n冒険のセーブデータは残るよ。`,()=>this.deleteProfile(),'削除する');
+                this.game.showGameConfirm(`「${this.profile.name}」のランキング登録を削除する？\n名前と最高スコアをサーバーから削除するよ。取り消せないよ。\n冒険のセーブデータは残るよ。\n続けて遊ぶには名前の再登録が必要だよ。`,()=>this.deleteProfile(),'削除する');
             }
             async deleteProfile(){
                 if(this.busy||this.deleting||!this.profile)return;
@@ -1821,16 +1822,17 @@
                     this.deleted=true;this.write('deleted',true);
                     this.profile=null;this.pending=null;this.write('profile',null);this.write('pending',null);
                     this.nameRevision++;
-                    document.querySelectorAll('.ranking-settings-message').forEach(node=>node.textContent='ランキング登録を削除したよ。冒険はそのまま続けられるよ♡');
+                    document.querySelectorAll('.ranking-settings-message').forEach(node=>node.textContent='ランキング登録を削除したよ。名前を再登録して冒険を再開してね♡');
                 }catch(e){
                     document.querySelectorAll('.ranking-settings-message').forEach(node=>node.textContent=this.errorText(e));
                 }finally{this.deleting=false;this.renderIdentity();}
+                if(this.deleted)this.ensurePlayer(()=>{});
             }
             configureName(mode){
                 this.nameMode=mode;
                 const rename=mode==='rename';
                 document.getElementById('ranking-name-heading').textContent=rename?'ランキング名を変更するよ♡':'あなたの名前を入力してね！';
-                document.getElementById('ranking-name-copy').textContent=rename?'新しい名前を入力してね。最高スコアと冒険のデータはそのまま引き継ぐよ♡':'ランキングに載せる名前だよ♡ 次の冒険でも同じ名前を使うよ。あとからゲーム設定で変更できるよ。';
+                document.getElementById('ranking-name-copy').textContent=rename?'新しい名前を入力してね。最高スコアと冒険のデータはそのまま引き継ぐよ♡':(this.deleted?'冒険を再開するには名前の再登録が必要だよ。登録したら今のHighScoreも送るよ♡':'ランキングに載せる名前だよ♡ 登録したら今のHighScoreも送るよ。あとからゲーム設定で変更できるよ。');
                 document.getElementById('ranking-name-submit').textContent=rename?'この名前に変更する ♡':'この名前で始める ♡';
             }
             openRename(){
@@ -1843,7 +1845,6 @@
             }
             async ensurePlayer(next,forceRegister=false){
                 if(this.busy||this.deleting||this.isModalOpen())return;
-                if(this.deleted&&!forceRegister){next?.();return;}
                 this.configureName('register');
                 this.busy=true;document.getElementById('ranking-name-cancel').disabled=true;this.next=next;this.previousFocus=document.activeElement;
                 const modal=document.getElementById('ranking-name-window');
@@ -1862,6 +1863,7 @@
                         else throw e;
                     }
                     if(data){
+                        this.deleted=false;this.write('deleted',false);
                         this.setProfile(data,session.user.id);
                         this.finishName();return;
                     }
@@ -1903,6 +1905,7 @@
                     this.deleted=false;this.write('deleted',false);if(!rename)this.identityEpoch++;
                     if(rename)this.nameRevision++;
                     this.setProfile(data,session.user.id);
+                    if(!rename)this.queue(this.game.highScore);
                     if(rename)document.querySelectorAll('.ranking-settings-message').forEach(node=>node.textContent='名前を変更したよ♡ 最高スコアはそのままだよ。');
                     this.finishName();
                 }catch(e){this.nameStatus(this.errorText(e));}
@@ -1919,7 +1922,10 @@
             cancelName(){
                 if(this.busy)return;
                 this.next=null;document.getElementById('ranking-name-window').classList.add('hidden');this.renderConnection();
-                this.previousFocus?.focus();
+                if(this.deleted){
+                    document.getElementById('options-window').classList.add('hidden');
+                    this.game.showTitleScreen();
+                }else this.previousFocus?.focus();
             }
             queue(score){
                 if(this.deleting||this.deleted||this.read('deleted')===true)return;
@@ -5666,7 +5672,7 @@
             }
 
             update(timestamp) {
-                if(this.ranking.isModalOpen()){this.lastFrameTime=timestamp;return;}
+                if(this.ranking.isPlayBlocked()){this.lastFrameTime=timestamp;return;}
                 if(!document.getElementById('difficulty-window').classList.contains('hidden')){this.lastFrameTime=timestamp;return;}
                 const delta = this.lastFrameTime ? Math.min(250, Math.max(0, timestamp - this.lastFrameTime)) : 16.67;
                 this.lastFrameTime = timestamp;
@@ -6991,7 +6997,7 @@
             }
 
             handleDirectionInput(dir, faceOnly) {
-                if(this.ranking.isModalOpen())return;
+                if(this.ranking.isPlayBlocked())return;
                 // 階段移動中は暗転～新フロア表示完了まで入力を完全にロックする。
                 if (this.floorTransitionBusy || !document.getElementById('npc-dialogue').classList.contains('hidden') || !document.getElementById('npc-storage').classList.contains('hidden') || !document.getElementById('angel-shop').classList.contains('hidden')) return;
                 // 1ターン制なので、敵ターンが終わるまでは次の入力を受け付けない。
@@ -7183,7 +7189,7 @@
             }
 
             performAttackInFacingDirection() {
-                if(this.ranking.isModalOpen())return;
+                if(this.ranking.isPlayBlocked())return;
                 if (this.floorTransitionBusy) return;
                 if (this.actionTimer > 0 || this.enemyTurnPending || this.combatSequenceBusy) return;
                 if (this.facing.x !== 0 && this.facing.y !== 0 && !this.canStepDiagonal(this.player.x,this.player.y,this.player.x+this.facing.x,this.player.y+this.facing.y)) {
@@ -7667,7 +7673,7 @@
             }
 
             turnWait() {
-                if(this.ranking.isModalOpen())return;
+                if(this.ranking.isPlayBlocked())return;
                 if (this.floorTransitionBusy) return;
                 if (this.actionTimer > 0 || this.enemyTurnPending || this.combatSequenceBusy) return;
                 this.actionTimer = 100;
